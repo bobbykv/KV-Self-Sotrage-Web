@@ -129,6 +129,9 @@ const LOC_PATTERNS: [LocationKey, RegExp][] = [
   ["stellarton", /stellarton|new glasgow|westville|trenton|pictou|heritage/i],
 ];
 
+/** Towns served by more than one site: narrow results without picking a single location. */
+const AREA_PATTERNS: [string, RegExp, LocationKey[]][] = [["Antigonish", /antigonish|stfx/i, ["haley", "hwy4"]]];
+
 export function parseUnitIntent(text: string) {
   const location = LOC_PATTERNS.find(([, re]) => re.test(text))?.[0];
   const size = text.match(/(\d{1,2})\s*(?:x|by|×)\s*(\d{1,2})/i);
@@ -162,12 +165,16 @@ export async function rulesChat(text: string): Promise<ChatReply> {
 
   if (intent.wantsUnits && !isQuestionFirst) {
     const r = await searchUnits(intent);
-    const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : "our locations";
-    if (r.available.length) {
-      const lines = r.available.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name} — ${money(u.monthly_price)}/mo (${u.available_count} open)`);
+    const area = !intent.location ? AREA_PATTERNS.find(([, re]) => re.test(text)) : undefined;
+    const available = r.available
+      .filter((u) => !area || area[2].includes(u.location as LocationKey))
+      .sort((a, b) => Number(b.size === intent.sizeText) - Number(a.size === intent.sizeText));
+    const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : area ? `our ${area[0]} locations` : "our locations";
+    if (available.length) {
+      const lines = available.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name} — ${money(u.monthly_price)}/mo (${u.available_count} open)`);
       return {
         reply: `Here's what's open at ${where} right now:\n${lines.join("\n")}\n\nTap one to hold it online for 20 minutes while you check out.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,
-        actions: r.available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `Hold ${u.size} · ${u.location_name}` })),
+        actions: available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `Hold ${u.size} · ${u.location_name}` })),
       };
     }
     return {

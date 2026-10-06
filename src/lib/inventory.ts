@@ -10,6 +10,8 @@ import type { PriceListEntry, Unit } from "./sitelink/types";
 
 type Kind = "available" | "all" | "pricelist" | "report";
 const snapshotId = (loc: LocationKey, kind: Kind) => `${loc}:${kind}`;
+/** After a failed first load, page views wait this long before trying SiteLink again. */
+const COLD_START_RETRY_MS = 2 * 60 * 1000;
 
 async function saveSnapshot(loc: LocationKey, kind: Kind, data: unknown, lastTimePolled?: string) {
   const id = snapshotId(loc, kind);
@@ -145,7 +147,9 @@ export type LocationInventory = {
  */
 export async function getInventory(): Promise<LocationInventory[]> {
   let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
-  if (!snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0)) {
+  const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
+  const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
+  if (neverLoaded && !failedRecently) {
     await refreshInventory({ kinds: ["available", "pricelist"] });
     snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
   }
