@@ -6,12 +6,12 @@ export const metadata = { title: "Lease", robots: { index: false } };
 export default function LeaseUnavailable() {
   return (
     <div className="container-kv max-w-xl py-16 text-center">
-      <h1 className="h2">Your lease isn&apos;t available online yet</h1>
+      <h1 className="h2">Your KV Self Storage lease isn&apos;t available here</h1>
       <p className="mt-3 text-kv-muted">
-        Need to review or sign your lease? Contact us at {BRAND.phone} or {BRAND.email} and we&apos;ll help you get a copy.
+        Call {BRAND.phone} or email {BRAND.email}. We&apos;ll help you get your lease.
       </p>
       <Link href="/portal" className="btn-primary mt-6">
-        Back to my account
+        Back to My storage
       </Link>
     </div>
   );

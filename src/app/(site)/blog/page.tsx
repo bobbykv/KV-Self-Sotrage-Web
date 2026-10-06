@@ -4,18 +4,20 @@ import { getPublishedPosts } from "@/lib/cms";
 import { excerptOf } from "@/lib/markdown";
 
 export const metadata: Metadata = {
-  title: "Storage Tips for Your Next Move",
-  description: "Moving, packing and storage tips from the KV Self Storage team.",
+  title: "Storage Tips | KV Self Storage Antigonish and Stellarton",
+  description: "Tips for choosing a storage size, packing your unit and storing between moves or school terms.",
 };
 
 export default async function BlogIndex() {
   const posts = await getPublishedPosts();
   return (
     <div className="container-kv max-w-4xl py-10 sm:py-16">
-      <p className="eyebrow">Storage tips</p>
-      <h1 className="h1 mt-2">A little guidance for your next move</h1>
+      <h1 className="h1 mt-2">Self storage tips for Antigonish and Stellarton</h1>
+      <p className="mt-3 text-kv-muted">Help with choosing a size, packing your unit and getting ready to move.</p>
       {posts.length === 0 ? (
-        <div className="mt-6 rounded-2xl bg-kv-navy-50 p-6"><p className="text-kv-muted">Planning where everything will go? Start with the size guide, or tell us what you&apos;re storing and we&apos;ll help.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/size-finder" className="btn-primary">Help me choose a size</Link><Link href="/contact" className="btn-ghost">Ask for help</Link></div></div>
+        <div className="mt-6 rounded-2xl bg-kv-navy-50 p-6">
+          <p className="text-kv-muted">No storage tips have been posted yet. Need help now? Call (902) 867-3779.</p>
+        </div>
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {posts.map((p) => (
@@ -32,6 +34,9 @@ export default async function BlogIndex() {
                   </Link>
                 </h2>
                 <p className="mt-2 text-sm text-kv-muted">{p.excerpt || excerptOf(p.body)}</p>
+                <Link href={`/blog/${p.slug}`} className="mt-3 inline-block text-sm font-semibold text-kv-red">
+                  Read more
+                </Link>
               </div>
             </article>
           ))}

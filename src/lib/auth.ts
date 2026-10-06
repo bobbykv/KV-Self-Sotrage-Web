@@ -116,7 +116,7 @@ export async function tenantLogin(email: string, password: string): Promise<Logi
     const id = await sitelink.tenantLogin(loc, normalized, password).catch(() => null);
     if (id) links.push({ locationKey: loc, tenantId: id });
   }
-  if (!links.length) return { ok: false, error: "We couldn't sign you in with that email and password." };
+  if (!links.length) return { ok: false, error: "We couldn't sign you in. Check your email and password, then try again." };
   await startSession("tenant", TENANT_TTL_HOURS, { tenantData: links, email: normalized });
   return { ok: true };
 }

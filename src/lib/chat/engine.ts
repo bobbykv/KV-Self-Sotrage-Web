@@ -46,10 +46,10 @@ export async function chat(history: ChatMessage[]): Promise<ChatReply> {
 
 export function greeting(): ChatReply {
   return {
-    reply: "Hi! I'm your virtual storage assistant. What are you making room for? I can help you compare spaces and prices, answer a question, or request a callback from the KV team.",
+    reply: "Need help with a size, price or location? Ask here. You can also call (902) 867-3779.",
     actions: [
-      { type: "link", href: "/units", label: "See available units" },
-      { type: "link", href: "/size-finder", label: "Help me pick a size" },
+      { type: "link", href: "/units", label: "See units & prices" },
+      { type: "link", href: "/size-finder", label: "Help me choose a size" },
     ],
   };
 }

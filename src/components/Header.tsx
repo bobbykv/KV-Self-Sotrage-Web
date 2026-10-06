@@ -5,7 +5,7 @@ import { BRAND } from "@/config/locations";
 const NAV = [
   { href: "/units", label: "Units & prices" },
   { href: "/locations", label: "Locations" },
-  { href: "/size-finder", label: "Choose your size" },
+  { href: "/size-finder", label: "Size finder" },
   { href: "/faq", label: "FAQ" },
   { href: "/portal", label: "My storage" },
 ];
@@ -37,6 +37,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <a href={`tel:${BRAND.phoneE164}`} className="btn-primary btn-sm min-h-11 px-4 text-sm sm:text-base" aria-label={`Call ${BRAND.phone}`}>
             <PhoneIcon />
+            <span className="hidden sm:inline">Call </span>
             <span>{BRAND.phone}</span>
           </a>
           <details className="relative lg:hidden">

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { LocalSchema } from "@/components/LocalSchema";
@@ -7,7 +8,11 @@ import { ReviewsBlock } from "@/components/Reviews";
 import { BRAND } from "@/config/locations";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
-import { env } from "@/lib/env";
+
+export const metadata: Metadata = {
+  title: { absolute: "Self Storage in Antigonish and Stellarton | KV Self Storage" },
+  description: "Compare storage units in Antigonish, Addington Forks and Stellarton. Gated entry, cameras and 24/7 access. See prices and choose your size.",
+};
 
 export default async function Home() {
   const [promos, inventory] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory()]);
@@ -23,24 +28,17 @@ export default async function Home() {
       <section className="container-kv grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-2">
         <div>
           <p className="eyebrow">Antigonish · Addington Forks · Stellarton</p>
-          <h1 className="h1 mt-3">Make room for what&apos;s next. Keep what matters.</h1>
-          <p className="mt-4 max-w-lg text-lg text-kv-muted">
-            Moving or settling into a smaller home? You don&apos;t have to part with belongings you&apos;re not ready to let go of. Find clean, secure storage close to home, with help choosing the right size.
-          </p>
+          <h1 className="h1 mt-3">Self storage in Antigonish and Stellarton</h1>
+          <p className="mt-4 max-w-lg text-lg text-kv-muted">Moving? Downsizing? Out of room? Store the things you still need.</p>
+          <p className="mt-3 max-w-lg text-kv-muted">Compare sizes and prices at our three locations. Gated coded entry, cameras and 24/7 access.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/units" className="btn-primary">
-              Find your space
+              See units &amp; prices
             </Link>
             <Link href="/size-finder" className="btn-ghost">
               Help me choose a size
             </Link>
           </div>
-          <p className="mt-6 text-sm text-kv-muted">
-            Want help deciding? Call{" "}
-            <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
-              {BRAND.phone}
-            </a>
-          </p>
         </div>
         <div className="relative overflow-hidden rounded-3xl">
           <Image src="/photos/hero.jpg" alt="Row of white roll-up storage doors at KV Self Storage" width={929} height={622} priority className="h-full w-full object-cover" />
@@ -48,14 +46,13 @@ export default async function Home() {
       </section>
 
       <section className="container-kv pb-16">
-        <p className="eyebrow">When life needs a little more space</p>
-        <h2 className="h2 mt-2">Your next chapter doesn&apos;t have to mean letting go</h2>
-        <p className="mt-4 max-w-3xl text-kv-muted">A move, a smaller home, or a growing business can leave you short on room. Give your belongings a place of their own so you can take your next step with less clutter and more peace of mind.</p>
+        <h2 className="h2">Keep your stuff. Get your space back.</h2>
+        <p className="mt-4 max-w-3xl text-kv-muted">You don&apos;t have to get rid of things just because they won&apos;t fit. Choose a unit for what you&apos;re keeping. We&apos;ll help you work out the size.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            ["Moving or downsizing", "Keep furniture, keepsakes, and the things you still want while you get settled."],
-            ["Room for your business", "Store stock, tools, and equipment so your workspace can work for you."],
-            ["Between school terms", "Leave your belongings near campus instead of packing them home for the summer."],
+            ["Moving or downsizing", "Store furniture and boxes while you move. Keep what you want without packing it into a smaller home."],
+            ["Studying at StFX", "Store your dorm room belongings between terms. Haley Road is close to StFX."],
+            ["Running a business", "Make room for stock, tools and equipment. Choose a unit with space to reach what you use."],
           ].map(([title, body]) => (
             <div key={title} className="card p-6">
               <h3 className="text-lg font-extrabold text-kv-navy">{title}</h3>
@@ -66,13 +63,12 @@ export default async function Home() {
       </section>
 
       <section className="container-kv pb-16">
-        <p className="eyebrow">A little guidance goes a long way</p>
-        <h2 className="h2 mt-2">Feel good about where your belongings are</h2>
+        <h2 className="h2">Know the size. Know the cost.</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            ["Choose the space you need", "Start with the size guide, compare monthly prices, and ask us if you need a second opinion."],
-            ["Store with peace of mind", "Clean units, gated entry, and camera surveillance help you feel confident about where you store."],
-            ["Get to your things when you need them", "With 24/7 access, you can collect a box or add a load when it fits your day."],
+            ["Find the right fit", "Use the size finder. Compare your options. Call us if you're between sizes."],
+            ["See the full price", "Check the monthly rent. Review fees and HST before you pay. No surprise fees."],
+            ["Get in when you need to", "All three locations have 24/7 access, gated coded entry and cameras. Finish your rental and access setup before you move in."],
           ].map(([title, body]) => (
             <div key={title} className="card p-6">
               <h3 className="text-lg font-extrabold text-kv-navy">{title}</h3>
@@ -84,9 +80,7 @@ export default async function Home() {
 
       <section className="bg-kv-navy-50 py-16">
         <div className="container-kv">
-          <p className="eyebrow">Three locations</p>
-          <h2 className="h2 mt-2">Keep your belongings within reach</h2>
-          <p className="mt-3 max-w-2xl text-kv-muted">Choose a location that fits your day in Antigonish, Addington Forks, or Stellarton. All three offer 24/7 access.</p>
+          <h2 className="h2">Choose your location</h2>
           <div className="mt-8">
             <LocationCards counts={counts} />
           </div>
@@ -98,37 +92,52 @@ export default async function Home() {
           <Image src="/photos/facility-2.jpg" alt="Drive-up storage units with yellow safety bollards" width={940} height={361} className="h-full w-full object-cover" />
         </div>
         <div>
-          <p className="eyebrow">How it works</p>
-          <h2 className="h2 mt-2">From needing room to feeling settled</h2>
+          <h2 className="h2">Get started in three steps</h2>
           <ol className="mt-6 space-y-5">
             {[
-              ["Find your space", "Tell us what you're storing or compare sizes and monthly prices. We'll help if you're unsure."],
-              ["Arrange your rental", env.PAYMENT_MODE === "passthrough" ? "Choose your move-in date, review the full total, and pay online. Your confirmation explains your lease and access." : "Choose your move-in date and reserve online. We'll help you finish payment and your rental before you move in."],
-              ["Move forward with peace of mind", "Once your rental and access are ready, bring your belongings over. They're nearby whenever you need them."],
+              ["Choose your unit", "Pick your location and size. Check the price."],
+              ["Finish your checkout", "Your unit is held for 20 minutes. Review the total and follow the payment or reservation steps."],
+              ["Get ready to move in", "Finish your lease and access setup. Your confirmation tells you what to do next."],
             ].map(([t, d], i) => (
               <li key={t} className="flex gap-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kv-yellow font-extrabold text-kv-navy">{i + 1}</span>
                 <div>
-                  <p className="font-bold text-kv-navy">{t}</p>
+                  <p className="font-bold text-kv-navy">
+                    {i + 1}. {t}
+                  </p>
                   <p className="text-sm text-kv-muted">{d}</p>
                 </div>
               </li>
             ))}
           </ol>
+          <Link href="/units" className="btn-primary mt-8">
+            See units &amp; prices
+          </Link>
         </div>
       </section>
 
       <ReviewsBlock />
 
       <section className="container-kv">
-        <div className="flex flex-col items-start gap-4 rounded-3xl bg-kv-red px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <div className="flex flex-col items-start gap-4 rounded-3xl bg-kv-red px-6 py-10 text-white sm:px-10">
           <div>
-            <h2 className="text-2xl font-extrabold">Ready for a little more breathing room?</h2>
-            <p className="mt-1 text-white/85">Find a space for what matters and take your next step.</p>
+            <h2 className="text-2xl font-extrabold">Need somewhere to put it?</h2>
+            <p className="mt-1 text-white/85">
+              Check the sizes and prices. If you&apos;re unsure what will fit, call{" "}
+              <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-yellow underline">
+                {BRAND.phone}
+              </a>
+              .
+            </p>
           </div>
-          <Link href="/units" className="btn-yellow">
-            Find your space
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/units" className="btn-yellow">
+              See units &amp; prices
+            </Link>
+            <Link href="/size-finder" className="btn-ghost border-white/40 text-white hover:bg-white/10">
+              Help me choose a size
+            </Link>
+          </div>
         </div>
       </section>
     </>

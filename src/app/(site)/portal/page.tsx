@@ -8,7 +8,7 @@ import { loadPortalAccounts } from "@/lib/portal";
 import { ISSUE_TYPES } from "@/lib/requests";
 import { logoutAction, maintenanceAction, scheduleMoveOutAction, transferAction } from "./actions";
 
-export const metadata: Metadata = { title: "My account", robots: { index: false } };
+export const metadata: Metadata = { title: "My storage account", robots: { index: false } };
 
 function fmtDate(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString("en-CA", { dateStyle: "medium", timeZone: "UTC" }) : "Not available";
@@ -26,7 +26,8 @@ export default async function PortalDashboard() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">My storage</p>
-          <h1 className="h2 mt-1">Hi{first ? `, ${first.firstName}` : ""}</h1>
+          <h1 className="h2 mt-1">Your KV Self Storage account</h1>
+          <p className="mt-1 text-sm text-kv-muted">Hi{first ? ` ${first.firstName}` : ""}.</p>
           <p className="text-sm text-kv-muted">{session.email}</p>
         </div>
         <form action={logoutAction}>
@@ -36,8 +37,8 @@ export default async function PortalDashboard() {
 
       {accounts.map((a) => (
         <section key={a.locationKey} className="mt-8">
-          <h2 className="text-lg font-extrabold text-kv-navy">{a.locationName}</h2>
-          {a.error && <p className="mt-2 rounded-xl bg-kv-yellow-light p-4 text-sm">We couldn&apos;t load this account right now. Please try again shortly or call {BRAND.phone}.</p>}
+          <h2 className="text-lg font-extrabold text-kv-navy">Your unit at {a.locationName}</h2>
+          {a.error && <p className="mt-2 rounded-xl bg-kv-yellow-light p-4 text-sm">We couldn&apos;t load your account. Try again or call {BRAND.phone}.</p>}
 
           <div className="mt-3 grid gap-4 lg:grid-cols-3">
             {a.ledgers.map((l) => (
@@ -47,15 +48,16 @@ export default async function PortalDashboard() {
                     <p className="text-sm text-kv-muted">Unit</p>
                     <p className="text-2xl font-extrabold text-kv-navy">{l.unitName}</p>
                     <p className="text-sm text-kv-muted">
-                      {money(l.rent)}/month · paid through {fmtDate(l.paidThrough)}
+                      Monthly rent {money(l.rent)} · Paid through {fmtDate(l.paidThrough)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-kv-muted">Balance</p>
+                    <p className="text-sm text-kv-muted">Balance due</p>
                     <p className={`text-2xl font-extrabold ${l.pastDue > 0 ? "text-kv-red" : "text-kv-navy"}`}>{money(l.balance)}</p>
                     {l.pastDue > 0 ? (
                       <p className="badge mt-1 bg-kv-red text-white">
-                        {money(l.pastDue)} past due{l.daysPastDue ? ` · ${l.daysPastDue} days` : ""}
+                        Past-due amount {money(l.pastDue)}
+                        {l.daysPastDue ? ` · ${l.daysPastDue} days` : ""}
                       </p>
                     ) : (
                       <p className="badge mt-1 bg-kv-navy-50 text-kv-navy">Up to date</p>
@@ -65,13 +67,13 @@ export default async function PortalDashboard() {
 
                 <dl className="mt-5 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-xl bg-kv-navy-50 p-4">
-                    <dt className="text-xs font-semibold text-kv-muted">Gate / access code</dt>
-                    <dd className="mt-1 font-mono text-2xl font-bold tracking-widest text-kv-navy">{l.accessCode || "Pending"}</dd>
-                    {!l.accessCode && <p className="text-xs text-kv-muted">Available after your rental and access setup are complete.</p>}
+                    <dt className="text-xs font-semibold text-kv-muted">Access details</dt>
+                    <dd className="mt-1 font-mono text-2xl font-bold tracking-widest text-kv-navy">{l.accessCode || "—"}</dd>
+                    {!l.accessCode && <p className="text-xs text-kv-muted">Your access details aren&apos;t shown yet. Follow your rental instructions or call {BRAND.phone}.</p>}
                   </div>
                   <div className="rounded-xl bg-kv-navy-50 p-4">
                     <dt className="text-xs font-semibold text-kv-muted">Autopay</dt>
-                    <dd className="mt-1 font-bold text-kv-navy">{a.billing ? (a.billing.autopay ? "On" : "Off") : "Unknown"}</dd>
+                    <dd className="mt-1 font-bold text-kv-navy">{a.billing ? (a.billing.autopay ? "On" : "Off") : "Contact us to confirm"}</dd>
                     {a.billing?.autopay && (
                       <p className="text-xs text-kv-muted">
                         {a.billing.method}
@@ -79,67 +81,71 @@ export default async function PortalDashboard() {
                         {a.billing.expires ? ` · exp ${new Date(a.billing.expires).toLocaleDateString("en-CA", { month: "2-digit", year: "2-digit", timeZone: "UTC" })}` : ""}
                       </p>
                     )}
-                    <p className="mt-1 text-xs text-kv-muted">To change autopay, call the office.</p>
+                    <p className="mt-1 text-xs text-kv-muted">Contact us to set it up or change your payment card.</p>
                   </div>
                   <div className="rounded-xl bg-kv-navy-50 p-4">
                     <dt className="text-xs font-semibold text-kv-muted">Lease</dt>
                     <dd className="mt-1">
                       <a href={`/api/portal/lease?location=${a.locationKey}&ledger=${l.ledgerId}`} className="font-bold text-kv-red underline">
-                        View / sign lease
+                        View and sign my lease
                       </a>
                     </dd>
-                    <p className="text-xs text-kv-muted">If it isn&apos;t set up online, we&apos;ll email it.</p>
                   </div>
                 </dl>
 
                 {a.noke && (
                   <p className="mt-4 rounded-xl border border-kv-yellow bg-kv-yellow-light p-3 text-sm text-kv-navy">
-                    <strong>Access your belongings with the Nokē app.</strong> Follow your move-in access instructions to get started. Need help with the app? Contact us.
+                    Use the Nokē app to unlock your unit at Addington Forks or Stellarton.
                   </p>
                 )}
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  {env.PAY_ONLINE_URL && (
+                  {env.PAY_ONLINE_URL ? (
                     <a href={env.PAY_ONLINE_URL} className="btn-primary btn-sm min-h-11" target="_blank" rel="noopener noreferrer">
                       Make a payment
                     </a>
+                  ) : (
+                    <p className="text-sm text-kv-muted">Your payment link isn&apos;t available. Call {BRAND.phone} to make a payment.</p>
                   )}
                   <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost btn-sm min-h-11">
-                    Call the office
+                    Call {BRAND.phone}
                   </a>
                 </div>
 
                 <details className="mt-5 rounded-xl border border-kv-line p-4">
-                  <summary className="cursor-pointer font-semibold text-kv-navy">{l.scheduledMoveOut ? `Move-out scheduled: ${fmtDate(l.scheduledMoveOut)}` : "Schedule a move-out"}</summary>
+                  <summary className="cursor-pointer font-semibold text-kv-navy">{l.scheduledMoveOut ? `Move-out scheduled: ${fmtDate(l.scheduledMoveOut)}` : "Schedule move-out"}</summary>
                   <div className="mt-3 max-w-sm">
                     <p className="mb-3 text-sm text-kv-muted">
-                      Let us know when you plan to leave. Empty your space and remove any personal lock by that date. We&apos;ll process your move-out to close the rental.
+                      Choose your planned date. Follow your rental agreement. Empty the unit and remove any personal lock by that date. We process the move-out to close your rental.
                     </p>
-                    <ActionForm action={scheduleMoveOutAction} submitLabel="Schedule move-out" buttonClassName="btn-navy w-full">
+                    <ActionForm action={scheduleMoveOutAction} submitLabel="Send move-out date" buttonClassName="btn-navy w-full">
                       <input type="hidden" name="locationKey" value={a.locationKey} />
                       <input type="hidden" name="ledgerId" value={l.ledgerId} />
-                      <input type="date" name="date" min={today} required className="input" aria-label="Move-out date" />
+                      <label className="block">
+                        <span className="label">Planned move-out date</span>
+                        <input type="date" name="date" min={today} required className="input" />
+                      </label>
                     </ActionForm>
                   </div>
                 </details>
               </article>
             ))}
-            {!a.ledgers.length && !a.error && <p className="text-sm text-kv-muted">No active units on this account.</p>}
+            {!a.ledgers.length && !a.error && <p className="text-sm text-kv-muted">No rental is linked to this account. Call {BRAND.phone} so we can check it.</p>}
           </div>
         </section>
       ))}
 
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <section className="card p-6" id="maintenance">
-          <h2 className="text-lg font-extrabold text-kv-navy">Report a maintenance issue</h2>
-          <p className="mt-1 text-sm text-kv-muted">Tell us about the problem so we can help. For an urgent issue, call {BRAND.phone}.</p>
+          <h2 className="text-lg font-extrabold text-kv-navy">Report a problem</h2>
+          <p className="mt-1 text-sm text-kv-muted">Tell us what&apos;s wrong and where it is. Add photos if you can. For an urgent problem, also call {BRAND.phone}.</p>
           <div className="mt-4">
-            <ActionForm action={maintenanceAction} submitLabel="Send request">
+            <ActionForm action={maintenanceAction} submitLabel="Send report">
               <UnitPicker units={units} />
               <input type="hidden" name="name" value={first ? `${first.firstName} ${first.lastName}` : session.email} />
               <input type="hidden" name="phone" value={first?.phone ?? ""} />
               <label className="block">
-                <span className="label">What&apos;s the issue?</span>
+                <span className="label">Problem type</span>
                 <select name="issueType" required className="input">
                   {ISSUE_TYPES.map((t) => (
                     <option key={t}>{t}</option>
@@ -147,11 +153,11 @@ export default async function PortalDashboard() {
                 </select>
               </label>
               <label className="block">
-                <span className="label">Describe it</span>
+                <span className="label">What happened?</span>
                 <textarea name="description" required minLength={5} rows={4} className="input py-3" />
               </label>
               <label className="block">
-                <span className="label">Photos (optional, up to 3, about 4 MB total)</span>
+                <span className="label">Photos (optional)</span>
                 <input name="photos" type="file" accept="image/*" multiple className="block w-full text-sm" />
               </label>
               <ContactPref />
@@ -161,20 +167,20 @@ export default async function PortalDashboard() {
 
         <section className="card p-6" id="transfer">
           <h2 className="text-lg font-extrabold text-kv-navy">Request a unit change</h2>
-          <p className="mt-1 text-sm text-kv-muted">Your needs can change. Tell us how much room you need now, and we&apos;ll check the options with you.</p>
+          <p className="mt-1 text-sm text-kv-muted">Need a different size or location? Tell us what you&apos;re looking for. We&apos;ll check availability and contact you. Your rental stays the same until we confirm the change.</p>
           <div className="mt-4">
             <ActionForm action={transferAction} submitLabel="Send request">
               <UnitPicker units={units} field="currentUnitName" />
               <label className="block">
-                <span className="label">I&apos;d like</span>
+                <span className="label">Type of change</span>
                 <select name="direction" className="input">
-                  <option value="bigger">A bigger unit</option>
-                  <option value="smaller">A smaller unit</option>
-                  <option value="different_type">A different type (e.g. climate, parking)</option>
+                  <option value="bigger">Bigger unit</option>
+                  <option value="smaller">Smaller unit</option>
+                  <option value="different_type">Different location</option>
                 </select>
               </label>
               <label className="block">
-                <span className="label">Where</span>
+                <span className="label">Preferred location</span>
                 <select name="desiredLocation" className="input">
                   <option value="same">Same location</option>
                   {LOCATIONS.map((l) => (
@@ -186,11 +192,11 @@ export default async function PortalDashboard() {
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label>
-                  <span className="label">Size (optional)</span>
+                  <span className="label">Size needed</span>
                   <input name="desiredSize" placeholder="e.g. 10x15" className="input" />
                 </label>
                 <label>
-                  <span className="label">When</span>
+                  <span className="label">When do you need it?</span>
                   <select name="timing" className="input">
                     <option value="asap">As soon as possible</option>
                     <option value="within_month">Within a month</option>
@@ -200,7 +206,7 @@ export default async function PortalDashboard() {
                 </label>
               </div>
               <label className="block">
-                <span className="label">Anything else? (optional)</span>
+                <span className="label">Anything else we should know?</span>
                 <textarea name="reason" rows={3} className="input py-3" />
               </label>
             </ActionForm>
@@ -253,10 +259,10 @@ function UnitSelect({ units, field }: { units: { locationKey: string; unitName: 
 function ContactPref() {
   return (
     <label className="block">
-      <span className="label">How should we follow up?</span>
+      <span className="label">How should we contact you?</span>
       <select name="contactPref" className="input">
-        <option value="phone">Phone call</option>
-        <option value="text">Text message</option>
+        <option value="phone">Phone</option>
+        <option value="text">Text</option>
         <option value="email">Email</option>
         <option value="no_contact">No follow-up needed</option>
       </select>

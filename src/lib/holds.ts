@@ -70,11 +70,11 @@ export async function createHold(input: HoldInput): Promise<Hold> {
 
   const inventory = await getInventory();
   const unit = inventory.find((l) => l.location === input.locationKey)?.units.find((u) => u.unitId === input.unitId);
-  if (!unit) throw new HoldError("unit not in cache", "That space is no longer available. Let's find another option for you.");
+  if (!unit) throw new HoldError("unit not in cache", "This unit is no longer available. Check the other units at this location.");
 
   const fresh = await sitelink.unitById(input.locationKey, input.unitId);
   if (!fresh || fresh.rented || !fresh.rentable || fresh.waitingListReserved) {
-    throw new HoldError("unit no longer vacant in SiteLink", "That space was just rented. Let's find another option for you.");
+    throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
   }
 
   const id = randomBytes(18).toString("base64url");
@@ -161,7 +161,7 @@ export async function releaseHold(id: string) {
 function assertActive(h: Hold | null): asserts h is Hold {
   if (!h) throw new HoldError("hold not found", "We couldn't find that reservation.");
   if (h.status !== "active" || h.expiresAt <= new Date()) {
-    throw new HoldError("hold not active", "This hold has expired. You can browse available spaces and start again.");
+    throw new HoldError("hold not active", "Your unit hold has ended. Check availability and start a new hold.");
   }
 }
 
@@ -184,7 +184,7 @@ export async function confirmPaySeparately(id: string): Promise<Hold> {
     });
     await sitelink.reservationNote(loc, h.waitingId!, `Website: customer confirmed reservation. Pay separately (PAYMENT_MODE=pay_separately). Phone ${h.phone}, email ${h.email}.`).catch(() => undefined);
   } catch (err) {
-    throw new HoldError(safeErrorMessage(err), "We couldn't confirm your reservation. Please call (902) 867-3779 and we'll help you finish.");
+    throw new HoldError(safeErrorMessage(err), "We couldn't confirm your reservation. Try again or call (902) 867-3779.");
   }
   const updated = await db.hold.update({ where: { id }, data: { status: "confirmed_pay_separately", expiresAt: newExpiry } });
   await notifyStaff("hold_confirmed_pay_separately", `Website reservation ${h.unitName} (${loc}) for ${h.firstName} ${h.lastName} — collect payment`, {

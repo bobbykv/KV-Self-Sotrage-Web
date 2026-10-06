@@ -9,11 +9,10 @@ const siteUrl = process.env.APP_URL ?? "https://kvselfstorage.ca";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "KV Self Storage | Self Storage in Antigonish & Stellarton, NS",
+    default: "Self Storage in Antigonish and Stellarton | KV Self Storage",
     template: "%s | KV Self Storage",
   },
-  description:
-    "Make room for your next chapter with clean, secure storage in Antigonish and Stellarton. Compare sizes and prices, with 24/7 access and local help.",
+  description: "Compare storage units in Antigonish, Addington Forks and Stellarton. Gated entry, cameras and 24/7 access. See prices and choose your size.",
   openGraph: { siteName: "KV Self Storage", locale: "en_CA", type: "website" },
   icons: { icon: "/favicon.ico" },
 };

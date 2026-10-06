@@ -23,7 +23,7 @@ export type HoldFormState = { error?: string };
 
 export async function startHold(_prev: HoldFormState, form: FormData): Promise<HoldFormState> {
   const parsed = schema.safeParse(Object.fromEntries(form));
-  if (!parsed.success || !isLocationKey(parsed.data.location)) return { error: "Please fill in your name, email, phone and move-in date." };
+  if (!parsed.success || !isLocationKey(parsed.data.location)) return { error: "Check the marked fields and try again." };
   const d = parsed.data;
   const ip = await clientIp();
   if (!(await rateLimit(`hold:${ip}`, 6, 1800)) || !(await rateLimit(`hold-email:${d.email.toLowerCase()}`, 4, 1800))) {
@@ -49,7 +49,7 @@ export async function startHold(_prev: HoldFormState, form: FormData): Promise<H
     holdId = hold.id;
   } catch (err) {
     if (err instanceof HoldError) {
-      if (/taken|rented/.test(err.userMessage)) redirect(`/units?location=${d.location}&notice=${encodeURIComponent(err.userMessage)}`);
+      if (/no longer available|taken|rented/.test(err.userMessage)) redirect(`/units?location=${d.location}&notice=${encodeURIComponent(err.userMessage)}`);
       return { error: err.userMessage };
     }
     log.error("startHold failed", { err });

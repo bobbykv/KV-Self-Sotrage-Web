@@ -32,10 +32,15 @@ export default async function BlogPost({ params }: { params: Promise<Params> }) 
       )}
       <div className="prose-kv mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.body) }} />
       <div className="mt-12 rounded-3xl bg-kv-navy-50 p-6">
-        <p className="font-bold text-kv-navy">Ready to make room for what comes next?</p>
-        <Link href="/units" className="btn-primary mt-3">
-          Find your space
-        </Link>
+        <p className="font-bold text-kv-navy">Need a unit for what you&apos;re storing? Compare sizes and prices in Antigonish and Stellarton.</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Link href="/units" className="btn-primary">
+            See units &amp; prices
+          </Link>
+          <Link href="/blog" className="btn-ghost">
+            Back to storage tips
+          </Link>
+        </div>
       </div>
     </article>
   );

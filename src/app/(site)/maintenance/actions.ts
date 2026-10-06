@@ -17,8 +17,8 @@ export async function publicMaintenanceAction(_prev: { ok?: boolean; error?: str
     const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
     const photoIds = (await Promise.all(photos.map((p) => saveImage(p, "maintenance_photo", false)))).filter(Boolean) as string[];
     await createMaintenanceRequest(parsed.data, { tenantId, verified: Boolean(tenantId), photoIds });
-    return { ok: true, message: "Thanks. We've received your report. For an urgent problem, please also call (902) 867-3779." };
+    return { ok: true, message: "Your report has been sent." };
   } catch (err) {
-    return { error: safeErrorMessage(err, 120) };
+    return { error: safeErrorMessage(err, 120) || "We couldn't send your report. Try again or call (902) 867-3779." };
   }
 }
