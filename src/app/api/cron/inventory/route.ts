@@ -6,7 +6,7 @@ import { refreshInventory } from "@/lib/inventory";
 
 export const maxDuration = 60;
 
-/** Vercel cron, every 30 minutes. Only snapshots that are due actually hit SiteLink. */
+/** Manual or scheduled refresh. Not registered in vercel.json (Hobby plan). Only snapshots that are due actually hit SiteLink. */
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const expired = await expireHolds();
