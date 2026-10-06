@@ -1,0 +1,59 @@
+{
+  "_note": "Shared tool policy for the web chat agent and the Retell voice agent. JSON-Schema parameters work for both OpenAI-style function calling and Retell custom functions. Retell should call the HTTP endpoints listed under `http` with header `Authorization: Bearer $AGENT_TOOL_SECRET`. Only these tools are allowed; SiteLink AI features are never used.",
+  "tools": [
+    {
+      "name": "search_units",
+      "description": "Search currently available storage units and parking from KV's cached SiteLink inventory (refreshed ~every 30 minutes). Returns sizes, monthly price, count available, features, a link to hold online, and an 'as of' time. Also returns unit types that are currently full so you can offer the waitlist.",
+      "http": { "method": "POST", "path": "/api/agent/tools/search_units" },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": { "type": "string", "enum": ["haley", "hwy4", "stellarton"], "description": "haley = 20 Haley Rd Antigonish; hwy4 = 2784 NS-4 Addington Forks (Exit 31); stellarton = 30 Heritage Ave Stellarton. Omit for all." },
+          "size_category": { "type": "string", "enum": ["small", "medium", "large", "parking"] },
+          "climate_controlled": { "type": "boolean" },
+          "vehicle_parking": { "type": "boolean" },
+          "max_monthly_price": { "type": "number" }
+        }
+      }
+    },
+    {
+      "name": "get_faq",
+      "description": "Look up answers from the canonical KV FAQ by keyword (hours, access, Noke, climate, parking, payments, refunds, student storage, maintenance, transfers, move-out, what to bring).",
+      "http": { "method": "POST", "path": "/api/agent/tools/get_faq" },
+      "parameters": {
+        "type": "object",
+        "properties": { "query": { "type": "string" } },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "capture_lead",
+      "description": "Send a lead to GoHighLevel. Use when the wanted unit is unavailable, for the waitlist, when the person asks to be contacted, or on human handoff. Requires a name and a phone or email. Confirm details with the person first.",
+      "http": { "method": "POST", "path": "/api/agent/tools/capture_lead" },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "enum": ["unavailable_unit", "waitlist", "contact_request", "human_handoff"] },
+          "name": { "type": "string" },
+          "phone": { "type": "string" },
+          "email": { "type": "string" },
+          "location": { "type": "string", "enum": ["haley", "hwy4", "stellarton"] },
+          "unit_type": { "type": "string", "description": "e.g. 'Climate Controlled', 'Drive-up', 'Outdoor Parking'" },
+          "unit_size": { "type": "string", "description": "e.g. '10x10'" },
+          "notes": { "type": "string" }
+        },
+        "required": ["reason", "name"]
+      }
+    },
+    {
+      "name": "handoff_to_human",
+      "description": "Tell the person how to reach staff now and flag the conversation for a human. Use for refunds, exceptions, billing disputes, complaints, or when asked for a person.",
+      "http": { "method": "POST", "path": "/api/agent/tools/handoff_to_human" },
+      "parameters": {
+        "type": "object",
+        "properties": { "summary": { "type": "string", "description": "One-line summary of what the person needs." } },
+        "required": ["summary"]
+      }
+    }
+  ]
+}

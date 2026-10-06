@@ -1,0 +1,73 @@
+{
+  "_note": "Seeded 2026-10-05 from live kvselfstorage.ca plus owner corrections (see Interview deltas in docs/BUILD_PROMPT.md). Homepage $125/$180 'starting at' prices are NOT live SiteLink prices and are intentionally omitted. null = not confirmed by owner; the site will not advertise it.",
+  "brand": {
+    "name": "KV Self Storage",
+    "phone": "(902) 867-3779",
+    "phoneE164": "+19028673779",
+    "email": "info@kvselfstorage.ca",
+    "domain": "kvselfstorage.ca"
+  },
+  "locations": [
+    {
+      "key": "haley",
+      "name": "KV Self Storage – Haley Road",
+      "shortName": "Haley Rd",
+      "street": "20 Haley Road",
+      "city": "Antigonish",
+      "region": "NS",
+      "country": "CA",
+      "blurb": "Less than a kilometre from downtown Antigonish. Climate-controlled units plus indoor and outdoor RV, boat and vehicle parking.",
+      "access": "24/7",
+      "officeHours": [{ "days": "Mon–Fri", "open": "08:30", "close": "16:30" }],
+      "amenities": {
+        "climateControlled": true,
+        "vehicleParking": true,
+        "nokeRemoteUnlock": false,
+        "gatedAccess": true,
+        "surveillance": true
+      },
+      "serves": ["Antigonish", "Lower South River", "St. Andrews", "Guysborough", "Sherbrooke"]
+    },
+    {
+      "key": "hwy4",
+      "name": "KV Self Storage – Addington Forks (Hwy 4)",
+      "shortName": "Hwy 4 / Exit 31",
+      "street": "2784 NS-4",
+      "city": "Antigonish",
+      "region": "NS",
+      "country": "CA",
+      "landmark": "Addington Forks, Highway 4 at Exit 31",
+      "blurb": "Easy highway access at Exit 31, handy for Lower West River and Salt Springs. Noke smart-lock remote unlock.",
+      "access": "24/7",
+      "officeHours": [{ "days": "Mon–Fri", "open": "08:00", "close": "16:30" }],
+      "amenities": {
+        "climateControlled": false,
+        "vehicleParking": null,
+        "nokeRemoteUnlock": true,
+        "gatedAccess": true,
+        "surveillance": true
+      },
+      "serves": ["Antigonish", "Addington Forks", "Lower West River", "Salt Springs", "Pictou County"]
+    },
+    {
+      "key": "stellarton",
+      "name": "KV Self Storage – Stellarton",
+      "shortName": "Stellarton",
+      "street": "30 Heritage Avenue",
+      "city": "Stellarton",
+      "region": "NS",
+      "country": "CA",
+      "blurb": "Our newest facility, minutes from New Glasgow, Westville and Trenton. Noke smart-lock remote unlock.",
+      "access": "24/7",
+      "officeHours": [{ "days": "Mon–Fri", "open": "08:00", "close": "16:30" }],
+      "amenities": {
+        "climateControlled": null,
+        "vehicleParking": null,
+        "nokeRemoteUnlock": true,
+        "gatedAccess": true,
+        "surveillance": true
+      },
+      "serves": ["Stellarton", "New Glasgow", "Westville", "Trenton", "Pictou"]
+    }
+  ]
+}
