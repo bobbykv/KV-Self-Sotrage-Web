@@ -4,11 +4,32 @@ import { passwordProblems } from "../src/lib/password-policy";
 
 const db = new PrismaClient();
 
+const DEMO_ADMIN_EMAIL = "owner@kvselfstorage.ca";
+const DEMO_ADMIN_PASSWORD = "Kv-Storage-Demo-2026!";
+
 async function main() {
+  const appTestMode = process.env.APP_TEST_MODE === "1" || process.env.APP_TEST_MODE === "true";
+  if (appTestMode) {
+    const email = DEMO_ADMIN_EMAIL;
+    if (await db.adminUser.findUnique({ where: { email } })) {
+      console.log(`Demo owner ${email} already exists — password left unchanged.`);
+    } else {
+      await db.adminUser.create({
+        data: {
+          email,
+          name: "Demo Owner",
+          role: "owner",
+          passwordHash: await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12),
+        },
+      });
+      console.log(`Created APP_TEST_MODE demo owner ${email} / ${DEMO_ADMIN_PASSWORD}`);
+    }
+  }
+
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   if (!email || !password) {
-    console.log("ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping owner account.");
+    if (!appTestMode) console.log("ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping owner account.");
   } else if (await db.adminUser.findUnique({ where: { email } })) {
     console.log(`Owner ${email} already exists — password left unchanged.`);
   } else {

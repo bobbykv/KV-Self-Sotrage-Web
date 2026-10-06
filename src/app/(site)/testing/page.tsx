@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DEMO_ADMIN, ensureDemoAdmin } from "@/lib/demo-admin";
 import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -12,8 +13,9 @@ export const metadata: Metadata = {
  * Hosted simulator instructions. Only served when APP_TEST_MODE=1 so a live
  * production deploy never exposes test card numbers or demo passwords.
  */
-export default function TestingPage() {
+export default async function TestingPage() {
   if (!env.appTestMode) notFound();
+  await ensureDemoAdmin();
 
   return (
     <div className="container-kv max-w-3xl py-12 sm:py-16">
@@ -41,6 +43,24 @@ export default function TestingPage() {
         </p>
         <Link href="/portal/login" className="btn-primary mt-5 inline-flex">
           Open portal sign-in
+        </Link>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-extrabold text-kv-navy">Staff console login</h2>
+        <p className="mt-2 text-sm text-kv-muted">Opens the admin dashboard (units, holds, leads, CMS). Created automatically in test mode.</p>
+        <dl className="mt-4 grid gap-3 rounded-2xl border border-kv-line bg-kv-navy-50 p-5 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Email</dt>
+            <dd className="mt-1 font-mono text-sm font-bold text-kv-navy">{DEMO_ADMIN.email}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-kv-muted">Password</dt>
+            <dd className="mt-1 font-mono text-sm font-bold text-kv-navy">{DEMO_ADMIN.password}</dd>
+          </div>
+        </dl>
+        <Link href="/admin/login" className="btn-navy mt-5 inline-flex">
+          Open staff sign-in
         </Link>
       </section>
 
