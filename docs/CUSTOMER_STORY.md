@@ -8,7 +8,7 @@ Bobby's central customer need: "I need somewhere for belongings I'm not ready to
 
 Moving and downsizing households lead the homepage. Businesses have their own use case and size-finder option. Students have supporting homepage and FAQ coverage. Vehicle storage remains an availability-led offer rather than the main promise.
 
-The homepage leads with "Make room for what's next. Keep what matters." The plan is: find your space, arrange your rental, move forward with peace of mind. The primary action is "Find your space"; size help is the secondary action.
+The current customer-facing copy is in **docs/WEBSITE_COPY.md**. The homepage leads with "Self storage in Antigonish and Stellarton." The primary action is "See units & prices"; size help is the secondary action ("Help me choose a size").
 
 ## Implementation coverage
 
