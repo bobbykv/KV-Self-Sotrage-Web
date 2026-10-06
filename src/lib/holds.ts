@@ -236,6 +236,18 @@ export async function payPassthrough(id: string, card: CardInput): Promise<Hold>
       where: { id },
       data: { status: "moved_in", ledgerId: result.ledgerId || null, paymentRef: result.receiptRef, lastFailure: null },
     });
+    await db.paymentReceipt.create({
+      data: {
+        locationKey: loc,
+        tenantId: h.tenantId!,
+        ledgerId: result.ledgerId || null,
+        holdId: id,
+        amount: cost.total,
+        paymentRef: result.receiptRef,
+        description: `Move-in payment · unit ${h.unitName}`,
+        periodLabel: "Move-in",
+      },
+    });
     if (env.sitelinkMode === "mock") {
       await refreshInventory({ force: true, kinds: ["available"] }).catch((err) => log.warn("post-move-in inventory refresh failed", { err }));
     }

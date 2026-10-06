@@ -46,6 +46,9 @@ export default async function AdminSettings() {
             <label className="flex items-center gap-2 font-semibold text-kv-navy">
               <input type="checkbox" name="chatEnabled" defaultChecked={s.chatEnabled} className="h-5 w-5" /> Website chat enabled
             </label>
+            <label className="flex items-center gap-2 font-semibold text-kv-navy">
+              <input type="checkbox" name="showReviews" defaultChecked={s.showReviews} className="h-5 w-5" /> Show reviews on the website
+            </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField name="holdMinutes" label="Hold length (minutes)" value={s.holdMinutes} min={5} max={60} />
               <NumberField name="confirmedReservationHours" label="Pay-separately reservation (hours)" value={s.confirmedReservationHours} min={1} max={168} hint="How long a confirmed web reservation stays on the SiteLink waiting list." />

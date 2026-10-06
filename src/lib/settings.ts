@@ -13,6 +13,8 @@ export type Settings = {
   /** Pay-separately mode: how long a confirmed website reservation stays on the SiteLink waiting list. */
   confirmedReservationHours: number;
   chatEnabled: boolean;
+  /** When false, hide reviews block, /reviews page link, and reviews nav. */
+  showReviews: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   priceListPollMinutes: 360,
   confirmedReservationHours: 48,
   chatEnabled: true,
+  showReviews: false,
 };
 
 const LIMITS: Partial<Record<keyof Settings, [number, number]>> = {

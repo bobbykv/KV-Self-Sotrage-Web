@@ -6,7 +6,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.APP_URL ?? "https://kvselfstorage.ca";
-  const staticPaths = ["", "/units", "/locations", "/size-finder", "/faq", "/blog", "/reviews", "/contact", "/maintenance", "/privacy", "/terms"];
+  const staticPaths = ["", "/units", "/locations", "/locations/haley", "/locations/hwy4", "/locations/stellarton", "/size-finder", "/faq", "/blog", "/reviews", "/contact", "/maintenance", "/privacy", "/terms"];
   const posts = await getPublishedPosts().catch(() => []);
   return [
     ...staticPaths.map((p) => ({ url: `${base}${p}`, changeFrequency: p === "/units" ? ("hourly" as const) : ("weekly" as const) })),

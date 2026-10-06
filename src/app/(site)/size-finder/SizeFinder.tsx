@@ -76,9 +76,8 @@ export function SizeFinder() {
         <div className="mt-3">
           <h2 className="text-2xl font-extrabold text-kv-navy">Start with these sizes</h2>
           <p className="mt-2 text-kv-muted">
-            Compare {choice.sizes}. This is an estimate. Large furniture, box count and space to walk inside can change what you need.
+            {choice.result} This is an estimate. Large furniture, box count and space to walk inside can change what you need.
           </p>
-          <p className="mt-3 font-semibold text-kv-navy">{choice.result}</p>
           {a.sensitive === true && <p className="mt-3 text-sm text-kv-muted">For climate control, compare units at Haley Road in Antigonish.</p>}
           {climateRedirect && <p className="mt-3 text-sm text-kv-muted">You chose {getLocation(a.location || "haley").shortName}. You can also compare options there without the climate-control filter.</p>}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">

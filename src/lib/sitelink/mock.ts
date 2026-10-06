@@ -531,3 +531,14 @@ function stringify(o: Record<string, unknown>): Row {
 export function resetMockMemory() {
   delete g.__kvMock;
 }
+
+/** Clear a ledger balance after a simulated portal payment. */
+export async function applyMockBalancePayment(loc: LocationKey, ledgerId: number) {
+  const st = await loadState();
+  const l = st.ledgers[loc]?.find((x) => x.LedgerID === ledgerId);
+  if (!l) throw new Error("Ledger not found");
+  l.dcChargeBalance = 0;
+  l.dcPastDue = 0;
+  l.iDaysPastDue = 0;
+  await persist(st);
+}

@@ -1,7 +1,7 @@
 import { money } from "@/lib/catalog";
 import type { MoveInCost } from "@/lib/sitelink/types";
 
-export function CostBreakdown({ cost, hstRate }: { cost: MoveInCost; hstRate: number }) {
+export function CostBreakdown({ cost, hstRate, totalLabel = "Total due today" }: { cost: MoveInCost; hstRate: number; totalLabel?: string }) {
   return (
     <div>
       <table className="w-full text-sm" aria-label="Move-in cost breakdown">
@@ -24,7 +24,7 @@ export function CostBreakdown({ cost, hstRate }: { cost: MoveInCost; hstRate: nu
             <td className="py-2.5 text-right font-semibold tabular-nums">{money(cost.tax)}</td>
           </tr>
           <tr>
-            <td className="pt-3 text-base font-extrabold text-kv-navy">Total due today</td>
+            <td className="pt-3 text-base font-extrabold text-kv-navy">{totalLabel}</td>
             <td className="pt-3 text-right text-xl font-extrabold text-kv-red tabular-nums">{money(cost.total)}</td>
           </tr>
         </tbody>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BRAND } from "@/config/locations";
 import { getFaq } from "@/lib/faq";
 import { renderMarkdown } from "@/lib/markdown";
+import { showDraftNotices } from "@/lib/site-env";
 
 export const metadata: Metadata = {
   title: "Self Storage Questions in Antigonish and Stellarton",
@@ -18,6 +19,7 @@ export default async function FaqPage() {
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
+      {showDraftNotices() && <p className="text-sm text-kv-muted">Draft. FAQ answers are still being reviewed before launch.</p>}
       <h1 className="h1">Self storage questions for Antigonish and Stellarton</h1>
       <p className="mt-3 text-kv-muted">
         Here&apos;s what to know before you book. Need help with your own situation? Call{" "}

@@ -315,8 +315,17 @@ export const sitelink = {
     };
   },
 
-  async scheduleMoveOut(loc: LocationKey, ledgerId: number, date: Date) {
-    await call(loc, "ScheduleMoveOut", { iLedgerID: ledgerId, dScheduledOut: date });
+  async scheduleMoveOut(loc: LocationKey, ledgerId: number, date: Date | null) {
+    await call(loc, "ScheduleMoveOut", { iLedgerID: ledgerId, dScheduledOut: date ?? "" });
+  },
+
+  /** Simulator only: zero a ledger balance after a portal card payment. */
+  async clearLedgerBalance(loc: LocationKey, ledgerId: number) {
+    if (env.sitelinkMode !== "mock" && !env.appTestMode) {
+      throw new SiteLinkError("clearLedgerBalance", -1, "Balance payments via the website are only available in the simulator.");
+    }
+    const { applyMockBalancePayment } = await import("./mock");
+    await applyMockBalancePayment(loc, ledgerId);
   },
 
   async leaseUrl(loc: LocationKey, tenantId: number, ledgerId: number, returnUrl: string): Promise<string | null> {

@@ -38,16 +38,21 @@ export function ChatWidget() {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open]);
 
+  function maskCards(text: string) {
+    return text.replace(/\b(?:\d[ -]?){12,19}\b/g, "[removed]");
+  }
+
   async function send(history: Msg[]) {
     setBusy(true);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content: maskCards(content) })) }),
       });
       const data = await res.json();
-      setMsgs([...history, { role: "assistant", content: data.reply ?? `I couldn’t get an answer just now. For help, call ${PHONE}.`, actions: data.actions ?? [] }]);
+      const maskedHistory = history.map((m) => ({ ...m, content: maskCards(m.content) }));
+      setMsgs([...maskedHistory, { role: "assistant", content: data.reply ?? `I couldn’t get an answer just now. For help, call ${PHONE}.`, actions: data.actions ?? [] }]);
     } catch {
       setMsgs([...history, { role: "assistant", content: `I'm having trouble connecting. Please call us at ${PHONE}.`, actions: [{ type: "call" }] }]);
     } finally {
@@ -65,7 +70,9 @@ export function ChatWidget() {
     const text = input.trim();
     if (!text || busy) return;
     setInput("");
-    const next = [...msgs, { role: "user" as const, content: text }];
+    const looksLikeCard = /\b(?:\d[ -]?){12,19}\b/.test(text);
+    const display = looksLikeCard ? maskCards(text) : text;
+    const next = [...msgs, { role: "user" as const, content: display }];
     setMsgs(next);
     void send(next);
   }
