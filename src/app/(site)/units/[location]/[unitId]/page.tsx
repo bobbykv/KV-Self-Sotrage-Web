@@ -28,7 +28,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
   if (!isLocationKey(location)) redirect("/units");
   const [inventory, settings, promos] = await Promise.all([getInventory(), getSettings(), getLivePromotions({ placement: "units", location })]);
   const unit = inventory.find((l) => l.location === location)?.units.find((u) => u.unitId === Number(unitId));
-  if (!unit) redirect(`/units?location=${location}&notice=${encodeURIComponent("Sorry — that unit was just taken. Here's what's still open.")}`);
+  if (!unit) redirect(`/units?location=${location}&notice=${encodeURIComponent("That space is no longer available. Let's find another option for you.")}`);
   const loc = getLocation(location);
   const cat = sizeCategory(unit);
 
@@ -42,13 +42,13 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
           <div className="overflow-hidden rounded-3xl">
             <Image src={unit.inside ? "/photos/facility-2.jpg" : "/photos/hero.jpg"} alt={`Storage units at ${loc.shortName}`} width={929} height={622} className="aspect-[16/9] w-full object-cover" />
           </div>
-          <p className="mt-2 text-xs text-kv-muted">Photo of our facility. Your unit may vary slightly.</p>
+          <p className="mt-2 text-xs text-kv-muted">Facility photo for illustration. Check the details below for this space.</p>
           <p className="eyebrow mt-6">{SIZE_LABELS[cat].label} · {loc.shortName}</p>
           <h1 className="h1 mt-2">
             {formatSize(unit.widthFt, unit.lengthFt)} {unit.typeName}
           </h1>
           <p className="mt-2 text-kv-muted">
-            About {unit.areaSqFt} sq ft — {SIZE_LABELS[cat].hint.split("·")[1]?.trim()}.
+            About {unit.areaSqFt} sq ft for {SIZE_LABELS[cat].hint.split("·")[1]?.trim()}.
           </p>
           <div className="mt-4">
             <FeatureTags g={unit} />
@@ -59,7 +59,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
             <h2 className="font-extrabold text-kv-navy">{loc.name}</h2>
             <p className="text-sm text-kv-muted">{fullAddress(loc)}</p>
             <div className="mt-4">
-              <AmenityList l={loc} />
+              <AmenityList l={loc} showStorageTypes={false} />
             </div>
           </div>
         </div>
@@ -69,7 +69,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
             <p className="text-sm text-kv-muted">Monthly rent</p>
             <p className="text-4xl font-extrabold text-kv-red">{money(unit.rate)}</p>
             {unit.standardRate > unit.rate && <p className="text-sm text-kv-muted line-through">{money(unit.standardRate)} standard rate</p>}
-            <p className="mt-1 text-xs text-kv-muted">+ HST. Any admin fee or deposit is listed on the next screen before you pay.</p>
+            <p className="mt-1 text-xs text-kv-muted">+ HST. Review any fees or deposit and your full move-in total on the next screen.</p>
             <div className="mt-4">
               <PromoBanner promos={promos} compact />
             </div>

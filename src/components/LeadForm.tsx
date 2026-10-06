@@ -48,8 +48,8 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
   if (state === "done") {
     return (
       <div className="rounded-xl bg-kv-navy-50 p-4 text-sm text-kv-navy" role="status">
-        <p className="font-bold">Thanks — you&apos;re on our list.</p>
-        <p>Someone from KV will be in touch. If it&apos;s urgent, call (902) 867-3779.</p>
+        <p className="font-bold">Thanks. We&apos;ve received your request.</p>
+        <p>{reason === "waitlist" || reason === "unavailable_unit" ? "We'll contact you when a suitable space opens." : "We'll follow up using your contact details."} Need help sooner? Call (902) 867-3779.</p>
       </div>
     );
   }
@@ -71,13 +71,13 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
           <option value="stellarton">Stellarton</option>
         </select>
       )}
-      {!unitSize && !compact && <input name="unitSize" placeholder="Size you need (e.g. 10x10) — optional" className="input" aria-label="Size" />}
-      <textarea name="notes" rows={compact ? 2 : 3} placeholder="Anything else? (optional)" className="input py-3" aria-label="Notes" />
+      {!unitSize && !compact && <input name="unitSize" placeholder="Preferred size, if you know it (e.g. 10x10)" className="input" aria-label="Size" />}
+      <textarea name="notes" rows={compact ? 2 : 3} placeholder="What are you storing, or how can we help? (optional)" className="input py-3" aria-label="Notes" />
       {error && <p className="text-sm font-semibold text-kv-red">{error}</p>}
       <button type="submit" disabled={state === "sending"} className={`btn-primary w-full ${compact ? "btn-sm min-h-11" : ""}`}>
         {state === "sending" ? "Sending…" : submitLabel}
       </button>
-      <p className="text-xs text-kv-muted">We&apos;ll only use this to contact you about storage. Phone or email required.</p>
+      <p className="text-xs text-kv-muted">Add a phone number or email so we can follow up about your storage needs.</p>
     </form>
   );
 }

@@ -18,8 +18,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
   if (!hold || !isLocationKey(hold.locationKey) || !["confirmed_pay_separately", "moved_in"].includes(hold.status)) {
     return (
       <div className="container-kv max-w-xl py-16 text-center">
-        <h1 className="h2">Nothing to show here</h1>
-        <p className="mt-3 text-kv-muted">If you just booked, call {BRAND.phone} and we&apos;ll confirm the details.</p>
+        <h1 className="h2">Let&apos;s check your booking</h1>
+        <p className="mt-3 text-kv-muted">If you just arranged a rental, call {BRAND.phone} and we&apos;ll help you confirm your next step.</p>
       </div>
     );
   }
@@ -31,8 +31,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
 
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">
-      <p className="eyebrow">{movedIn ? "You're all set" : "Reservation confirmed"}</p>
-      <h1 className="h1 mt-2">{movedIn ? `Welcome to KV, ${hold.firstName}!` : `Thanks, ${hold.firstName} — it's reserved.`}</h1>
+      <p className="eyebrow">{movedIn ? "Rental confirmed" : "Reservation confirmed"}</p>
+      <h1 className="h1 mt-2">{movedIn ? `Your next step is getting settled, ${hold.firstName}` : `Your space is reserved, ${hold.firstName}`}</h1>
 
       <section className="card mt-8 p-6">
         <h2 className="font-extrabold text-kv-navy">
@@ -73,13 +73,13 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
           {movedIn ? (
             <>
               <li>{leaseUrl ? "Sign your lease online (button below)." : "Our office will send your lease to sign."}</li>
-              <li>Your gate/access code is set up with your move-in. It appears in your tenant portal; if it isn&apos;t there yet, the office will text or email it to you.</li>
-              {loc.amenities.nokeRemoteUnlock && <li>This location uses Noke smart locks — the office will help you set up the Noke app for remote unlock.</li>}
-              <li>Bring photo ID on move-in day. Access is 24/7.</li>
+              <li>Check your storage account for your access details. If they are missing, contact us before heading over so we can help you get in.</li>
+              {loc.amenities.nokeRemoteUnlock && <li>Follow your Nokē app-access instructions for this location. If you need help with setup or have not received instructions, contact us.</li>}
+              <li>Bring photo ID and follow your access instructions on move-in day. Once your access is ready, you can visit your belongings 24/7.</li>
             </>
           ) : (
             <>
-              <li>Our office will contact you {loc.officeHours[0] ? `(${loc.officeHours[0].days})` : ""} to take payment and finish your move-in.</li>
+              <li>We&apos;ll contact you during office hours {loc.officeHours[0] ? `(${loc.officeHours[0].days})` : ""} to help you finish payment and your rental before your reservation expires.</li>
               {env.PAY_ONLINE_URL && (
                 <li>
                   Prefer to pay now? Use our{" "}
@@ -89,8 +89,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
                   .
                 </li>
               )}
-              <li>Your access code is issued once the move-in is processed — not before.</li>
-              {loc.amenities.nokeRemoteUnlock && <li>This location uses Noke smart locks; we&apos;ll set you up on the Noke app at move-in.</li>}
+              <li>Access is arranged after your rental is complete. Your reservation alone does not give you access.</li>
+              {loc.amenities.nokeRemoteUnlock && <li>You&apos;ll use the Nokē app at this location. Follow the setup instructions provided when your rental is complete.</li>}
             </>
           )}
         </ol>
@@ -108,8 +108,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
 
       {movedIn && hold.tenantCreated && !hold.portalPasswordSet && (
         <section className="card mt-4 p-6">
-          <h2 className="font-extrabold text-kv-navy">Set up your tenant portal</h2>
-          <p className="mt-1 text-sm text-kv-muted">See your balance and access code, schedule a move-out, and report maintenance issues — no phone call needed.</p>
+          <h2 className="font-extrabold text-kv-navy">Keep your storage details handy</h2>
+          <p className="mt-1 text-sm text-kv-muted">Create your account password to check your balance and access details, report a problem, or let us know when your plans change.</p>
           <div className="mt-4 max-w-sm">
             <PortalPasswordForm holdId={hold.id} email={hold.email} />
           </div>
@@ -117,7 +117,7 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
       )}
 
       <p className="mt-8 text-sm text-kv-muted">
-        Plans changed? Call us. Refunds are handled personally by the owner. <Link href="/faq" className="font-semibold underline">FAQ</Link>
+        Plans changed or unsure what to do next? Contact us for help. <Link href="/faq" className="font-semibold underline">Get answers</Link>
       </p>
     </div>
   );

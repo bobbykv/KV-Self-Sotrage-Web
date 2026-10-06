@@ -17,7 +17,7 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = {
   maintenanceMode: false,
-  maintenanceMessage: "We're doing some quick maintenance. Please call (902) 867-3779 and we'll help you right away.",
+  maintenanceMessage: "Online booking is temporarily unavailable. Call (902) 867-3779 for help choosing or arranging your storage.",
   holdMinutes: 20,
   pollIntervalMinutes: 30,
   allUnitsPollMinutes: 120,

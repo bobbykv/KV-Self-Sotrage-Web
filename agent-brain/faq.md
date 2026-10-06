@@ -1,101 +1,109 @@
 <!--
-CANONICAL FAQ — single source of truth.
-Rendered at /faq, used by the website chat agent, and served to the Retell
-voice agent at /api/agent/brain. Edit here (or via /admin/faq) — never fork
-answers into React components or the Retell dashboard.
-
-Format: "# Category" headings, then "## Question" + answer paragraphs.
-Lines inside HTML comments are notes for the owner and are never shown.
+CANONICAL FAQ: rendered at /faq and shared with website chat and Retell.
+Use # Category, then ## Question and answer paragraphs.
+Private notes in HTML comments are not displayed.
 -->
+
+# Choosing your space
+
+## What size unit do I need?
+Start with what you're keeping, not just the number of rooms in your home. Try the size guide at kvselfstorage.ca/size-finder for a starting estimate:
+- **5×5 to 5×10:** boxes, seasonal gear, or a dorm room
+- **5×10 to 10×10:** a studio or one-bedroom apartment
+- **10×15 to 10×20:** a two- to three-bedroom home
+- **10×20 to 10×30:** a larger household move
+
+These are estimates. Furniture size, how much you're storing, and space to reach your belongings all matter. For business stock or equipment, tell us what you need to store. If you're between sizes, call **(902) 867-3779** and we'll help you compare before you decide.
+
+## Can you help me choose without paying for more space than I need?
+Yes. Tell us about your largest items, roughly how many boxes you have, and whether you'll need to reach things regularly. We can help you compare suitable sizes and their monthly prices.
+
+## Which location has climate-controlled units?
+**Haley Road** has climate-controlled options for belongings that need a more consistent environment. Addington Forks does not have climate-controlled units. Check each listing's features before choosing.
+<!-- OWNER: Stellarton climate control is unconfirmed; do not advertise it. -->
+
+## Do you have student storage?
+Yes. If you're studying at StFX, our Haley Road location is close to campus. Store belongings between terms rather than taking everything home. A 5×5 or 5×10 can be a starting point for dorm-room belongings; check the size guide and listings, or ask us to help you choose.
+<!-- OWNER: No student discounts or special terms are confirmed. -->
+
+## Can I store business stock, tools, or equipment?
+Yes. Storage can give you room for stock, tools, and equipment without crowding your workspace. Compare sizes and prices, and leave space to reach the items you use regularly. Contact us if you need help planning the layout or checking whether a particular item is suitable for storage.
+
+## Do you store RVs, boats, or vehicles?
+**Haley Road** has indoor and outdoor parking for RVs, boats, trailers, and other vehicles. Check the Units & prices page under **Vehicle / RV / Boat**, or contact us with your vehicle's dimensions. Openings can be limited; you can join the waitlist if the space you need is full.
+
+## What if the size I want is full?
+You can compare another size or location, or leave your details on the Units & prices page to join the waitlist. We'll contact you when a suitable space opens. There is no charge to join the list. If you need storage sooner, call us to talk through other options.
+
+# Price & payment
+
+## How much will my storage cost?
+Compare the monthly rent on the Units & prices page. HST is added, and checkout lists your full move-in total, including any fees or deposit, before payment. If you're unsure which size fits your needs and budget, call **(902) 867-3779** for help.
+
+## How current are the prices and availability?
+Check the last-update time on the Units & prices page. Availability can change between that update and your checkout, so your chosen space is checked again when you start a hold. If you need to confirm an option, call us. If the site is marked as a demonstration, the prices and listings are examples rather than real rental offers.
+
+## How do I pay my bill?
+Use the payment link in your storage account when available, call **(902) 867-3779**, or visit the office during office hours.
+
+## Can I set up autopay?
+Yes. Your storage account shows your autopay status. Contact us to set it up or change your payment card.
+
+## Do you give refunds?
+If your plans change, call **(902) 867-3779** or email **info@kvselfstorage.ca** so we can review your situation. Refunds are reviewed by the owner and are not automatic.
+
+## What happens if I'm late on rent?
+Check your storage account for your balance and any past-due amount. If you're having trouble paying, contact us early so we can talk through your situation.
+
+# Arranging your rental
+
+## How do I get started?
+Choose a suitable space and your move-in date, then review your full total at checkout. Follow the payment or reservation steps shown there. Your confirmation explains what you need to do before moving in, including your lease and access arrangements.
+
+## How does the online hold work?
+Starting checkout holds your chosen space for the time shown on screen while you review your rental. A hold is not a completed rental and does not give you access. If the timer ends, you can browse the available spaces and start again. Starting a hold does not take a payment.
+
+## Does a reservation mean I can move in?
+Your rental must be completed and your access arranged before you move in. If your checkout asks you to reserve first and pay separately, follow the confirmation instructions to finish payment and your rental. Contact us if you need help with the next step.
+
+## What should I bring on move-in day?
+Bring government-issued photo ID and follow the access instructions provided with your rental. Ask us whether you need a personal lock for your selected unit, especially if it uses Nokē app access.
+<!-- OWNER: Confirm lock and insurance requirements before launch. -->
 
 # Hours & access
 
 ## When can I get to my unit?
-All three KV Self Storage locations have **24/7 access**. Use your gate/access code any time, day or night.
+Once your rental and access setup are complete, all three locations offer **24/7 access**. Follow the instructions for your location to get in and reach your belongings.
 
 ## What are your office hours?
 - **Haley Road (20 Haley Road, Antigonish):** Monday–Friday, 8:30am–4:30pm
 - **Addington Forks / Hwy 4 (2784 NS-4, Exit 31):** Monday–Friday, 8:00am–4:30pm
 - **Stellarton (30 Heritage Avenue):** Monday–Friday, 8:00am–4:30pm
 
-Outside office hours you can still call **(902) 867-3779** and leave a message, or use the chat on our website.
+Outside office hours, call **(902) 867-3779** and leave a message. You can also ask the website assistant a question or request a callback.
 
 ## How do I find my gate or access code?
-Log in to the tenant portal at kvselfstorage.ca/portal — your access code is on your dashboard. Codes are set up when your move-in is processed, so if you just reserved online, your code arrives once your move-in is complete.
+Sign in at kvselfstorage.ca/portal to check your access details. Access is arranged after your rental is complete. If your code is missing or you cannot get in, contact us for help. At Nokē locations, follow your app-access instructions as well.
 
-# Noke smart locks (remote unlock)
+## Which locations use the Nokē app?
+**Addington Forks (2784 NS-4, Highway 4 at Exit 31)** and **Stellarton (30 Heritage Avenue)** use **Nokē** smart locks for access from your phone. **Haley Road** uses a standard access code.
 
-## Which locations have Noke remote unlock?
-**Addington Forks (2784 NS-4, Highway 4 at Exit 31)** and **Stellarton (30 Heritage Avenue)** use Noke smart-lock access, so you can unlock from your phone. **Haley Road does not have Noke**; it uses a standard access code.
+## How do I get started with the Nokē app?
+Follow the app-access instructions provided when your rental is complete at Addington Forks or Stellarton. Keep your mobile number up to date so you can receive setup instructions. If you're missing an invitation or need help getting in, call **(902) 867-3779**. Use the Nokē app to unlock; this website does not unlock your unit.
+<!-- OWNER: Verify KV's SiteLink-to-Nokē invitation and activation flow before promising automatic or immediate access. -->
 
-## How do I set up Noke?
-Once your move-in is processed at Addington Forks or Stellarton, the office will help you get set up on the Noke app. Until then, your portal shows your access code. Remote unlock inside our own portal is coming soon.
-<!-- OWNER: confirm whether tenants bring their own lock at Noke sites or a Noke lock is provided. -->
-
-# Units & features
-
-## Which location has climate-controlled units?
-**Haley Road** has climate-controlled units. Addington Forks (Hwy 4) does not. Check the Units page for what is open right now.
-<!-- OWNER: confirm whether Stellarton has climate-controlled units. -->
-
-## Do you store RVs, boats or vehicles?
-Yes — **Haley Road** has indoor and outdoor parking for RVs, boats, trailers and other vehicles. Check the Units page (filter "Vehicle / RV / Boat") for current openings, or ask us to put you on the list.
-
-## What size unit do I need?
-Try our size finder at kvselfstorage.ca/size-finder. Rough guide:
-- **5×5 to 5×10:** boxes, seasonal gear, a dorm room
-- **10×10:** a one-bedroom apartment
-- **10×15 to 10×20:** a two- to three-bedroom home, or business stock
-- **10×30 and parking:** vehicles, boats, larger moves
-
-## Are the prices on the website live?
-Yes. Unit availability and prices come straight from our booking system and refresh about every 30 minutes. The time of the last update is shown on the Units page.
-
-## What if the size I want is full?
-Leave your name and number on the Units page (or in the chat) and we'll contact you as soon as one opens up. We don't charge anything to be on the list.
-
-# Reserving & moving in
-
-## How does the online hold work?
-When you pick a unit we hold it for you for **20 minutes** while you check out. If the timer runs out, the unit simply goes back on the list — nothing is charged.
-
-## What will I pay at move-in?
-Checkout shows every line before you pay: rent, any admin fee, any deposit, and **HST as its own line**. There are no surprise charges at the end.
-
-## What should I bring on move-in day?
-Bring government-issued photo ID and a lock for your unit.
-<!-- OWNER: confirm lock policy (bring your own vs. buy at office) and whether proof of insurance is required. -->
-
-## Do you have student storage?
-Yes — we're close to StFX and plenty of students store with us over the summer. Small units (5×5, 5×10) are usually enough for a dorm room. Book early in April, as small units go fast at the end of term.
-<!-- OWNER: confirm any student-specific terms or promos. -->
-
-# Payments & billing
-
-## How do I pay my bill?
-You can pay online through the tenant portal's payment link, by phone at **(902) 867-3779**, or at the office during office hours.
-
-## Can I set up autopay?
-Yes. Your portal shows whether autopay is on. To turn it on or change your card, contact the office and we'll update it in our billing system.
-
-## Do you give refunds?
-Refunds are handled **personally by the owner**, not automatically. Call **(902) 867-3779** or email info@kvselfstorage.ca and we'll look at your situation.
-
-## What happens if I'm late on rent?
-Your portal shows your balance and anything past due. If you're having trouble, call us early — we'd much rather work something out.
-
-# Maintenance & changes
+# While you're storing
 
 ## Something is broken at my unit. How do I report it?
-Log in to the portal and use **Report a maintenance issue**, or use the form at kvselfstorage.ca/maintenance. Add photos if you can. It goes straight to the owner's maintenance list — no phone call needed.
+Use **Report a maintenance issue** in your storage account, or the form at kvselfstorage.ca/maintenance. Tell us what happened and add photos if you can. For an urgent problem, also call **(902) 867-3779**.
 
 ## Can I move to a bigger or smaller unit?
-Yes. In the portal, choose **Request a unit change**, tell us the size and timing you want, and we'll get back to you. Nothing changes on your account until our staff confirm the move with you.
+Yes. Choose **Request a unit change** in your storage account and tell us the size and timing you need. We'll check the options and contact you. Your account stays as it is until staff confirm the change with you.
 
 ## How do I move out?
-Schedule your move-out date in the portal. Scheduling lets us know your plans; your unit isn't closed out until staff process the move-out, so please empty the unit and remove your lock by that date.
+Schedule your planned date in your storage account. Empty your space and remove any personal lock by that date. Staff then process your move-out to close the rental. Your signed agreement sets out the applicable move-out terms; contact us if you need help planning your departure.
 
-# Contact
+# Getting help
 
 ## How do I reach a person?
-Call **(902) 867-3779** (Monday–Friday office hours, or leave a message), email **info@kvselfstorage.ca**, or ask the website chat to have someone call you back.
+Call **(902) 867-3779** during office hours or leave a message, email **info@kvselfstorage.ca**, or ask the website assistant to request a callback. Whether you're choosing a size or need help with access, we're here to help you take the next step.

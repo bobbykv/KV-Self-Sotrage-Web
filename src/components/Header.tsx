@@ -5,9 +5,9 @@ import { BRAND } from "@/config/locations";
 const NAV = [
   { href: "/units", label: "Units & prices" },
   { href: "/locations", label: "Locations" },
-  { href: "/size-finder", label: "Size finder" },
+  { href: "/size-finder", label: "Choose your size" },
   { href: "/faq", label: "FAQ" },
-  { href: "/portal", label: "Tenant login" },
+  { href: "/portal", label: "My storage" },
 ];
 
 export function PhoneIcon({ className = "h-4 w-4" }: { className?: string }) {

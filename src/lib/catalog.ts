@@ -4,9 +4,9 @@ import type { PriceListEntry, Unit } from "./sitelink/types";
 export type SizeCategory = "small" | "medium" | "large" | "parking";
 
 export const SIZE_LABELS: Record<SizeCategory, { label: string; hint: string }> = {
-  small: { label: "Small", hint: "Up to 50 sq ft · boxes, seasonal gear, a dorm room" },
-  medium: { label: "Medium", hint: "51–150 sq ft · a 1–2 bedroom apartment" },
-  large: { label: "Large", hint: "Over 150 sq ft · a house, workshop or business stock" },
+  small: { label: "Small", hint: "Up to 50 sq ft · boxes, seasonal belongings, or dorm-room items" },
+  medium: { label: "Medium", hint: "51–150 sq ft · apartment belongings or business stock" },
+  large: { label: "Large", hint: "Over 150 sq ft · a household move or larger equipment" },
   parking: { label: "Vehicle / RV / Boat", hint: "Parking and vehicle storage" },
 };
 
@@ -92,6 +92,31 @@ export type UnitFilter = {
   maxArea?: number;
   maxRate?: number;
 };
+
+/** Size-finder ranges are inclusive and remain in place when changing location. */
+export function areaRangeFromParams(sp: Record<string, string | undefined>): Pick<UnitFilter, "minArea" | "maxArea"> {
+  const positive = (value: string | undefined) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  };
+  return { minArea: positive(sp.minArea), maxArea: positive(sp.maxArea) };
+}
+
+export function filterFullTypes(types: PriceListEntry[], f: UnitFilter): PriceListEntry[] {
+  return types.filter((p) => {
+    // The price-list response has no vehicle flag, so use the same type-name
+    // convention as the SiteLink unit mapper for sold-out parking types.
+    const vehicle = /(parking|rv|boat|vehicle|trailer|car\b|outdoor)/i.test(p.typeName);
+    const area = p.widthFt * p.lengthFt;
+    if (f.location && p.locationKey !== f.location) return false;
+    if (f.climate && !p.climate) return false;
+    if (f.category && sizeCategory({ ...p, vehicle }) !== f.category) return false;
+    if (f.vehicle !== undefined && vehicle !== f.vehicle) return false;
+    if (f.minArea && area < f.minArea) return false;
+    if (f.maxArea && area > f.maxArea) return false;
+    return true;
+  });
+}
 
 export function filterGroups(groups: UnitGroup[], f: UnitFilter): UnitGroup[] {
   return groups.filter((g) => {

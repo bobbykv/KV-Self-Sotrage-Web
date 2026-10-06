@@ -11,7 +11,7 @@ import { logoutAction, maintenanceAction, scheduleMoveOutAction, transferAction 
 export const metadata: Metadata = { title: "My account", robots: { index: false } };
 
 function fmtDate(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString("en-CA", { dateStyle: "medium", timeZone: "UTC" }) : "—";
+  return iso ? new Date(iso).toLocaleDateString("en-CA", { dateStyle: "medium", timeZone: "UTC" }) : "Not available";
 }
 
 export default async function PortalDashboard() {
@@ -25,7 +25,7 @@ export default async function PortalDashboard() {
     <div className="container-kv py-8 sm:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Tenant portal</p>
+          <p className="eyebrow">My storage</p>
           <h1 className="h2 mt-1">Hi{first ? `, ${first.firstName}` : ""}</h1>
           <p className="text-sm text-kv-muted">{session.email}</p>
         </div>
@@ -66,8 +66,8 @@ export default async function PortalDashboard() {
                 <dl className="mt-5 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-xl bg-kv-navy-50 p-4">
                     <dt className="text-xs font-semibold text-kv-muted">Gate / access code</dt>
-                    <dd className="mt-1 font-mono text-2xl font-bold tracking-widest text-kv-navy">{l.accessCode || "—"}</dd>
-                    {!l.accessCode && <p className="text-xs text-kv-muted">Issued once your move-in is processed.</p>}
+                    <dd className="mt-1 font-mono text-2xl font-bold tracking-widest text-kv-navy">{l.accessCode || "Pending"}</dd>
+                    {!l.accessCode && <p className="text-xs text-kv-muted">Available after your rental and access setup are complete.</p>}
                   </div>
                   <div className="rounded-xl bg-kv-navy-50 p-4">
                     <dt className="text-xs font-semibold text-kv-muted">Autopay</dt>
@@ -94,7 +94,7 @@ export default async function PortalDashboard() {
 
                 {a.noke && (
                   <p className="mt-4 rounded-xl border border-kv-yellow bg-kv-yellow-light p-3 text-sm text-kv-navy">
-                    <strong>Noke smart lock site.</strong> Remote unlock from your phone is available here through the Noke app — unlocking right from this portal is coming soon.
+                    <strong>Access your belongings with the Nokē app.</strong> Follow your move-in access instructions to get started. Need help with the app? Contact us.
                   </p>
                 )}
 
@@ -113,7 +113,7 @@ export default async function PortalDashboard() {
                   <summary className="cursor-pointer font-semibold text-kv-navy">{l.scheduledMoveOut ? `Move-out scheduled: ${fmtDate(l.scheduledMoveOut)}` : "Schedule a move-out"}</summary>
                   <div className="mt-3 max-w-sm">
                     <p className="mb-3 text-sm text-kv-muted">
-                      Scheduling tells us your plans — the unit isn&apos;t closed out until staff process the move-out on that date. Please have it empty and your lock removed.
+                      Let us know when you plan to leave. Empty your space and remove any personal lock by that date. We&apos;ll process your move-out to close the rental.
                     </p>
                     <ActionForm action={scheduleMoveOutAction} submitLabel="Schedule move-out" buttonClassName="btn-navy w-full">
                       <input type="hidden" name="locationKey" value={a.locationKey} />
@@ -132,7 +132,7 @@ export default async function PortalDashboard() {
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <section className="card p-6" id="maintenance">
           <h2 className="text-lg font-extrabold text-kv-navy">Report a maintenance issue</h2>
-          <p className="mt-1 text-sm text-kv-muted">Goes straight to the owner&apos;s maintenance list. Emergency? Call {BRAND.phone}.</p>
+          <p className="mt-1 text-sm text-kv-muted">Tell us about the problem so we can help. For an urgent issue, call {BRAND.phone}.</p>
           <div className="mt-4">
             <ActionForm action={maintenanceAction} submitLabel="Send request">
               <UnitPicker units={units} />
@@ -161,7 +161,7 @@ export default async function PortalDashboard() {
 
         <section className="card p-6" id="transfer">
           <h2 className="text-lg font-extrabold text-kv-navy">Request a unit change</h2>
-          <p className="mt-1 text-sm text-kv-muted">Need more or less space? Tell us and we&apos;ll check what&apos;s open — no phone tag.</p>
+          <p className="mt-1 text-sm text-kv-muted">Your needs can change. Tell us how much room you need now, and we&apos;ll check the options with you.</p>
           <div className="mt-4">
             <ActionForm action={transferAction} submitLabel="Send request">
               <UnitPicker units={units} field="currentUnitName" />
@@ -258,7 +258,7 @@ function ContactPref() {
         <option value="phone">Phone call</option>
         <option value="text">Text message</option>
         <option value="email">Email</option>
-        <option value="no_contact">No need — just fix it</option>
+        <option value="no_contact">No follow-up needed</option>
       </select>
     </label>
   );

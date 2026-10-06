@@ -3,7 +3,6 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { HOLD_COOKIE } from "@/lib/holds";
-import { safeErrorMessage } from "@/lib/log";
 import { isLocationKey } from "@/config/locations";
 import { sitelink } from "@/lib/sitelink/client";
 
@@ -19,7 +18,7 @@ export async function setPortalPassword(holdId: string, _prev: { ok?: boolean; e
     await sitelink.setPortalPassword(hold.locationKey, hold.tenantId, hold.email, pw);
     await db.hold.update({ where: { id: holdId }, data: { portalPasswordSet: true } });
     return { ok: true };
-  } catch (err) {
-    return { error: `We couldn't save that password (${safeErrorMessage(err, 80)}). Call the office and we'll set it up.` };
+  } catch {
+    return { error: `We couldn't save your password. Call (902) 867-3779 and we'll help you set it up.` };
   }
 }

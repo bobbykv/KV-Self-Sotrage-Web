@@ -22,7 +22,7 @@ export default async function BlogPost({ params }: { params: Promise<Params> }) 
   return (
     <article className="container-kv max-w-3xl py-10 sm:py-16">
       <Link href="/blog" className="text-sm font-semibold text-kv-navy hover:text-kv-red">
-        ← All posts
+        ← More storage tips
       </Link>
       <p className="mt-6 text-sm text-kv-muted">{post.publishedAt?.toLocaleDateString("en-CA", { dateStyle: "long" })}</p>
       <h1 className="h1 mt-1">{post.title}</h1>
@@ -32,9 +32,9 @@ export default async function BlogPost({ params }: { params: Promise<Params> }) 
       )}
       <div className="prose-kv mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.body) }} />
       <div className="mt-12 rounded-3xl bg-kv-navy-50 p-6">
-        <p className="font-bold text-kv-navy">Need storage in Antigonish or Pictou County?</p>
+        <p className="font-bold text-kv-navy">Ready to make room for what comes next?</p>
         <Link href="/units" className="btn-primary mt-3">
-          See what&apos;s open
+          Find your space
         </Link>
       </div>
     </article>

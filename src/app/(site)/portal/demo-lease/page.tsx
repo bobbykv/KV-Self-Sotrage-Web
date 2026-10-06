@@ -10,8 +10,8 @@ export default function DemoLease() {
   return (
     <div className="container-kv max-w-xl py-16 text-center">
       <p className="eyebrow">Demo mode</p>
-      <h1 className="h2 mt-2">SiteLink eSign would open here</h1>
-      <p className="mt-3 text-kv-muted">With live credentials this link goes to the hosted SiteLink lease-signing page.</p>
+      <h1 className="h2 mt-2">Preview your lease-signing step</h1>
+      <p className="mt-3 text-kv-muted">This is a demonstration, so there is no rental agreement to sign. For a real rental, this step will let you review and sign your lease.</p>
       <Link href="/portal" className="btn-primary mt-6">
         Back to my account
       </Link>

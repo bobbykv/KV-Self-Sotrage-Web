@@ -34,7 +34,7 @@ export function UnitGroupCard({ g }: { g: UnitGroup }) {
       <div className="mt-auto flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-kv-navy">{g.available} available</p>
         <Link href={`/units/${g.locationKey}/${g.bestUnitId}`} className="btn-primary btn-sm min-h-11">
-          Select
+          View this space
         </Link>
       </div>
     </article>

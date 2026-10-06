@@ -11,27 +11,26 @@ export type SeoPage = {
   nearby: string[];
 };
 
-/** Unique copy per target query. Keep claims to what's in location-seed.json. */
+/** Location claims follow location-seed.json. Rental and access steps live in checkout. */
 export const SEO_PAGES: SeoPage[] = [
   {
     slug: "self-storage-antigonish",
-    title: "Self Storage Antigonish, NS — Live Prices & 24/7 Access",
-    description: "Self storage in Antigonish, NS at 20 Haley Road (near downtown) and 2784 NS-4 at Exit 31. Climate-controlled units, RV & boat parking, 24/7 access. See live prices.",
-    h1: "Self storage in Antigonish",
-    intro:
-      "KV Self Storage has two Antigonish-area locations: Haley Road, less than a kilometre from downtown, and Addington Forks on Highway 4 at Exit 31. Both are open 24/7, and you can see real prices and hold a unit online.",
+    title: "Self Storage in Antigonish, NS | Space for What Matters",
+    description: "Moving, downsizing, or storing between StFX terms? Compare storage sizes and prices in Antigonish, with 24/7 access and climate-controlled options at Haley Road.",
+    h1: "Make room for your next chapter in Antigonish",
+    intro: "A new home or a smaller space doesn't mean you have to let go of everything. Keep your belongings nearby at Haley Road or Addington Forks while you settle into what comes next.",
     sections: [
       {
-        heading: "Close to downtown and StFX",
-        body: "Our Haley Road site is minutes from Main Street and the StFX campus — handy for students storing over the summer, families between homes, and local businesses that need overflow space. It's also where you'll find our climate-controlled units and indoor and outdoor RV, boat and vehicle parking.",
+        heading: "Keep what you're not ready to part with",
+        body: "Store furniture, keepsakes, and extra boxes while you move or downsize. Haley Road is less than a kilometre from downtown Antigonish, with climate-controlled options for belongings that need a more consistent environment.",
       },
       {
-        heading: "Highway access at Exit 31",
-        body: "If you're coming from Lower West River, Salt Springs or anywhere along the 104, our Addington Forks location at 2784 NS-4 is right off Exit 31. It features Noke smart-lock access so you can unlock from your phone.",
+        heading: "Room for school or business",
+        body: "Between terms at StFX? Keep your belongings near campus at Haley Road. Need room for stock or tools? Compare spaces at both locations and choose one that fits your workday, including Addington Forks at Highway 4, Exit 31.",
       },
       {
-        heading: "Straightforward pricing",
-        body: "Prices on our website come straight from our booking system and refresh about every 30 minutes. At checkout every line is listed — rent, any admin fee, and HST on its own line — before you pay anything.",
+        heading: "Choose with confidence",
+        body: "Start with the size guide and compare monthly prices. You'll review your full move-in total before payment, and your confirmation will explain the next steps. If you're unsure, tell us what you're storing and we'll help.",
       },
     ],
     locations: ["haley", "hwy4"],
@@ -39,23 +38,22 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: "self-storage-new-glasgow",
-    title: "Self Storage near New Glasgow, NS — KV Stellarton",
-    description: "Looking for self storage near New Glasgow? KV Self Storage at 30 Heritage Ave, Stellarton is minutes away. 24/7 access, Noke smart locks, live online prices.",
-    h1: "Self storage near New Glasgow",
-    intro:
-      "Our newest facility is at 30 Heritage Avenue in Stellarton — a short drive from downtown New Glasgow, Westville and Trenton. It's open 24/7 and uses Noke smart-lock access.",
+    title: "Self Storage near New Glasgow, NS | KV Stellarton",
+    description: "Keep your belongings close to New Glasgow at KV Self Storage in Stellarton. Find space for a move, a smaller home, or business stock, with 24/7 access.",
+    h1: "More room for your life near New Glasgow",
+    intro: "Moving, renovating, or making room at home? Give your belongings a place nearby at 30 Heritage Avenue in Stellarton, a short drive from New Glasgow, Westville, and Trenton.",
     sections: [
       {
-        heading: "Minutes from New Glasgow",
-        body: "Whether you're downsizing in New Glasgow, renovating in Trenton or moving into the area, our Stellarton site is close enough to make quick trips easy — and with 24/7 access you can come and go on your schedule.",
+        heading: "Take your move one step at a time",
+        body: "Keep furniture and boxes out of the way while you get settled. You can make space in your home without rushing decisions about belongings you still want to keep.",
       },
       {
-        heading: "Unlock from your phone",
-        body: "Stellarton is one of our two Noke smart-lock locations, so tenants can unlock remotely from the Noke app — no fumbling with keys in the rain.",
+        heading: "Keep your things within reach",
+        body: "With 24/7 access, you can visit when it fits your day. Gated entry and camera surveillance support your peace of mind, and you'll use the Nokē app for access once your rental and app setup are complete.",
       },
       {
-        heading: "Book online in a few minutes",
-        body: "See what's open now, hold a unit for 20 minutes while you check out, and see the full total including HST before you pay. Prefer to talk? We're a local business and we answer the phone.",
+        heading: "Find the size that fits",
+        body: "Compare storage sizes and monthly prices, or use the size guide for a starting estimate. Not sure how your furniture will fit? Tell us what you're storing and we'll help you choose.",
       },
     ],
     locations: ["stellarton"],
@@ -63,22 +61,22 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: "self-storage-stellarton",
-    title: "Self Storage Stellarton, NS — 30 Heritage Ave",
-    description: "KV Self Storage Stellarton at 30 Heritage Avenue: drive-up storage units, 24/7 access, Noke smart-lock remote unlock and live online prices.",
-    h1: "Self storage in Stellarton",
-    intro: "KV Self Storage Stellarton is at 30 Heritage Avenue. It's our newest location — gated, camera-monitored and open around the clock.",
+    title: "Self Storage in Stellarton, NS | Room for Your Next Step",
+    description: "Find clean, secure storage at 30 Heritage Avenue in Stellarton. Compare sizes and prices for your move, home, or business, with 24/7 access and local help.",
+    h1: "Space for what matters in Stellarton",
+    intro: "Your home or workspace can feel crowded when life changes. Keep the belongings you need at 30 Heritage Avenue, and give yourself room to move forward.",
     sections: [
       {
-        heading: "A newer facility in Pictou County",
-        body: "Stellarton has gated, coded entry and camera surveillance. Office hours are Monday to Friday, 8:00am to 4:30pm, and access is 24/7.",
+        heading: "Make room without rushing to let go",
+        body: "Store furniture, seasonal belongings, and keepsakes while you move or settle into a smaller home. Clean storage, gated entry, and camera surveillance help you feel confident about where you keep them.",
       },
       {
-        heading: "Noke smart-lock access",
-        body: "Stellarton uses Noke smart locks for remote unlock from your phone. Once you've moved in, the office will get you set up on the app.",
+        heading: "Give your business breathing room",
+        body: "Keep stock, tools, or equipment out of your day-to-day workspace. With 24/7 access, you can pick up what you need around your own schedule.",
       },
       {
-        heading: "Honest prices, no surprises",
-        body: "Our website shows live sizes and monthly rates. At checkout you'll see every charge, including HST as its own line, before paying. Refunds are handled personally by the owner.",
+        heading: "Know your next step",
+        body: "Choose your space, review the price, and follow the rental steps shown at checkout. Your confirmation explains your lease and access arrangements. Need a hand with size or the Nokē app? Contact us for help.",
       },
     ],
     locations: ["stellarton"],
@@ -86,23 +84,22 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: "self-storage-near-me",
-    title: "Self Storage Near Me — Antigonish & Pictou County, NS",
-    description: "Find self storage near you in northeastern Nova Scotia: KV Self Storage in Antigonish (Haley Rd and Hwy 4 Exit 31) and Stellarton. Live availability and 24/7 access.",
-    h1: "Self storage near you in northeastern Nova Scotia",
-    intro:
-      "KV Self Storage serves Antigonish County, Pictou County and Guysborough from three locations. Pick the one closest to you — every site has 24/7 access and live online prices.",
+    title: "Self Storage Near You | Antigonish & Pictou County, NS",
+    description: "Find storage close to home in Antigonish, Addington Forks, or Stellarton. Get help with size, compare prices, and keep your belongings nearby with 24/7 access.",
+    h1: "Find room for your next step, close to home",
+    intro: "Whether you're moving, downsizing, or making space for your business, your belongings can stay within reach. Choose from three locations in Antigonish and Pictou County, each with 24/7 access.",
     sections: [
       {
-        heading: "Which location is closest?",
-        body: "In or near the Town of Antigonish, Haley Road is closest. Along the 104 between Antigonish and Pictou County, Addington Forks at Exit 31 is easiest. In New Glasgow, Stellarton, Westville or Trenton, choose Stellarton.",
+        heading: "Choose a convenient location",
+        body: "For downtown Antigonish or StFX, start with Haley Road. Along Highway 104, consider Addington Forks at Exit 31. For New Glasgow, Westville, or Trenton, compare spaces at Stellarton.",
       },
       {
-        heading: "What you'll find",
-        body: "A range of unit sizes at all three; climate-controlled units and RV/boat parking at Haley Road; Noke smart-lock remote unlock at Addington Forks and Stellarton.",
+        heading: "Find room for what you're keeping",
+        body: "Use the size guide to estimate the space your belongings need, then compare prices. Haley Road also has climate-controlled units and vehicle parking. Parking and larger units can be limited, so check the listings or ask for help.",
       },
       {
-        heading: "Rent from your phone",
-        body: "Browse live availability, hold a unit for 20 minutes, and see the full total including HST up front. Need something that's full? Join the list and we'll call you when it opens.",
+        heading: "Move forward with a clear plan",
+        body: "Choose a space, arrange your rental, and follow your confirmation's access instructions. If your preferred size is full, join the waitlist or contact us to talk through other options.",
       },
     ],
     locations: ["haley", "hwy4", "stellarton"],
