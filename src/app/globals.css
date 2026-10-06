@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/*
+  KV Self Storage brand tokens.
+  red #790909 · navy #1A2A3B (sampled from the KV logo — confirm in Interview deltas) · yellow #FFDF46
+*/
+@theme {
+  --color-kv-red: #790909;
+  --color-kv-red-dark: #5c0606;
+  --color-kv-red-50: #fbf1f1;
+  --color-kv-navy: #1a2a3b;
+  --color-kv-navy-light: #2c4157;
+  --color-kv-navy-50: #f2f5f8;
+  --color-kv-yellow: #ffdf46;
+  --color-kv-yellow-light: #fff6c7;
+  --color-kv-ink: #1f2933;
+  --color-kv-muted: #5b6672;
+  --color-kv-line: #e6e9ed;
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1rem;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fff;
+  color: var(--color-kv-ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-kv-yellow);
+  outline-offset: 2px;
+}
+
+@utility container-kv {
+  @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+}
+
+@utility btn {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility btn-primary {
+  @apply btn bg-kv-red text-white hover:bg-kv-red-dark;
+}
+
+@utility btn-navy {
+  @apply btn bg-kv-navy text-white hover:bg-kv-navy-light;
+}
+
+@utility btn-yellow {
+  @apply btn bg-kv-yellow text-kv-navy hover:brightness-95;
+}
+
+@utility btn-ghost {
+  @apply btn border border-kv-line bg-white text-kv-navy hover:border-kv-navy;
+}
+
+@utility btn-sm {
+  @apply min-h-9 px-4 text-sm;
+}
+
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-kv-line bg-white;
+}
+
+@utility input {
+  @apply block min-h-12 w-full rounded-xl border border-kv-line bg-white px-4 text-base text-kv-ink placeholder:text-kv-muted/70 focus:border-kv-navy focus:outline-none;
+}
+
+@utility label {
+  @apply mb-1.5 block text-sm font-semibold text-kv-navy;
+}
+
+@utility eyebrow {
+  @apply text-xs font-bold tracking-[0.18em] text-kv-red uppercase;
+}
+
+@utility h1 {
+  @apply text-3xl leading-tight font-extrabold tracking-tight text-kv-navy sm:text-5xl;
+}
+
+@utility h2 {
+  @apply text-2xl leading-tight font-extrabold tracking-tight text-kv-navy sm:text-3xl;
+}
+
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}
+
+@layer components {
+  .prose-kv {
+    @apply text-kv-ink leading-relaxed;
+  }
+  .prose-kv h1,
+  .prose-kv h2 {
+    @apply mt-8 mb-3 text-2xl font-extrabold text-kv-navy;
+  }
+  .prose-kv h3 {
+    @apply mt-6 mb-2 text-xl font-bold text-kv-navy;
+  }
+  .prose-kv p {
+    @apply my-4;
+  }
+  .prose-kv ul {
+    @apply my-4 list-disc pl-6;
+  }
+  .prose-kv ol {
+    @apply my-4 list-decimal pl-6;
+  }
+  .prose-kv a {
+    @apply font-semibold text-kv-red underline;
+  }
+  .prose-kv img {
+    @apply my-6 rounded-xl;
+  }
+  .prose-kv strong {
+    @apply font-bold text-kv-navy;
+  }
+  .prose-kv blockquote {
+    @apply my-4 border-l-4 border-kv-yellow pl-4 italic;
+  }
+}

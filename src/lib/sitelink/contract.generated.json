@@ -1,0 +1,1282 @@
+{
+  "SiteInformation": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "UnitsInformationAvailableUnitsOnly_v2": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "lngLastTimePolled",
+        "type": "string"
+      }
+    ]
+  },
+  "UnitsInformation_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "lngLastTimePolled",
+        "type": "string"
+      },
+      {
+        "name": "bReturnExcludedFromWebsiteUnits",
+        "type": "boolean"
+      }
+    ]
+  },
+  "UnitsInformationByUnitID": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "UnitID",
+        "type": "int"
+      }
+    ]
+  },
+  "UnitTypePriceList_v2": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "DiscountPlansRetrieve": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "PaymentTypesRetrieve": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "KeypadZonesRetrieve": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantSearchDetailed": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sTenantFirstName",
+        "type": "string"
+      },
+      {
+        "name": "sTenantLastName",
+        "type": "string"
+      },
+      {
+        "name": "sAddressLine1",
+        "type": "string"
+      },
+      {
+        "name": "sAddressLine2",
+        "type": "string"
+      },
+      {
+        "name": "sCity",
+        "type": "string"
+      },
+      {
+        "name": "sState",
+        "type": "string"
+      },
+      {
+        "name": "sZipCode",
+        "type": "string"
+      },
+      {
+        "name": "sEmailAddress",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneNumber",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneNumber2",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneNumber3",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneNumber4",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantNewDetailed_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sWebPassword",
+        "type": "string"
+      },
+      {
+        "name": "sMrMrs",
+        "type": "string"
+      },
+      {
+        "name": "sFName",
+        "type": "string"
+      },
+      {
+        "name": "sMI",
+        "type": "string"
+      },
+      {
+        "name": "sLName",
+        "type": "string"
+      },
+      {
+        "name": "sCompany",
+        "type": "string"
+      },
+      {
+        "name": "sAddr1",
+        "type": "string"
+      },
+      {
+        "name": "sAddr2",
+        "type": "string"
+      },
+      {
+        "name": "sCity",
+        "type": "string"
+      },
+      {
+        "name": "sRegion",
+        "type": "string"
+      },
+      {
+        "name": "sPostalCode",
+        "type": "string"
+      },
+      {
+        "name": "sCountry",
+        "type": "string"
+      },
+      {
+        "name": "sPhone",
+        "type": "string"
+      },
+      {
+        "name": "sMrMrsAlt",
+        "type": "string"
+      },
+      {
+        "name": "sFNameAlt",
+        "type": "string"
+      },
+      {
+        "name": "sMIAlt",
+        "type": "string"
+      },
+      {
+        "name": "sLNameAlt",
+        "type": "string"
+      },
+      {
+        "name": "sAddr1Alt",
+        "type": "string"
+      },
+      {
+        "name": "sAddr2Alt",
+        "type": "string"
+      },
+      {
+        "name": "sCityAlt",
+        "type": "string"
+      },
+      {
+        "name": "sRegionAlt",
+        "type": "string"
+      },
+      {
+        "name": "sPostalCodeAlt",
+        "type": "string"
+      },
+      {
+        "name": "sCountryAlt",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneAlt",
+        "type": "string"
+      },
+      {
+        "name": "sMrMrsBus",
+        "type": "string"
+      },
+      {
+        "name": "sFNameBus",
+        "type": "string"
+      },
+      {
+        "name": "sMIBus",
+        "type": "string"
+      },
+      {
+        "name": "sLNameBus",
+        "type": "string"
+      },
+      {
+        "name": "sCompanyBus",
+        "type": "string"
+      },
+      {
+        "name": "sAddr1Bus",
+        "type": "string"
+      },
+      {
+        "name": "sAddr2Bus",
+        "type": "string"
+      },
+      {
+        "name": "sCityBus",
+        "type": "string"
+      },
+      {
+        "name": "sRegionBus",
+        "type": "string"
+      },
+      {
+        "name": "sPostalCodeBus",
+        "type": "string"
+      },
+      {
+        "name": "sCountryBus",
+        "type": "string"
+      },
+      {
+        "name": "sPhoneBus",
+        "type": "string"
+      },
+      {
+        "name": "sFax",
+        "type": "string"
+      },
+      {
+        "name": "sEmail",
+        "type": "string"
+      },
+      {
+        "name": "sPager",
+        "type": "string"
+      },
+      {
+        "name": "sMobile",
+        "type": "string"
+      },
+      {
+        "name": "bCommercial",
+        "type": "boolean"
+      },
+      {
+        "name": "bCompanyIsTenant",
+        "type": "boolean"
+      },
+      {
+        "name": "dDOB",
+        "type": "dateTime"
+      },
+      {
+        "name": "sTenNote",
+        "type": "string"
+      },
+      {
+        "name": "sLicense",
+        "type": "string"
+      },
+      {
+        "name": "sLicRegion",
+        "type": "string"
+      },
+      {
+        "name": "sSSN",
+        "type": "string"
+      },
+      {
+        "name": "sGateCode",
+        "type": "string"
+      },
+      {
+        "name": "sEmailAlt",
+        "type": "string"
+      },
+      {
+        "name": "sRelationshipAlt",
+        "type": "string"
+      },
+      {
+        "name": "sTaxID",
+        "type": "string"
+      },
+      {
+        "name": "bSMSOptIn",
+        "type": "boolean"
+      },
+      {
+        "name": "sCountryCode",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantLogin": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sTenantLogin",
+        "type": "string"
+      },
+      {
+        "name": "sTenantPassword",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantInfoByTenantID": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      }
+    ]
+  },
+  "TenantLoginAndSecurityUpdate": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "TenantID",
+        "type": "int"
+      },
+      {
+        "name": "sEmail",
+        "type": "string"
+      },
+      {
+        "name": "sWebPassword",
+        "type": "string"
+      },
+      {
+        "name": "sWebSecurityQ",
+        "type": "string"
+      },
+      {
+        "name": "sWebSecurityQA",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantIDByUnitNameOrAccessCode": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sUnitName",
+        "type": "string"
+      },
+      {
+        "name": "sAccessCode",
+        "type": "string"
+      }
+    ]
+  },
+  "TenantBillingInfoByTenantID_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      }
+    ]
+  },
+  "LedgersByTenantID_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sTenantID",
+        "type": "string"
+      }
+    ]
+  },
+  "CustomerAccountsBalanceDetails_v2": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      }
+    ]
+  },
+  "ReservationNewWithSource_v5": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sTenantID",
+        "type": "string"
+      },
+      {
+        "name": "sUnitID",
+        "type": "string"
+      },
+      {
+        "name": "dNeeded",
+        "type": "dateTime"
+      },
+      {
+        "name": "sComment",
+        "type": "string"
+      },
+      {
+        "name": "iSource",
+        "type": "int"
+      },
+      {
+        "name": "sSource",
+        "type": "string"
+      },
+      {
+        "name": "QTRentalTypeID",
+        "type": "int"
+      },
+      {
+        "name": "iInquiryType",
+        "type": "int"
+      },
+      {
+        "name": "dcQuotedRate",
+        "type": "decimal"
+      },
+      {
+        "name": "dExpires",
+        "type": "dateTime"
+      },
+      {
+        "name": "dFollowUp",
+        "type": "dateTime"
+      },
+      {
+        "name": "sTrackingCode",
+        "type": "string"
+      },
+      {
+        "name": "sCallerID",
+        "type": "string"
+      },
+      {
+        "name": "ConcessionID",
+        "type": "int"
+      }
+    ]
+  },
+  "ReservationUpdate_v4": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      },
+      {
+        "name": "sTenantID",
+        "type": "string"
+      },
+      {
+        "name": "sUnitID",
+        "type": "string"
+      },
+      {
+        "name": "dNeeded",
+        "type": "dateTime"
+      },
+      {
+        "name": "sComment",
+        "type": "string"
+      },
+      {
+        "name": "iStatus",
+        "type": "int"
+      },
+      {
+        "name": "bFollowup",
+        "type": "boolean"
+      },
+      {
+        "name": "dFollowup",
+        "type": "dateTime"
+      },
+      {
+        "name": "dFollowupLast",
+        "type": "dateTime"
+      },
+      {
+        "name": "iInquiryType",
+        "type": "int"
+      },
+      {
+        "name": "dcQuotedRate",
+        "type": "decimal"
+      },
+      {
+        "name": "dExpires",
+        "type": "dateTime"
+      },
+      {
+        "name": "QTRentalTypeID",
+        "type": "int"
+      },
+      {
+        "name": "QTCancellationTypeID",
+        "type": "int"
+      },
+      {
+        "name": "sCancellationReason",
+        "type": "string"
+      },
+      {
+        "name": "ConcessionID",
+        "type": "int"
+      }
+    ]
+  },
+  "ReservationList_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iGlobalWaitingNum",
+        "type": "int"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      }
+    ]
+  },
+  "ReservationNoteInsert": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      },
+      {
+        "name": "sNote",
+        "type": "string"
+      }
+    ]
+  },
+  "MoveInCostRetrieveWithDiscount_Reservation_v4": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iUnitID",
+        "type": "int"
+      },
+      {
+        "name": "dMoveInDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "InsuranceCoverageID",
+        "type": "int"
+      },
+      {
+        "name": "ConcessionPlanID",
+        "type": "int"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      },
+      {
+        "name": "bApplyInsuranceCredit",
+        "type": "boolean"
+      },
+      {
+        "name": "iPromoGlobalNum",
+        "type": "int"
+      },
+      {
+        "name": "sCreditCardNum",
+        "type": "string"
+      }
+    ]
+  },
+  "MoveInWithDiscount_v7": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "TenantID",
+        "type": "int"
+      },
+      {
+        "name": "sAccessCode",
+        "type": "string"
+      },
+      {
+        "name": "UnitID",
+        "type": "int"
+      },
+      {
+        "name": "dStartDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "dEndDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "dcPaymentAmount",
+        "type": "decimal"
+      },
+      {
+        "name": "iCreditCardType",
+        "type": "int"
+      },
+      {
+        "name": "sCreditCardNumber",
+        "type": "string"
+      },
+      {
+        "name": "sCreditCardCVV",
+        "type": "string"
+      },
+      {
+        "name": "sCCTrack2",
+        "type": "string"
+      },
+      {
+        "name": "dExpirationDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "sBillingName",
+        "type": "string"
+      },
+      {
+        "name": "sBillingAddress",
+        "type": "string"
+      },
+      {
+        "name": "sBillingZipCode",
+        "type": "string"
+      },
+      {
+        "name": "InsuranceCoverageID",
+        "type": "int"
+      },
+      {
+        "name": "ConcessionPlanID",
+        "type": "int"
+      },
+      {
+        "name": "iSource",
+        "type": "int"
+      },
+      {
+        "name": "sSource",
+        "type": "string"
+      },
+      {
+        "name": "bUsePushRate",
+        "type": "boolean"
+      },
+      {
+        "name": "iPayMethod",
+        "type": "int"
+      },
+      {
+        "name": "sABARoutingNum",
+        "type": "string"
+      },
+      {
+        "name": "sAccountNum",
+        "type": "string"
+      },
+      {
+        "name": "iAccountType",
+        "type": "int"
+      },
+      {
+        "name": "iKeypadZoneID",
+        "type": "int"
+      },
+      {
+        "name": "iTimeZoneID",
+        "type": "int"
+      },
+      {
+        "name": "iBillingFrequency",
+        "type": "int"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      },
+      {
+        "name": "ChannelType",
+        "type": "int"
+      },
+      {
+        "name": "bTestMode",
+        "type": "boolean"
+      },
+      {
+        "name": "bApplyInsuranceCredit",
+        "type": "boolean"
+      }
+    ]
+  },
+  "ScheduleMoveOut": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iLedgerID",
+        "type": "int"
+      },
+      {
+        "name": "dScheduledOut",
+        "type": "dateTime"
+      }
+    ]
+  },
+  "SiteLinkeSignCreateLeaseURL_v2": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      },
+      {
+        "name": "iLedgerID",
+        "type": "int"
+      },
+      {
+        "name": "sFormIdsCommaDelimited",
+        "type": "string"
+      },
+      {
+        "name": "sReturnUrl",
+        "type": "string"
+      }
+    ]
+  },
+  "PastDueBalances": {
+    "service": "reporting",
+    "namespace": "http://tempuri.org/CallCenterWs/ReportingWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "dReportDateStart",
+        "type": "dateTime"
+      },
+      {
+        "name": "dReportDateEnd",
+        "type": "dateTime"
+      }
+    ]
+  },
+  "MoveInsAndMoveOuts": {
+    "service": "reporting",
+    "namespace": "http://tempuri.org/CallCenterWs/ReportingWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "dReportDateStart",
+        "type": "dateTime"
+      },
+      {
+        "name": "dReportDateEnd",
+        "type": "dateTime"
+      }
+    ]
+  },
+  "OccupancyStatistics": {
+    "service": "reporting",
+    "namespace": "http://tempuri.org/CallCenterWs/ReportingWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "dReportDateStart",
+        "type": "dateTime"
+      },
+      {
+        "name": "dReportDateEnd",
+        "type": "dateTime"
+      }
+    ]
+  }
+}
