@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { areaRangeFromParams, filterFullTypes, filterGroups, groupUnits, type UnitFilter } from "@/lib/catalog";
-import { sizeFinderHref, type SizeFinderAnswer } from "@/lib/size-finder";
+import { sizeFinderHref, STORAGE_NEEDS, type SizeFinderAnswer } from "@/lib/size-finder";
 import type { PriceListEntry, Unit } from "@/lib/sitelink/types";
 
 function filterFor(answer: SizeFinderAnswer): UnitFilter {
@@ -35,7 +35,7 @@ describe("size finder to listing journey", () => {
   });
 
   it("does not apply climate control or household area bounds to vehicle searches", () => {
-    expect(sizeFinderHref({ what: "vehicle", sensitive: true, location: "haley" })).toBe("/units?size=parking&location=haley");
+    expect(sizeFinderHref({ what: "vehicle", sensitive: true, location: "haley" })).toBe("/units?type=parking&location=haley");
   });
 
   it("shows sold-out types that match the same size and location filters", () => {
@@ -47,5 +47,16 @@ describe("size finder to listing journey", () => {
 
   it("ignores invalid range values", () => {
     expect(areaRangeFromParams({ minArea: "-50", maxArea: "Infinity" })).toEqual({ minArea: undefined, maxArea: undefined });
+  });
+
+  it("uses the website copy labels for storage needs", () => {
+    expect(STORAGE_NEEDS.map((n) => n.label)).toEqual([
+      "Boxes, seasonal gear or a dorm room",
+      "A studio or one-bedroom apartment",
+      "A two- or three-bedroom home",
+      "A larger household",
+      "Business stock, tools or equipment",
+      "A vehicle, RV or boat",
+    ]);
   });
 });

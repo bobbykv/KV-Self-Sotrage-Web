@@ -18,8 +18,11 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
   if (!hold || !isLocationKey(hold.locationKey) || !["confirmed_pay_separately", "moved_in"].includes(hold.status)) {
     return (
       <div className="container-kv max-w-xl py-16 text-center">
-        <h1 className="h2">Let&apos;s check your booking</h1>
-        <p className="mt-3 text-kv-muted">If you just arranged a rental, call {BRAND.phone} and we&apos;ll help you confirm your next step.</p>
+        <h1 className="h2">We couldn&apos;t find this hold</h1>
+        <p className="mt-3 text-kv-muted">Choose an available unit to start again. Call {BRAND.phone} if you need help.</p>
+        <Link href="/units" className="btn-primary mt-6">
+          See available units
+        </Link>
       </div>
     );
   }
@@ -28,27 +31,55 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
   const leaseUrl =
     movedIn && hold.tenantId && hold.ledgerId ? await sitelink.leaseUrl(hold.locationKey, hold.tenantId, hold.ledgerId, `${env.APP_URL}/portal`).catch(() => null) : null;
+  const unitSize = formatSize(hold.widthFt, hold.lengthFt);
+  const expiry = hold.expiresAt.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Halifax" });
+  const moveInDate = hold.moveInDate.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
 
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">
-      <p className="eyebrow">{movedIn ? "Rental confirmed" : "Reservation confirmed"}</p>
-      <h1 className="h1 mt-2">{movedIn ? `Your next step is getting settled, ${hold.firstName}` : `Your space is reserved, ${hold.firstName}`}</h1>
+      <h1 className="h1">
+        {movedIn ? `Your storage rental at ${loc.shortName} is confirmed` : `Your storage reservation at ${loc.shortName} is confirmed`}
+      </h1>
+      <p className="mt-3 text-kv-muted">
+        {movedIn
+          ? `Payment received: ${cost ? money(cost.total) : "confirmed"}. Your unit is ${unitSize}. Your move-in date is ${moveInDate}.`
+          : `We've reserved ${unitSize} for you until ${expiry}. Finish payment and your rental before you move in.`}
+      </p>
 
       <section className="card mt-8 p-6">
-        <h2 className="font-extrabold text-kv-navy">
-          {formatSize(hold.widthFt, hold.lengthFt)} {hold.unitTypeName} · Unit {hold.unitName}
-        </h2>
-        <p className="text-sm text-kv-muted">
-          {loc.name} · {fullAddress(loc)}
-        </p>
+        <h2 className="font-extrabold text-kv-navy">Your rental details</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-kv-muted">Move-in date</dt>
-            <dd className="font-semibold">{hold.moveInDate.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" })}</dd>
+            <dt className="text-kv-muted">Location</dt>
+            <dd className="font-semibold">{loc.name}</dd>
           </div>
-          {cost && (
+          <div>
+            <dt className="text-kv-muted">Address</dt>
+            <dd className="font-semibold">{fullAddress(loc)}</dd>
+          </div>
+          <div>
+            <dt className="text-kv-muted">Unit</dt>
+            <dd className="font-semibold">
+              {unitSize} {hold.unitTypeName} · Unit {hold.unitName}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-kv-muted">Move-in date</dt>
+            <dd className="font-semibold">{moveInDate}</dd>
+          </div>
+          <div>
+            <dt className="text-kv-muted">Monthly rent</dt>
+            <dd className="font-semibold">{money(Number(hold.quotedRate))} + HST</dd>
+          </div>
+          {!movedIn && (
             <div>
-              <dt className="text-kv-muted">{movedIn ? "Paid today (incl. HST)" : "Due at move-in (incl. HST)"}</dt>
+              <dt className="text-kv-muted">Reservation number</dt>
+              <dd className="font-mono font-semibold">{hold.id.slice(0, 8).toUpperCase()}</dd>
+            </div>
+          )}
+          {movedIn && cost && (
+            <div>
+              <dt className="text-kv-muted">Payment received</dt>
               <dd className="font-semibold">{money(cost.total)}</dd>
             </div>
           )}
@@ -58,67 +89,67 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
               <dd className="font-mono font-semibold">{hold.paymentRef}</dd>
             </div>
           )}
-          {!movedIn && (
-            <div>
-              <dt className="text-kv-muted">Held until</dt>
-              <dd className="font-semibold">{hold.expiresAt.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Halifax" })}</dd>
-            </div>
-          )}
         </dl>
       </section>
 
       <section className="card mt-4 p-6">
-        <h2 className="font-extrabold text-kv-navy">What happens next</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
-          {movedIn ? (
-            <>
-              <li>{leaseUrl ? "Sign your lease online (button below)." : "Our office will send your lease to sign."}</li>
-              <li>Check your storage account for your access details. If they are missing, contact us before heading over so we can help you get in.</li>
-              {loc.amenities.nokeRemoteUnlock && <li>Follow your Nokē app-access instructions for this location. If you need help with setup or have not received instructions, contact us.</li>}
-              <li>Bring photo ID and follow your access instructions on move-in day. Once your access is ready, you can visit your belongings 24/7.</li>
-            </>
-          ) : (
-            <>
-              <li>We&apos;ll contact you during office hours {loc.officeHours[0] ? `(${loc.officeHours[0].days})` : ""} to help you finish payment and your rental before your reservation expires.</li>
-              {env.PAY_ONLINE_URL && (
-                <li>
-                  Prefer to pay now? Use our{" "}
-                  <a href={env.PAY_ONLINE_URL} className="font-semibold text-kv-red underline" target="_blank" rel="noopener noreferrer">
-                    secure online payment page
-                  </a>
-                  .
-                </li>
-              )}
-              <li>Access is arranged after your rental is complete. Your reservation alone does not give you access.</li>
-              {loc.amenities.nokeRemoteUnlock && <li>You&apos;ll use the Nokē app at this location. Follow the setup instructions provided when your rental is complete.</li>}
-            </>
-          )}
-        </ol>
+        <h2 className="font-extrabold text-kv-navy">{movedIn ? "Before you move in" : "What to do next"}</h2>
+        {movedIn ? (
+          <p className="mt-3 text-sm text-kv-muted">
+            Complete your lease using the link below, if shown. Follow the access instructions for your location. If anything is missing, call {BRAND.phone}.
+          </p>
+        ) : (
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
+            <li>
+              Finish payment using the link below, if shown. Otherwise, call {BRAND.phone} or visit the office during office hours.
+            </li>
+            <li>Complete your rental and lease.</li>
+            <li>Follow your access instructions. Call us if you haven&apos;t received them.</li>
+          </ol>
+        )}
+        {loc.amenities.nokeRemoteUnlock && (
+          <p className="mt-4 rounded-xl border border-kv-yellow bg-kv-yellow-light p-3 text-sm text-kv-navy">
+            Addington Forks and Stellarton use the Nokē app to unlock your unit. Follow the setup instructions you receive after completing your rental. Missing the
+            invitation? Call {BRAND.phone}.
+          </p>
+        )}
+        {!loc.amenities.nokeRemoteUnlock && (
+          <p className="mt-4 text-sm text-kv-muted">
+            Follow the gate and unit-access instructions provided with your rental. Call {BRAND.phone} if you need help getting in.
+          </p>
+        )}
         <div className="mt-5 flex flex-wrap gap-3">
-          {leaseUrl && (
+          {movedIn && leaseUrl && (
             <a href={leaseUrl} className="btn-primary">
-              Sign my lease
+              View and sign my lease
             </a>
           )}
-          <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
-            Call {BRAND.phone}
-          </a>
+          {!movedIn && env.PAY_ONLINE_URL && (
+            <a href={env.PAY_ONLINE_URL} className="btn-primary" target="_blank" rel="noopener noreferrer">
+              Continue to payment
+            </a>
+          )}
+          {movedIn ? (
+            <Link href="/portal" className="btn-ghost">
+              My storage
+            </Link>
+          ) : (
+            <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
+              Call {BRAND.phone}
+            </a>
+          )}
         </div>
       </section>
 
       {movedIn && hold.tenantCreated && !hold.portalPasswordSet && (
         <section className="card mt-4 p-6">
-          <h2 className="font-extrabold text-kv-navy">Keep your storage details handy</h2>
-          <p className="mt-1 text-sm text-kv-muted">Create your account password to check your balance and access details, report a problem, or let us know when your plans change.</p>
+          <h2 className="font-extrabold text-kv-navy">Set up your storage account</h2>
+          <p className="mt-1 text-sm text-kv-muted">Choose a password to view your rental details and send requests.</p>
           <div className="mt-4 max-w-sm">
             <PortalPasswordForm holdId={hold.id} email={hold.email} />
           </div>
         </section>
       )}
-
-      <p className="mt-8 text-sm text-kv-muted">
-        Plans changed or unsure what to do next? Contact us for help. <Link href="/faq" className="font-semibold underline">Get answers</Link>
-      </p>
     </div>
   );
 }

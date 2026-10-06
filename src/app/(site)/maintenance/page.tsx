@@ -6,24 +6,23 @@ import { ISSUE_TYPES } from "@/lib/requests";
 import { publicMaintenanceAction } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Report a maintenance issue",
-  description: "Tell us about a problem with your storage unit, door, lighting, or access so we can help.",
+  title: "Report a problem",
+  description: "Tell us what's wrong at your Antigonish or Stellarton unit. Add photos if you can.",
 };
 
 export default function MaintenancePage() {
   return (
     <div className="container-kv max-w-2xl py-10 sm:py-16">
-      <p className="eyebrow">Tenants</p>
-      <h1 className="h2 mt-2">Report a maintenance issue</h1>
+      <h1 className="h2 mt-2">Report a problem at KV Self Storage</h1>
       <p className="mt-2 text-kv-muted">
-        Door sticking, light out, or trouble getting in? Tell us what happened so we can help. You can also send your report through your{" "}
-        <Link href="/portal#maintenance" className="font-semibold underline">
-          portal
-        </Link>
-        . For an urgent problem, call{" "}
+        Tell us what&apos;s wrong at your Antigonish or Stellarton unit. Add photos if you can. For an urgent problem, also call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
           {BRAND.phone}
         </a>
+        . You can also send a report through{" "}
+        <Link href="/portal#maintenance" className="font-semibold underline">
+          My storage
+        </Link>
         .
       </p>
       <div className="card mt-6 p-6">
@@ -49,7 +48,7 @@ export default function MaintenancePage() {
             </label>
           </div>
           <label className="block">
-            <span className="label">Your name (as on your lease)</span>
+            <span className="label">Name</span>
             <input name="name" required autoComplete="name" className="input" />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -63,7 +62,7 @@ export default function MaintenancePage() {
             </label>
           </div>
           <label className="block">
-            <span className="label">Issue type</span>
+            <span className="label">Problem type</span>
             <select name="issueType" required className="input">
               {ISSUE_TYPES.map((t) => (
                 <option key={t}>{t}</option>
@@ -71,18 +70,18 @@ export default function MaintenancePage() {
             </select>
           </label>
           <label className="block">
-            <span className="label">What&apos;s going on?</span>
+            <span className="label">What happened?</span>
             <textarea name="description" required minLength={5} rows={4} className="input py-3" />
           </label>
           <label className="block">
-            <span className="label">Photos (optional, up to 3, about 4 MB total)</span>
+            <span className="label">Photos (optional)</span>
             <input name="photos" type="file" accept="image/*" multiple className="block w-full text-sm" />
           </label>
           <label className="block">
-            <span className="label">How should we follow up?</span>
+            <span className="label">How should we contact you?</span>
             <select name="contactPref" className="input">
-              <option value="phone">Phone call</option>
-              <option value="text">Text message</option>
+              <option value="phone">Phone</option>
+              <option value="text">Text</option>
               <option value="email">Email</option>
               <option value="no_contact">No follow-up needed</option>
             </select>

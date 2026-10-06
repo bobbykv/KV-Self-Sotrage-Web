@@ -10,10 +10,8 @@ export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: st
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-kv-navy-50 p-4 text-sm text-kv-navy">
-        <p className="font-bold">Your next step</p>
-        <p className="mt-1">
-          Reserve this space for {hours} hours while you arrange payment and finish your rental. We&apos;ll contact you to help you complete those steps
-          {payOnlineUrl ? ", or you can pay through our secure online payment page" : ""}. Confirming your reservation doesn&apos;t take a payment. Access is arranged after your rental is complete.
+        <p>
+          Reserve this unit for {hours} hours while you finish payment and your rental. Confirming the reservation does not take a payment. Your confirmation tells you what to do next.
         </p>
       </div>
       {error && (
@@ -31,8 +29,13 @@ export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: st
           })
         }
       >
-        {pending ? "Confirming…" : "Confirm my reservation"}
+        {pending ? "Confirming your reservation..." : "Confirm my reservation"}
       </button>
+      {payOnlineUrl && (
+        <a href={payOnlineUrl} className="btn-ghost w-full" target="_blank" rel="noopener noreferrer">
+          Continue to payment
+        </a>
+      )}
     </div>
   );
 }
@@ -60,7 +63,7 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
     const data = await res?.json().catch(() => null);
     if (res?.ok) router.push(`/checkout/${holdId}/confirmation`);
     else {
-      setError(data?.error ?? "We couldn't confirm your payment. Please call (902) 867-3779 before trying again so we can check it.");
+      setError(data?.error ?? "We couldn't confirm your payment. Call (902) 867-3779 before trying again so we can check it.");
       setPending(false);
     }
   }
@@ -77,7 +80,7 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
       </label>
       <div className="grid grid-cols-2 gap-3">
         <label>
-          <span className="label">Expiry (MM/YY)</span>
+          <span className="label">Expiry date (MM/YY)</span>
           <input name="expiry" required inputMode="numeric" autoComplete="cc-exp" placeholder="MM/YY" className="input font-mono" maxLength={7} />
         </label>
         <label>
@@ -99,9 +102,9 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
         </p>
       )}
       <button className="btn-primary w-full" disabled={pending}>
-        {pending ? "Processing…" : `Pay ${total} and complete my rental`}
+        {pending ? "Processing payment..." : `Pay ${total} and complete my rental`}
       </button>
-      <p className="text-xs text-kv-muted">Pay securely to complete your rental. Your confirmation will explain the next steps for your lease and access.</p>
+      <p className="text-xs text-kv-muted">Your confirmation tells you how to finish your lease and access setup.</p>
     </form>
   );
 }

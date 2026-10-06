@@ -4,8 +4,8 @@ import { getFaq } from "@/lib/faq";
 import { renderMarkdown } from "@/lib/markdown";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions",
-  description: "Get help choosing your storage size, understanding prices, arranging your rental, and accessing your belongings at KV Self Storage.",
+  title: "Self Storage Questions in Antigonish and Stellarton",
+  description: "Get answers about storage sizes, prices, reservations, office hours and access at KV Self Storage in Antigonish and Stellarton.",
 };
 
 export default async function FaqPage() {
@@ -18,10 +18,9 @@ export default async function FaqPage() {
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-      <p className="eyebrow">FAQ</p>
-      <h1 className="h1 mt-2">Feel prepared for your next step</h1>
+      <h1 className="h1">Self storage questions for Antigonish and Stellarton</h1>
       <p className="mt-3 text-kv-muted">
-        Start here for help with size, price, and moving in. Have another question? Ask the chat, or call{" "}
+        Here&apos;s what to know before you book. Need help with your own situation? Call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
           {BRAND.phone}
         </a>

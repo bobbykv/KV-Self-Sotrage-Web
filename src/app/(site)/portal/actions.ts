@@ -55,9 +55,9 @@ export async function scheduleMoveOutAction(_prev: FormState, form: FormData): P
   try {
     await sitelink.scheduleMoveOut(link.locationKey, ledgerId, when);
     await audit(`tenant:${link.tenantId}`, "portal.schedule_move_out", `${link.locationKey}:${ledger.unitName}`, { date });
-    return { ok: true, message: `Move-out scheduled for ${when.toLocaleDateString("en-CA", { dateStyle: "long", timeZone: "UTC" })}. The office will process it on that date.` };
+    return { ok: true, message: `Your planned move-out date has been sent. We still need to process the move-out to close your rental.` };
   } catch {
-    return { error: `We couldn't save your move-out date. Please call (902) 867-3779 and we'll help you arrange it.` };
+    return { error: `We couldn't send your move-out date. Try again or call (902) 867-3779.` };
   }
 }
 
@@ -73,9 +73,9 @@ export async function maintenanceAction(_prev: FormState, form: FormData): Promi
     const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
     const photoIds = (await Promise.all(photos.map((p) => saveImage(p, "maintenance_photo", false)))).filter(Boolean) as string[];
     await createMaintenanceRequest(parsed.data, { tenantId: link.tenantId, verified: true, photoIds });
-    return { ok: true, message: "Thanks. We've received your report and your follow-up preference." };
+    return { ok: true, message: "Your report has been sent." };
   } catch (err) {
-    return { error: safeErrorMessage(err, 120) };
+    return { error: safeErrorMessage(err, 120) || "We couldn't send your report. Try again or call (902) 867-3779." };
   }
 }
 
@@ -94,5 +94,5 @@ export async function transferAction(_prev: FormState, form: FormData): Promise<
     email: info?.tenant.email || session.email,
     phone: info?.tenant.phone,
   });
-  return { ok: true, message: "Got it. Staff will check what's available and contact you. Nothing changes on your account until we confirm with you." };
+  return { ok: true, message: "Your request has been sent. We'll contact you about the options." };
 }

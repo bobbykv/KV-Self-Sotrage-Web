@@ -13,7 +13,17 @@ type Props = {
   submitLabel?: string;
 };
 
-export function LeadForm({ reason, channel = "website_form", locationKey, unitType, unitSize, compact, title, submitLabel = "Let me know" }: Props) {
+export function LeadForm({
+  reason,
+  channel = "website_form",
+  locationKey,
+  unitType,
+  unitSize,
+  compact,
+  title,
+  submitLabel = "Join the waitlist",
+  notesPlaceholder = "What are you storing, or how can we help? (optional)",
+}: Props & { notesPlaceholder?: string }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -41,15 +51,14 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
     if (res?.ok) setState("done");
     else {
       setState("error");
-      setError((await res?.json().catch(() => null))?.error ?? "Something went wrong. Please call (902) 867-3779.");
+      setError((await res?.json().catch(() => null))?.error ?? (reason === "waitlist" || reason === "unavailable_unit" ? "We couldn't add you to the waitlist. Try again or call (902) 867-3779." : "We couldn't send your message. Try again, call (902) 867-3779 or email info@kvselfstorage.ca."));
     }
   }
 
   if (state === "done") {
     return (
       <div className="rounded-xl bg-kv-navy-50 p-4 text-sm text-kv-navy" role="status">
-        <p className="font-bold">Thanks. We&apos;ve received your request.</p>
-        <p>{reason === "waitlist" || reason === "unavailable_unit" ? "We'll contact you when a suitable space opens." : "We'll follow up using your contact details."} Need help sooner? Call (902) 867-3779.</p>
+        <p className="font-bold">{reason === "waitlist" || reason === "unavailable_unit" ? "You're on the waitlist. We'll contact you when a matching space opens." : reason === "human_handoff" ? "Your callback request has been sent." : "Your message has been sent. We'll get back to you."}</p>
       </div>
     );
   }
@@ -58,26 +67,26 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
     <form onSubmit={onSubmit} className={compact ? "space-y-2" : "space-y-3"}>
       {title && <p className="font-bold text-kv-navy">{title}</p>}
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-      <input name="name" required placeholder="Your name" autoComplete="name" className="input" aria-label="Your name" />
+      <input name="name" required placeholder="Name" autoComplete="name" className="input" aria-label="Name" />
       <div className={compact ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
-        <input name="phone" type="tel" placeholder="Phone" autoComplete="tel" className="input" aria-label="Phone" />
+        <input name="phone" type="tel" placeholder={reason === "contact_request" ? "Phone (optional)" : "Phone"} autoComplete="tel" className="input" aria-label="Phone" />
         <input name="email" type="email" placeholder="Email" autoComplete="email" className="input" aria-label="Email" />
       </div>
       {!locationKey && !compact && (
-        <select name="locationKey" className="input" aria-label="Preferred location" defaultValue="">
-          <option value="">Any location</option>
+        <select name="locationKey" className="input" aria-label="Location" defaultValue="">
+          <option value="">Location</option>
           <option value="haley">Haley Road, Antigonish</option>
-          <option value="hwy4">Addington Forks (Hwy 4 / Exit 31)</option>
-          <option value="stellarton">Stellarton</option>
+          <option value="hwy4">Addington Forks, Exit 31</option>
+          <option value="stellarton">Stellarton, Heritage Avenue</option>
         </select>
       )}
-      {!unitSize && !compact && <input name="unitSize" placeholder="Preferred size, if you know it (e.g. 10x10)" className="input" aria-label="Size" />}
-      <textarea name="notes" rows={compact ? 2 : 3} placeholder="What are you storing, or how can we help? (optional)" className="input py-3" aria-label="Notes" />
+      {!unitSize && !compact && <input name="unitSize" placeholder="Size needed" className="input" aria-label="Size needed" />}
+      <textarea name="notes" rows={compact ? 2 : 3} placeholder={notesPlaceholder} className="input py-3" aria-label={reason === "contact_request" ? "What can we help with?" : "Notes"} />
       {error && <p className="text-sm font-semibold text-kv-red">{error}</p>}
       <button type="submit" disabled={state === "sending"} className={`btn-primary w-full ${compact ? "btn-sm min-h-11" : ""}`}>
-        {state === "sending" ? "Sending…" : submitLabel}
+        {state === "sending" ? (reason === "contact_request" ? "Sending..." : "Sending…") : submitLabel}
       </button>
-      <p className="text-xs text-kv-muted">Add a phone number or email so we can follow up about your storage needs.</p>
+      {!compact && <p className="text-xs text-kv-muted">Add a phone number or email so we can follow up.</p>}
     </form>
   );
 }
