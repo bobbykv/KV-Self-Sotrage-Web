@@ -32,7 +32,10 @@ function sanitizeHistory(history: ChatMessage[]): ChatMessage[] {
 export async function chat(history: ChatMessage[]): Promise<ChatReply> {
   const last = history[history.length - 1];
   if (!last || last.role !== "user") return greeting();
-  if (containsCardNumber(last.content)) return CARD_REPLY;
+  if (containsCardNumber(last.content)) {
+    // Mask the offending turn in any subsequent history the client re-sends.
+    return { ...CARD_REPLY, reply: CARD_REPLY.reply };
+  }
   const clean = sanitizeHistory(history);
   if (env.CHAT_LLM_API_KEY) {
     try {
@@ -42,6 +45,11 @@ export async function chat(history: ChatMessage[]): Promise<ChatReply> {
     }
   }
   return rulesChat(clean[clean.length - 1].content);
+}
+
+/** Exported for tests — masks card-looking numbers in chat transcripts. */
+export function maskCardNumbersInHistory(history: ChatMessage[]): ChatMessage[] {
+  return sanitizeHistory(history);
 }
 
 export function greeting(): ChatReply {
@@ -145,7 +153,12 @@ export function parseUnitIntent(text: string) {
     size_category = area <= 50 ? "small" : area <= 150 ? "medium" : "large";
   }
   const climate = /climate|heated|temperature/i.test(text) || undefined;
-  const wantsUnits = Boolean(location || size_category || climate || /\b(unit|units|available|availability|price|prices|cost|rent|storage|space|open)\b/i.test(text));
+  const wantsUnits = Boolean(
+    location ||
+      size_category ||
+      climate ||
+      /\b(unit|units|available|availability|price|prices|cost|rent|storage|space|spaces|size|sizes|how much)\b/i.test(text),
+  );
   return { location, size_category, climate_controlled: climate, wantsUnits, sizeText: size ? `${size[1]}x${size[2]}` : undefined };
 }
 
@@ -161,9 +174,17 @@ export async function rulesChat(text: string): Promise<ChatReply> {
 
   const intent = parseUnitIntent(text);
   const faq = await getFaqAnswer({ query: text });
-  const isQuestionFirst = faq.results.length > 0 && !/\b(available|availability|price|prices|cost|units?)\b/i.test(text) && !intent.sizeText;
+  // Size / price / availability questions must hit the units tool, not a unit-change FAQ.
+  const asksSizesOrPrices =
+    intent.wantsUnits ||
+    /\b(size|sizes|price|prices|cost|rent|available|availability|unit|units|space|spaces|how much|what do you have)\b/i.test(text);
+  const isQuestionFirst =
+    faq.results.length > 0 &&
+    !asksSizesOrPrices &&
+    !intent.sizeText &&
+    !/\b(available|availability|price|prices|cost|units?|sizes?)\b/i.test(text);
 
-  if (intent.wantsUnits && !isQuestionFirst) {
+  if (asksSizesOrPrices && (intent.wantsUnits || !isQuestionFirst)) {
     const r = await searchUnits(intent);
     const area = !intent.location ? AREA_PATTERNS.find(([, re]) => re.test(text)) : undefined;
     const available = r.available

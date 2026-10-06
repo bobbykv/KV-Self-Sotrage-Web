@@ -111,7 +111,11 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
           <h2 className="mt-8 font-extrabold text-kv-navy">Your move-in total</h2>
           <div className="mt-3">
             {cost ? (
-              <CostBreakdown cost={cost} hstRate={env.HST_RATE} />
+              <CostBreakdown
+                cost={cost}
+                hstRate={env.HST_RATE}
+                totalLabel={env.PAYMENT_MODE === "passthrough" ? "Total due today" : "Estimated move-in total"}
+              />
             ) : (
               <p className="rounded-xl bg-kv-yellow-light p-4 text-sm">
                 Your full move-in total isn&apos;t available yet. Refresh in a moment, or contact us for help. You can continue once the total, including HST, is shown.

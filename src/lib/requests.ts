@@ -5,7 +5,7 @@ import { db } from "./db";
 import { notifyStaff } from "./notify";
 import { sitelink } from "./sitelink/client";
 
-export const ISSUE_TYPES = ["Door / lock", "Gate / access code", "Lighting", "Leak / water", "Pests", "Cleanliness", "Snow / ice", "Noke smart lock", "Other"] as const;
+export const ISSUE_TYPES = ["Door / lock", "Gate / access code", "Lighting", "Leak / water", "Pests", "Cleanliness", "Snow / ice", "Nokē smart lock", "Other"] as const;
 
 export const maintenanceSchema = z.object({
   locationKey: z.enum(LOCATION_KEYS),

@@ -241,6 +241,7 @@ export async function saveSettingsAction(_prev: State, form: FormData): Promise<
     maintenanceMode: form.get("maintenanceMode") === "on",
     maintenanceMessage: String(form.get("maintenanceMessage") ?? "").slice(0, 300),
     chatEnabled: form.get("chatEnabled") === "on",
+    showReviews: form.get("showReviews") === "on",
     holdMinutes: Number(form.get("holdMinutes")),
     pollIntervalMinutes: Number(form.get("pollIntervalMinutes")),
     allUnitsPollMinutes: Number(form.get("allUnitsPollMinutes")),

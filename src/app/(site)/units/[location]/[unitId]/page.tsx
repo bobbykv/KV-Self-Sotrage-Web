@@ -9,14 +9,28 @@ import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locatio
 import { formatSize, money } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
+import { unitTypePhotoUrl } from "@/lib/photos";
+import { allowSearchIndexing } from "@/lib/site-env";
 import { getSettings } from "@/lib/settings";
 import { HoldForm } from "./HoldForm";
 
 type Params = { location: string; unitId: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { location } = await params;
-  return { title: isLocationKey(location) ? `Storage unit at ${getLocation(location).shortName}` : "Storage unit", robots: { index: false } };
+  const { location, unitId } = await params;
+  if (!isLocationKey(location)) return { title: "Storage unit", robots: { index: false } };
+  const inventory = await getInventory();
+  const unit = inventory.find((l) => l.location === location)?.units.find((u) => u.unitId === Number(unitId));
+  const loc = getLocation(location);
+  const sizeLabel = unit ? formatSize(unit.widthFt, unit.lengthFt) : "Storage";
+  const noun = unit?.vehicle ? "parking space" : "storage unit";
+  return {
+    title: `${sizeLabel} ${noun} at ${loc.shortName}`,
+    description: unit
+      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}/month + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
+      : `Storage at ${loc.shortName}.`,
+    robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
+  };
 }
 
 function isoDate(d: Date) {
@@ -31,6 +45,16 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
   if (!unit) redirect(`/units?location=${location}&notice=${encodeURIComponent("This unit is no longer available. Check the other units at this location.")}`);
   const loc = getLocation(location);
   const sizeLabel = formatSize(unit.widthFt, unit.lengthFt);
+  const photoUrl = await unitTypePhotoUrl({
+    locationKey: location,
+    typeName: unit.typeName,
+    widthFt: unit.widthFt,
+    lengthFt: unit.lengthFt,
+    climate: unit.climate,
+    inside: unit.inside,
+    vehicle: unit.vehicle,
+  });
+  const noun = unit.vehicle ? "parking space" : "self storage";
 
   return (
     <div className="container-kv py-8 sm:py-12">
@@ -40,10 +64,10 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
       <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_420px]">
         <div>
           <div className="overflow-hidden rounded-3xl">
-            <Image src={unit.inside ? "/photos/facility-2.jpg" : "/photos/hero.jpg"} alt={`Storage units at ${loc.shortName}`} width={929} height={622} className="aspect-[16/9] w-full object-cover" />
+            <Image src={photoUrl} alt={`${sizeLabel} ${noun} at ${loc.shortName}`} width={929} height={622} className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="h1 mt-6">
-            {sizeLabel} self storage at {loc.shortName}
+            {sizeLabel} {noun} at {loc.shortName}
           </h1>
           <p className="mt-2 text-2xl font-extrabold text-kv-red">
             {money(unit.rate)}

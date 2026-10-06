@@ -1,14 +1,12 @@
 import "server-only";
 import { getLocation, type LocationKey } from "@/config/locations";
 import type { TenantLink } from "./auth";
-import { env } from "./env";
 import { log, safeErrorMessage } from "./log";
 import { sitelink } from "./sitelink/client";
 import type { Balance, BillingInfo, Ledger, Tenant } from "./sitelink/types";
 
-/** Nokē remote unlock is never activated in the simulator — access codes are sample data only. */
+/** Show Nokē copy at sites that have the amenity. Simulator still does not activate locks. */
 function showNoke(locationKey: LocationKey) {
-  if (env.appTestMode || env.sitelinkMode === "mock") return false;
   return getLocation(locationKey).amenities.nokeRemoteUnlock;
 }
 

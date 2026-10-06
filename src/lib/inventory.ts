@@ -150,9 +150,14 @@ export type LocationInventory = {
 export async function getInventory(): Promise<LocationInventory[]> {
   let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
   const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
+  const settings = await getSettings();
+  const staleMs = settings.pollIntervalMinutes * 60_000;
+  const oldestAvailable = snaps.filter((s) => s.kind === "available" && s.refreshedAt.getTime() > 0).map((s) => s.refreshedAt.getTime());
+  const oldest = oldestAvailable.length ? Math.min(...oldestAvailable) : 0;
+  const isStale = oldest > 0 && Date.now() - oldest >= staleMs;
   const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
-  if (neverLoaded && !failedRecently) {
-    await refreshInventory({ kinds: ["available", "pricelist"] });
+  if ((neverLoaded || isStale) && !failedRecently) {
+    await refreshInventory({ kinds: ["available", "pricelist"], force: isStale });
     snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
   }
   const held = await db.hold.findMany({

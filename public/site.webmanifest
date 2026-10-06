@@ -1,0 +1,14 @@
+{
+  "name": "KV Self Storage",
+  "short_name": "KV Storage",
+  "description": "Self storage in Antigonish, Addington Forks and Stellarton.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#790909",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

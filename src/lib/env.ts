@@ -59,6 +59,10 @@ const hasLiveCreds = Boolean(
   raw.SITELINK_CORP_CODE && raw.SITELINK_API_USERNAME && raw.SITELINK_API_PASSWORD && raw.SITELINK_LOCATION_CODES,
 );
 
+const sitelinkMode = (appTestMode ? "mock" : raw.SITELINK_MODE ?? (hasLiveCreds ? "live" : "mock")) as "live" | "mock";
+/** Simulator (mock SiteLink or APP_TEST_MODE) always uses the fake card form. */
+const paymentMode = (appTestMode || sitelinkMode === "mock" ? "passthrough" : raw.PAYMENT_MODE) as "pay_separately" | "passthrough";
+
 /**
  * APP_TEST_MODE forces the isolated simulator even when live credentials are
  * present in the host environment (e.g. a Vercel project that also has go-live
@@ -68,11 +72,11 @@ export const env = {
   ...raw,
   isProd: raw.NODE_ENV === "production",
   appTestMode,
-  sitelinkMode: (appTestMode ? "mock" : raw.SITELINK_MODE ?? (hasLiveCreds ? "live" : "mock")) as "live" | "mock",
+  sitelinkMode,
   sitelinkLocationCodes: appTestMode ? ({} as Partial<Record<LocationKey, string>>) : parseLocationCodes(raw.SITELINK_LOCATION_CODES),
   sitelinkTestMode: appTestMode || raw.SITELINK_TEST_MODE === "1" || raw.SITELINK_TEST_MODE === "true",
-  PAYMENT_MODE: (appTestMode ? "passthrough" : raw.PAYMENT_MODE) as "pay_separately" | "passthrough",
-  PAY_ONLINE_URL: appTestMode ? undefined : raw.PAY_ONLINE_URL,
+  PAYMENT_MODE: paymentMode,
+  PAY_ONLINE_URL: appTestMode || sitelinkMode === "mock" ? undefined : raw.PAY_ONLINE_URL,
   GHL_WEBHOOK_URL: appTestMode ? undefined : raw.GHL_WEBHOOK_URL,
   GHL_API_KEY: appTestMode ? undefined : raw.GHL_API_KEY,
   GHL_LOCATION_ID: appTestMode ? undefined : raw.GHL_LOCATION_ID,

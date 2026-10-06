@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/config/locations";
+import { showDraftNotices } from "@/lib/site-env";
 
 export const metadata: Metadata = { title: "Privacy" };
 
@@ -7,7 +8,7 @@ export default function Privacy() {
   return (
     <div className="container-kv prose-kv max-w-3xl py-10 sm:py-16">
       <h1 className="h1">KV Self Storage privacy</h1>
-      <p className="text-sm text-kv-muted">Draft. To be reviewed by the owner before launch.</p>
+      {showDraftNotices() && <p className="text-sm text-kv-muted">Draft. To be reviewed by the owner before launch.</p>}
       <p>When you ask a question, reserve or rent, we use the details you give us to arrange your storage and help with your rental.</p>
       <h2>What we collect</h2>
       <ul>

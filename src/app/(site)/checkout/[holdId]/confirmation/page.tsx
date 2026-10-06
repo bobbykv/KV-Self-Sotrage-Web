@@ -100,9 +100,16 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
           </p>
         ) : (
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
-            <li>
-              Finish payment using the link below, if shown. Otherwise, call {BRAND.phone} or visit the office during office hours.
-            </li>
+            {env.PAY_ONLINE_URL && (
+              <li>
+                Finish payment using the link below. You can also call {BRAND.phone} or visit the office during office hours.
+              </li>
+            )}
+            {!env.PAY_ONLINE_URL && (
+              <li>
+                Finish payment by calling {BRAND.phone} or visiting the office during office hours.
+              </li>
+            )}
             <li>Complete your rental and lease.</li>
             <li>Follow your access instructions. Call us if you haven&apos;t received them.</li>
           </ol>

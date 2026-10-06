@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getLocation } from "@/config/locations";
 import { formatSize, money, type UnitGroup } from "@/lib/catalog";
@@ -15,14 +16,22 @@ export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "
   );
 }
 
-export function UnitGroupCard({ g }: { g: UnitGroup }) {
+export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
+  const titleNoun = g.vehicle ? "parking space" : "storage unit";
   return (
     <article className="card flex flex-col gap-4 p-5">
+      {imageUrl && (
+        <div className="overflow-hidden rounded-2xl">
+          <Image src={imageUrl} alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`} width={640} height={400} className="aspect-[16/10] w-full object-cover" />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-extrabold text-kv-navy">{formatSize(g.widthFt, g.lengthFt)} storage unit</h3>
+          <h3 className="text-2xl font-extrabold text-kv-navy">
+            {formatSize(g.widthFt, g.lengthFt)} {titleNoun}
+          </h3>
           <p className="mt-0.5 text-sm text-kv-muted">{loc.shortName}</p>
           <p className="text-sm text-kv-muted">
             {g.typeName} · {area} sq. ft. approximately

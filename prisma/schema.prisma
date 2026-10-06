@@ -237,3 +237,46 @@ model MockSiteLinkState {
   payload   Json
   updatedAt DateTime @updatedAt
 }
+
+/// Location and unit-type gallery photos (files live in Vercel Blob; this is metadata).
+model GalleryPhoto {
+  id           String   @id @default(cuid())
+  /// location | unit_type
+  kind         String
+  locationKey  String
+  unitTypeName String?
+  widthFt      Float?
+  lengthFt     Float?
+  climate      Boolean?
+  url          String
+  blobPath     String?
+  caption      String?
+  altText      String   @default("")
+  sortOrder    Int      @default(0)
+  isCover      Boolean  @default(false)
+  widthPx      Int?
+  heightPx     Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([kind, locationKey, sortOrder])
+  @@index([locationKey, unitTypeName])
+}
+
+/// Website payment receipts (simulated or passthrough move-ins). Never stores card data.
+model PaymentReceipt {
+  id          String   @id @default(cuid())
+  locationKey String
+  tenantId    Int
+  ledgerId    Int?
+  holdId      String?
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("CAD")
+  /// SiteLink / simulator receipt reference only
+  paymentRef  String?
+  description String
+  periodLabel String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, locationKey, createdAt])
+}

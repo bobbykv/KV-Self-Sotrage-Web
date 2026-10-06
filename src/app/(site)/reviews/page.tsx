@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { ReviewsBlock } from "@/components/Reviews";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "KV Self Storage Reviews | Antigonish and Stellarton",
   description: "Find customer reviews for KV Self Storage on Google.",
 };
 
-export default function ReviewsPage() {
+export default async function ReviewsPage() {
+  const settings = await getSettings();
+  if (!settings.showReviews) notFound();
   return (
     <>
       <div className="container-kv py-10 sm:py-16">

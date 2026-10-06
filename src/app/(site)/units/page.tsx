@@ -7,6 +7,7 @@ import { LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
 import { areaRangeFromParams, filterFullTypes, filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
+import { unitTypePhotoUrl } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Storage Units & Prices in Antigonish and Stellarton",
@@ -18,8 +19,13 @@ const CATS = Object.keys(SIZE_LABELS) as SizeCategory[];
 function updatedLabel(iso: string | null) {
   if (!iso) return "not yet loaded";
   const d = new Date(iso);
-  const at = d.toLocaleString("en-CA", { timeZone: "America/Halifax", dateStyle: "medium", timeStyle: "short" });
-  return at;
+  // Atlantic Time (America/Halifax) — includes ADT/AST with abbreviation.
+  return d.toLocaleString("en-CA", {
+    timeZone: "America/Halifax",
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZoneName: "short",
+  });
 }
 
 export default async function UnitsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -42,6 +48,19 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   const groups = groupUnits(inventory.flatMap((l) => l.units));
   if (!category && !storageType && !range.minArea && !range.maxArea) filter.vehicle = undefined;
   const shown = filterGroups(groups, filter);
+  const imageUrls = await Promise.all(
+    shown.map((g) =>
+      unitTypePhotoUrl({
+        locationKey: g.locationKey,
+        typeName: g.typeName,
+        widthFt: g.widthFt,
+        lengthFt: g.lengthFt,
+        climate: g.climate,
+        inside: g.inside,
+        vehicle: g.vehicle,
+      }),
+    ),
+  );
   const full = filterFullTypes(
     fullTypes(
       inventory.flatMap((l) => l.priceList),
@@ -126,8 +145,8 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
 
       {shown.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((g) => (
-            <UnitGroupCard key={g.key} g={g} />
+          {shown.map((g, i) => (
+            <UnitGroupCard key={g.key} g={g} imageUrl={imageUrls[i]} />
           ))}
         </div>
       ) : (

@@ -44,17 +44,12 @@ export function LocationCards({ counts }: { counts?: Record<string, number> }) {
           <p className="text-xs text-kv-muted">Office hours: {formatOfficeHours(l)}</p>
           {counts && <p className="text-sm text-kv-muted">{counts[l.key] ?? 0} units open</p>}
           <div className="mt-auto flex flex-wrap items-center gap-2">
-            <Link href={`/units?location=${l.key}`} className="btn-primary btn-sm min-h-11">
+            <Link href={`/locations/${l.key}`} className="btn-primary btn-sm min-h-11">
+              Location details
+            </Link>
+            <Link href={`/units?location=${l.key}`} className="btn-ghost btn-sm min-h-11">
               {UNIT_BUTTON[l.key] ?? "See units"}
             </Link>
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.street}, ${l.city}, ${l.region}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-ghost btn-sm min-h-11"
-            >
-              Get directions
-            </a>
           </div>
         </article>
       ))}

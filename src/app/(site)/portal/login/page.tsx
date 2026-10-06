@@ -14,7 +14,7 @@ export default async function PortalLogin() {
   return (
     <div className="container-kv max-w-md py-12 sm:py-20">
       <h1 className="h2">Sign in to your KV Self Storage account</h1>
-      <p className="mt-2 text-sm text-kv-muted">Check your rental, payment and access details for your unit in Antigonish or Stellarton.</p>
+      <p className="mt-2 text-sm text-kv-muted">Check your rental, payment and access details for your unit in Antigonish, Addington Forks or Stellarton.</p>
       <div className="card mt-6 p-6">
         <ActionForm action={loginAction} submitLabel="Sign in" pendingLabel="Signing in..." hideOnSuccess={false}>
           <label className="block">
@@ -26,6 +26,11 @@ export default async function PortalLogin() {
             <input name="password" type="password" required autoComplete="current-password" className="input" />
           </label>
         </ActionForm>
+        <p className="mt-4 text-sm">
+          <Link href="/portal/forgot-password" className="font-semibold text-kv-navy underline">
+            Forgot password?
+          </Link>
+        </p>
         {env.appTestMode && (
           <p className="mt-4 rounded-xl bg-kv-yellow-light p-3 text-sm text-kv-navy">
             Test login: <strong>demo@kvselfstorage.ca</strong> / <strong>demo1234</strong>. See{" "}

@@ -8,6 +8,7 @@ import { ReviewsBlock } from "@/components/Reviews";
 import { BRAND } from "@/config/locations";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: { absolute: "Self Storage in Antigonish and Stellarton | KV Self Storage" },
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [promos, inventory] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory()]);
+  const [promos, inventory, settings] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory(), getSettings()]);
   const counts = Object.fromEntries(inventory.map((l) => [l.location, l.units.length]));
 
   return (
@@ -102,9 +103,7 @@ export default async function Home() {
               <li key={t} className="flex gap-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kv-yellow font-extrabold text-kv-navy">{i + 1}</span>
                 <div>
-                  <p className="font-bold text-kv-navy">
-                    {i + 1}. {t}
-                  </p>
+                  <p className="font-bold text-kv-navy">{t}</p>
                   <p className="text-sm text-kv-muted">{d}</p>
                 </div>
               </li>
@@ -116,7 +115,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <ReviewsBlock />
+      {settings.showReviews && <ReviewsBlock />}
 
       <section className="container-kv">
         <div className="flex flex-col items-start gap-4 rounded-3xl bg-kv-red px-6 py-10 text-white sm:px-10">
@@ -134,7 +133,7 @@ export default async function Home() {
             <Link href="/units" className="btn-yellow">
               See units &amp; prices
             </Link>
-            <Link href="/size-finder" className="btn-ghost border-white/40 text-white hover:bg-white/10">
+            <Link href="/size-finder" className="btn border border-white/50 bg-transparent text-white hover:bg-white/10">
               Help me choose a size
             </Link>
           </div>
