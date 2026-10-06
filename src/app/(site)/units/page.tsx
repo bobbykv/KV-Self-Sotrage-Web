@@ -49,7 +49,8 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
       <h1 className="h1 mt-2">{location ? `Available at ${getLocation(location).shortName}` : "What's open right now"}</h1>
       <p className="mt-3 text-sm text-kv-muted">
         Live from our booking system · updated {updatedLabel(oldest)}. Prices are per month; HST is added and shown at checkout.
-        {anyError && " Some data may be a little behind — call us to confirm."}
+        {anyError && !oldest && " Live availability isn't connected yet — call us to confirm what's open."}
+        {anyError && oldest && " Some data may be a little behind — call us to confirm."}
       </p>
 
       {notice && <p className="mt-4 rounded-xl bg-kv-red-50 p-4 font-semibold text-kv-red" role="alert">{notice}</p>}

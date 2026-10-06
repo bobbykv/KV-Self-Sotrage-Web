@@ -3,7 +3,9 @@
 // CMS content, sessions and audit logs. Never add card data columns here.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Vercel runs Amazon Linux; without this target the query engine is missing at runtime.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

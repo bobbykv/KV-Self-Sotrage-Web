@@ -10,6 +10,7 @@ import { getInventory } from "@/lib/inventory";
 
 export default async function Home() {
   const [promos, inventory] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory()]);
+  const availabilityDown = inventory.every((l) => l.units.length === 0 && l.lastError && !l.refreshedAt);
   const counts = Object.fromEntries(inventory.map((l) => [l.location, l.units.length]));
 
   return (
@@ -51,8 +52,17 @@ export default async function Home() {
           <p className="eyebrow">Three locations</p>
           <h2 className="h2 mt-2">Pick the one closest to you</h2>
           <div className="mt-8">
-            <LocationCards counts={counts} />
+            <LocationCards counts={availabilityDown ? undefined : counts} />
           </div>
+          {availabilityDown && (
+            <p className="mt-4 text-sm text-kv-muted">
+              Live availability isn&apos;t connected yet. Call{" "}
+              <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
+                {BRAND.phone}
+              </a>{" "}
+              and we&apos;ll tell you what&apos;s open.
+            </p>
+          )}
         </div>
       </section>
 
