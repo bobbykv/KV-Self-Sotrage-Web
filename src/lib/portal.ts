@@ -1,9 +1,16 @@
 import "server-only";
 import { getLocation, type LocationKey } from "@/config/locations";
 import type { TenantLink } from "./auth";
+import { env } from "./env";
 import { log, safeErrorMessage } from "./log";
 import { sitelink } from "./sitelink/client";
 import type { Balance, BillingInfo, Ledger, Tenant } from "./sitelink/types";
+
+/** Nokē remote unlock is never activated in the simulator — access codes are sample data only. */
+function showNoke(locationKey: LocationKey) {
+  if (env.appTestMode || env.sitelinkMode === "mock") return false;
+  return getLocation(locationKey).amenities.nokeRemoteUnlock;
+}
 
 export type PortalAccount = {
   locationKey: LocationKey;
@@ -30,7 +37,7 @@ export async function loadPortalAccounts(links: TenantLink[]): Promise<PortalAcc
         return {
           locationKey,
           locationName: loc.name,
-          noke: loc.amenities.nokeRemoteUnlock,
+          noke: showNoke(locationKey),
           tenant: info?.tenant ?? null,
           ledgers: ledgers.ledgers.map((l) => {
             const b = balances.find((x) => x.ledgerId === l.ledgerId) ?? balances.find((x) => x.unitName === l.unitName);
@@ -41,7 +48,7 @@ export async function loadPortalAccounts(links: TenantLink[]): Promise<PortalAcc
         };
       } catch (err) {
         log.warn("portal load failed", { locationKey, err });
-        return { locationKey, locationName: loc.name, noke: loc.amenities.nokeRemoteUnlock, tenant: null, ledgers: [], billing: null, error: safeErrorMessage(err, 120) };
+        return { locationKey, locationName: loc.name, noke: showNoke(locationKey), tenant: null, ledgers: [], billing: null, error: safeErrorMessage(err, 120) };
       }
     }),
   );

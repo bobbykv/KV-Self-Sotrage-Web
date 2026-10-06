@@ -79,4 +79,9 @@ With no SiteLink credentials the app uses `src/lib/sitelink/mock.ts`:
   declines.
 * Highway 4 eSign returns an error so the lease fallback can be tested.
 
-Mock mode refuses to run in production unless `ALLOW_MOCK_IN_PRODUCTION=1`.
+Mock mode refuses to run in production unless `ALLOW_MOCK_IN_PRODUCTION=1` or
+`APP_TEST_MODE=1` (hosted simulator — see [TEST_ENVIRONMENT.md](TEST_ENVIRONMENT.md)).
+
+For the Vercel test site, set `APP_TEST_MODE=1` with a dedicated test database.
+Portal login: `demo@kvselfstorage.ca` / `demo1234`. Simulator cards:
+`4242…4242` approve, `4000…0002` decline, `4000…0119` timeout.

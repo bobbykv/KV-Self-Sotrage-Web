@@ -7,12 +7,10 @@ import type { AdminUser } from "@prisma/client";
 import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { audit } from "./audit";
 import { db } from "./db";
-import { env } from "./env";
+import { cookieNames, env } from "./env";
 import { clientIp, rateLimit } from "./rate-limit";
 import { sitelink } from "./sitelink/client";
 
-const ADMIN_COOKIE = "kv_admin";
-const TENANT_COOKIE = "kv_tenant";
 const ADMIN_TTL_HOURS = 12;
 const TENANT_TTL_HOURS = 2;
 const LOCKOUT_AFTER = 5;
@@ -26,7 +24,7 @@ async function startSession(kind: "admin" | "tenant", ttlHours: number, data: { 
   await db.session.create({
     data: { id: hashToken(token), kind, adminUserId: data.adminUserId, tenantData: data.tenantData, email: data.email, expiresAt },
   });
-  (await cookies()).set(kind === "admin" ? ADMIN_COOKIE : TENANT_COOKIE, token, {
+  (await cookies()).set(kind === "admin" ? cookieNames.admin : cookieNames.tenant, token, {
     httpOnly: true,
     secure: env.isProd,
     sameSite: "lax",
@@ -36,7 +34,7 @@ async function startSession(kind: "admin" | "tenant", ttlHours: number, data: { 
 }
 
 async function readSession(kind: "admin" | "tenant") {
-  const token = (await cookies()).get(kind === "admin" ? ADMIN_COOKIE : TENANT_COOKIE)?.value;
+  const token = (await cookies()).get(kind === "admin" ? cookieNames.admin : cookieNames.tenant)?.value;
   if (!token) return null;
   const s = await db.session.findUnique({ where: { id: hashToken(token) }, include: { adminUser: true } });
   if (!s || s.kind !== kind || s.expiresAt < new Date()) return null;
@@ -45,7 +43,7 @@ async function readSession(kind: "admin" | "tenant") {
 
 export async function endSession(kind: "admin" | "tenant") {
   const jar = await cookies();
-  const name = kind === "admin" ? ADMIN_COOKIE : TENANT_COOKIE;
+  const name = kind === "admin" ? cookieNames.admin : cookieNames.tenant;
   const token = jar.get(name)?.value;
   if (token) await db.session.deleteMany({ where: { id: hashToken(token) } });
   jar.delete(name);

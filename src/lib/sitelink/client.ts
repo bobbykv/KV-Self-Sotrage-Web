@@ -25,7 +25,7 @@ async function call(locationKey: LocationKey, method: SiteLinkMethod, args: Args
   const started = Date.now();
   try {
     let data: DataSet;
-    if (env.sitelinkMode === "mock") {
+    if (env.sitelinkMode === "mock" || env.appTestMode) {
       data = await invokeMock(method, locationKey, args);
       assertOk(method, data);
     } else {

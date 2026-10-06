@@ -123,6 +123,9 @@ export async function captureLead(input: LeadInput) {
 
 export async function sendLeadToGhl(leadId: string) {
   const lead = await db.lead.findUniqueOrThrow({ where: { id: leadId } });
+  if (env.appTestMode) {
+    return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "skipped", ghlError: "APP_TEST_MODE — GHL delivery blocked" } });
+  }
   const configured = Boolean(env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID));
   if (!configured) {
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "skipped", ghlError: "GHL not configured" } });

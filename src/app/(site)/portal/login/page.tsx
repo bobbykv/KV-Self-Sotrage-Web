@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ActionForm } from "@/components/ActionForm";
 import { BRAND } from "@/config/locations";
 import { getTenantSession } from "@/lib/auth";
+import { env } from "@/lib/env";
 import { loginAction } from "../actions";
 
 export const metadata: Metadata = { title: "Sign in to My storage", robots: { index: false } };
@@ -18,13 +19,22 @@ export default async function PortalLogin() {
         <ActionForm action={loginAction} submitLabel="Sign in" pendingLabel="Signing in..." hideOnSuccess={false}>
           <label className="block">
             <span className="label">Email</span>
-            <input name="email" type="email" required autoComplete="email" className="input" />
+            <input name="email" type="email" required autoComplete="email" className="input" defaultValue={env.appTestMode ? "demo@kvselfstorage.ca" : undefined} />
           </label>
           <label className="block">
             <span className="label">Password</span>
             <input name="password" type="password" required autoComplete="current-password" className="input" />
           </label>
         </ActionForm>
+        {env.appTestMode && (
+          <p className="mt-4 rounded-xl bg-kv-yellow-light p-3 text-sm text-kv-navy">
+            Test login: <strong>demo@kvselfstorage.ca</strong> / <strong>demo1234</strong>. See{" "}
+            <Link href="/testing" className="font-semibold underline">
+              test instructions
+            </Link>
+            .
+          </p>
+        )}
       </div>
       <p className="mt-6 text-sm text-kv-muted">
         Need help signing in? Call{" "}

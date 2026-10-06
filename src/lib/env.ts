@@ -1,11 +1,13 @@
 import "server-only";
 import { z } from "zod";
 import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
+import { isAppTestMode } from "./test-mode";
 
 const schema = z.object({
   NODE_ENV: z.string().default("development"),
   DATABASE_URL: z.string().optional(),
   APP_URL: z.string().url().default("http://localhost:3000"),
+  APP_TEST_MODE: z.string().optional(),
 
   SITELINK_MODE: z.enum(["live", "mock"]).optional(),
   SITELINK_ENDPOINT: z.string().url().default("https://api.smdservers.net/CCWs_3.5/CallCenterWs.asmx"),
@@ -41,6 +43,7 @@ if (!parsed.success) {
   throw new Error(`Invalid environment: ${parsed.error.issues.map((i) => i.path.join(".")).join(", ")}`);
 }
 const raw = parsed.data;
+const appTestMode = isAppTestMode();
 
 function parseLocationCodes(value: string | undefined): Partial<Record<LocationKey, string>> {
   if (!value) return {};
@@ -56,16 +59,31 @@ const hasLiveCreds = Boolean(
   raw.SITELINK_CORP_CODE && raw.SITELINK_API_USERNAME && raw.SITELINK_API_PASSWORD && raw.SITELINK_LOCATION_CODES,
 );
 
+/**
+ * APP_TEST_MODE forces the isolated simulator even when live credentials are
+ * present in the host environment (e.g. a Vercel project that also has go-live
+ * secrets configured). Integration secrets are ignored at runtime.
+ */
 export const env = {
   ...raw,
   isProd: raw.NODE_ENV === "production",
-  sitelinkMode: raw.SITELINK_MODE ?? (hasLiveCreds ? "live" : "mock"),
-  sitelinkLocationCodes: parseLocationCodes(raw.SITELINK_LOCATION_CODES),
-  sitelinkTestMode: raw.SITELINK_TEST_MODE === "1" || raw.SITELINK_TEST_MODE === "true",
+  appTestMode,
+  sitelinkMode: (appTestMode ? "mock" : raw.SITELINK_MODE ?? (hasLiveCreds ? "live" : "mock")) as "live" | "mock",
+  sitelinkLocationCodes: appTestMode ? ({} as Partial<Record<LocationKey, string>>) : parseLocationCodes(raw.SITELINK_LOCATION_CODES),
+  sitelinkTestMode: appTestMode || raw.SITELINK_TEST_MODE === "1" || raw.SITELINK_TEST_MODE === "true",
+  PAYMENT_MODE: (appTestMode ? "passthrough" : raw.PAYMENT_MODE) as "pay_separately" | "passthrough",
+  PAY_ONLINE_URL: appTestMode ? undefined : raw.PAY_ONLINE_URL,
+  GHL_WEBHOOK_URL: appTestMode ? undefined : raw.GHL_WEBHOOK_URL,
+  GHL_API_KEY: appTestMode ? undefined : raw.GHL_API_KEY,
+  GHL_LOCATION_ID: appTestMode ? undefined : raw.GHL_LOCATION_ID,
+  CHAT_LLM_API_KEY: appTestMode ? undefined : raw.CHAT_LLM_API_KEY,
+  NOTIFY_WEBHOOK_URL: appTestMode ? undefined : raw.NOTIFY_WEBHOOK_URL,
+  OWNER_NOTIFY_EMAIL: appTestMode ? undefined : raw.OWNER_NOTIFY_EMAIL,
 };
 
 /** Called lazily (not at import) so `next build` works without production secrets. */
 export function assertSiteLinkConfig() {
+  if (env.appTestMode) return;
   if (env.sitelinkMode === "live" && !hasLiveCreds) {
     throw new Error(
       "SITELINK_MODE=live requires SITELINK_CORP_CODE, SITELINK_LOCATION_CODES, SITELINK_API_USERNAME, SITELINK_API_PASSWORD",
@@ -78,7 +96,14 @@ export function assertSiteLinkConfig() {
     process.env.NEXT_PHASE !== "phase-production-build"
   ) {
     throw new Error(
-      "Refusing to serve production traffic with mock SiteLink data. Set SiteLink credentials, or ALLOW_MOCK_IN_PRODUCTION=1 for a staging demo.",
+      "Refusing to serve production traffic with mock SiteLink data. Set SiteLink credentials, APP_TEST_MODE=1 for the hosted simulator, or ALLOW_MOCK_IN_PRODUCTION=1 for a staging demo.",
     );
   }
 }
+
+/** Cookie names — separate in test mode so a production browser session cannot collide. */
+export const cookieNames = {
+  admin: env.appTestMode ? "kv_test_admin" : "kv_admin",
+  tenant: env.appTestMode ? "kv_test_tenant" : "kv_tenant",
+  hold: env.appTestMode ? "kv_test_hold" : "kv_hold",
+};

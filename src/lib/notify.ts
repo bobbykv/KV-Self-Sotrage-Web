@@ -17,6 +17,10 @@ export type StaffEvent =
  * webhook, Slack, Zapier, etc. — destination is an open owner decision).
  */
 export async function notifyStaff(event: StaffEvent, summary: string, details: Record<string, unknown> = {}) {
+  if (env.appTestMode) {
+    log.info("staff notification suppressed (APP_TEST_MODE)", { event, summary });
+    return;
+  }
   const payload = {
     event,
     summary,
