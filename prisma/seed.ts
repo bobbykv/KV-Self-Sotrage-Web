@@ -1,0 +1,40 @@
+import bcrypt from "bcryptjs";
+import { PrismaClient } from "@prisma/client";
+import { passwordProblems } from "../src/lib/password-policy";
+
+const db = new PrismaClient();
+
+async function main() {
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log("ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping owner account.");
+  } else if (await db.adminUser.findUnique({ where: { email } })) {
+    console.log(`Owner ${email} already exists — password left unchanged.`);
+  } else {
+    const problems = passwordProblems(password, email);
+    if (problems.length) throw new Error(`ADMIN_PASSWORD needs: ${problems.join("; ")}`);
+    await db.adminUser.create({ data: { email, name: process.env.ADMIN_NAME ?? "Owner", role: "owner", passwordHash: await bcrypt.hash(password, 12) } });
+    console.log(`Created owner account ${email}.`);
+  }
+
+  if (process.env.SEED_SAMPLE_CONTENT === "1" && (await db.blogPost.count()) === 0) {
+    await db.blogPost.create({
+      data: {
+        title: "How to pick the right storage unit size",
+        slug: "how-to-pick-a-storage-unit-size",
+        excerpt: "A quick guide to choosing between small, medium and large units so you don't pay for space you won't use.",
+        body: "## Start with what you're storing\n\nA 5x10 fits the contents of a small bedroom. A 10x10 fits a one-bedroom apartment. A 10x20 fits most of a two- or three-bedroom home.\n\n## Not sure?\n\nTry our [size finder](/size-finder) or call (902) 867-3779 and we'll help.",
+        published: false,
+      },
+    });
+    console.log("Added a sample draft blog post.");
+  }
+}
+
+main()
+  .catch((err) => {
+    console.error(err instanceof Error ? err.message : err);
+    process.exitCode = 1;
+  })
+  .finally(() => db.$disconnect());

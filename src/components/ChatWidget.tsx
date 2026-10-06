@@ -147,7 +147,7 @@ export function ChatWidget() {
               Send
             </button>
           </form>
-          <p className="px-4 pb-3 text-[11px] text-kv-muted">Please don't share card numbers here. Need a person? Call {PHONE}.</p>
+          <p className="px-4 pb-3 text-[11px] text-kv-muted">Please don&apos;t share card numbers here. Need a person? Call {PHONE}.</p>
         </section>
       )}
     </>

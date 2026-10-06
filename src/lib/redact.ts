@@ -5,7 +5,7 @@
  */
 
 const SENSITIVE_KEYS =
-  /(card|cc|cvv|cvc|pan|expir|track2|routing|aba|account.?num|password|passwd|secret|token|sCorpPassword|sTenantPassword|authorization)/i;
+  /(credit.?card|card.?num|^card$|^number$|^sCC|cvv|cvc|^pan$|expir|track2|routing|^sABA|account.?num|password|passwd|secret|token|authorization)/i;
 
 const SOAP_SENSITIVE_ELEMENTS = [
   "sCreditCardNumber",

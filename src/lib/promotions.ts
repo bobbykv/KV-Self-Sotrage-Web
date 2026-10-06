@@ -25,6 +25,19 @@ export function promoMatches(p: PromoLike, opts: { placement?: Placement; locati
   return true;
 }
 
+/** Converts a "YYYY-MM-DD" date picked by staff into the UTC instant for that Halifax wall-clock day boundary. */
+export function halifaxDayBoundary(date: string, edge: "start" | "end"): Date {
+  const [y, m, d] = date.split("-").map(Number);
+  const wall = edge === "start" ? Date.UTC(y, m - 1, d, 0, 0, 0) : Date.UTC(y, m - 1, d, 23, 59, 59);
+  const offsetAt = (instant: number) => {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Halifax", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(new Date(instant));
+    const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+    return Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second")) - instant;
+  };
+  const guess = wall - offsetAt(wall);
+  return new Date(wall - offsetAt(guess));
+}
+
 export function promoStatus(p: PromoLike, now = new Date()): "live" | "scheduled" | "ended" | "off" {
   if (!p.active) return "off";
   if (p.startsAt && p.startsAt > now) return "scheduled";

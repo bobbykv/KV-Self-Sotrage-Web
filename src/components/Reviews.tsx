@@ -24,7 +24,7 @@ export function ReviewsBlock() {
         </div>
       ) : (
         <div className="card mt-8 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-kv-ink">We'd rather show you real reviews than write our own. Read what local customers say about KV Self Storage on Google.</p>
+          <p className="max-w-xl text-kv-ink">We&apos;d rather show you real reviews than write our own. Read what local customers say about KV Self Storage on Google.</p>
           <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="btn-navy">
             Read our Google reviews
           </a>

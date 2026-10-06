@@ -48,8 +48,8 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
   if (state === "done") {
     return (
       <div className="rounded-xl bg-kv-navy-50 p-4 text-sm text-kv-navy" role="status">
-        <p className="font-bold">Thanks — you're on our list.</p>
-        <p>Someone from KV will be in touch. If it's urgent, call (902) 867-3779.</p>
+        <p className="font-bold">Thanks — you&apos;re on our list.</p>
+        <p>Someone from KV will be in touch. If it&apos;s urgent, call (902) 867-3779.</p>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export function LeadForm({ reason, channel = "website_form", locationKey, unitTy
       <button type="submit" disabled={state === "sending"} className={`btn-primary w-full ${compact ? "btn-sm min-h-11" : ""}`}>
         {state === "sending" ? "Sending…" : submitLabel}
       </button>
-      <p className="text-xs text-kv-muted">We'll only use this to contact you about storage. Phone or email required.</p>
+      <p className="text-xs text-kv-muted">We&apos;ll only use this to contact you about storage. Phone or email required.</p>
     </form>
   );
 }
