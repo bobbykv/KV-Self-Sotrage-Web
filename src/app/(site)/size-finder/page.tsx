@@ -4,7 +4,7 @@ import { SizeFinder } from "./SizeFinder";
 
 export const metadata: Metadata = {
   title: "Storage Size Finder",
-  description: "Answer three quick questions and we'll suggest the right storage unit size at KV Self Storage.",
+  description: "Get a starting size estimate for your belongings, then compare storage spaces and monthly prices at KV Self Storage.",
 };
 
 export default function SizeFinderPage() {
@@ -12,23 +12,23 @@ export default function SizeFinderPage() {
     <div className="container-kv grid gap-10 py-10 sm:py-16 lg:grid-cols-2">
       <div>
         <p className="eyebrow">Size finder</p>
-        <h1 className="h1 mt-2">What size do I need?</h1>
-        <p className="mt-3 text-kv-muted">Three quick questions. We&apos;ll point you to units that are open right now.</p>
+        <h1 className="h1 mt-2">Find enough room for what matters</h1>
+        <p className="mt-3 text-kv-muted">You shouldn&apos;t have to guess how much space to rent. Tell us what you&apos;re storing for a starting estimate, then compare sizes and prices.</p>
         <div className="mt-6 overflow-hidden rounded-3xl">
           <Image src="/photos/facility-2.jpg" alt="KV Self Storage drive-up units" width={940} height={361} className="w-full object-cover" />
         </div>
         <ul className="mt-6 space-y-2 text-sm text-kv-muted">
           <li>
-            <strong className="text-kv-navy">5′×5′</strong> — about a closet: boxes, bins, a bike
+            <strong className="text-kv-navy">5′×5′</strong>: about a closet for boxes, bins, or a bike
           </li>
           <li>
-            <strong className="text-kv-navy">5′×10′</strong> — a walk-in closet: a dorm room or studio
+            <strong className="text-kv-navy">5′×10′</strong>: about a walk-in closet for a dorm room or small furniture
           </li>
           <li>
-            <strong className="text-kv-navy">10′×10′</strong> — half a garage: a 1-bedroom apartment
+            <strong className="text-kv-navy">10′×10′</strong>: about half a garage for a one-bedroom apartment
           </li>
           <li>
-            <strong className="text-kv-navy">10′×20′</strong> — a one-car garage: a 2–3 bedroom home
+            <strong className="text-kv-navy">10′×20′</strong>: about a one-car garage for a two- to three-bedroom home
           </li>
         </ul>
       </div>

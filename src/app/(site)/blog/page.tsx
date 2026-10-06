@@ -4,7 +4,7 @@ import { getPublishedPosts } from "@/lib/cms";
 import { excerptOf } from "@/lib/markdown";
 
 export const metadata: Metadata = {
-  title: "Blog — Storage tips from Antigonish & Pictou County",
+  title: "Storage Tips for Your Next Move",
   description: "Moving, packing and storage tips from the KV Self Storage team.",
 };
 
@@ -12,10 +12,10 @@ export default async function BlogIndex() {
   const posts = await getPublishedPosts();
   return (
     <div className="container-kv max-w-4xl py-10 sm:py-16">
-      <p className="eyebrow">Blog</p>
-      <h1 className="h1 mt-2">Storage tips & local news</h1>
+      <p className="eyebrow">Storage tips</p>
+      <h1 className="h1 mt-2">A little guidance for your next move</h1>
       {posts.length === 0 ? (
-        <p className="mt-6 text-kv-muted">No posts yet — check back soon.</p>
+        <div className="mt-6 rounded-2xl bg-kv-navy-50 p-6"><p className="text-kv-muted">Planning where everything will go? Start with the size guide, or tell us what you&apos;re storing and we&apos;ll help.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/size-finder" className="btn-primary">Help me choose a size</Link><Link href="/contact" className="btn-ghost">Ask for help</Link></div></div>
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {posts.map((p) => (

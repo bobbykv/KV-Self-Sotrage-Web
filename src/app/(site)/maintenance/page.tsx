@@ -7,7 +7,7 @@ import { publicMaintenanceAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Report a maintenance issue",
-  description: "KV Self Storage tenants can report a maintenance issue online — no phone call needed.",
+  description: "Tell us about a problem with your storage unit, door, lighting, or access so we can help.",
 };
 
 export default function MaintenancePage() {
@@ -16,11 +16,11 @@ export default function MaintenancePage() {
       <p className="eyebrow">Tenants</p>
       <h1 className="h2 mt-2">Report a maintenance issue</h1>
       <p className="mt-2 text-kv-muted">
-        Door sticking, light out, gate trouble? Tell us here and it goes straight to the owner&apos;s maintenance list. Signed-in tenants can also use the{" "}
+        Door sticking, light out, or trouble getting in? Tell us what happened so we can help. You can also send your report through your{" "}
         <Link href="/portal#maintenance" className="font-semibold underline">
           portal
         </Link>
-        . Emergency (water, break-in)? Call{" "}
+        . For an urgent problem, call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
           {BRAND.phone}
         </a>
@@ -84,7 +84,7 @@ export default function MaintenancePage() {
               <option value="phone">Phone call</option>
               <option value="text">Text message</option>
               <option value="email">Email</option>
-              <option value="no_contact">No need — just fix it</option>
+              <option value="no_contact">No follow-up needed</option>
             </select>
           </label>
         </ActionForm>

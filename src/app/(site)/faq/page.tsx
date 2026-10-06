@@ -5,7 +5,7 @@ import { renderMarkdown } from "@/lib/markdown";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
-  description: "Hours, 24/7 access, Noke smart locks, climate-controlled units, RV parking, payments, student storage and more at KV Self Storage.",
+  description: "Get help choosing your storage size, understanding prices, arranging your rental, and accessing your belongings at KV Self Storage.",
 };
 
 export default async function FaqPage() {
@@ -19,9 +19,9 @@ export default async function FaqPage() {
     <div className="container-kv max-w-3xl py-10 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
       <p className="eyebrow">FAQ</p>
-      <h1 className="h1 mt-2">Questions, answered</h1>
+      <h1 className="h1 mt-2">Feel prepared for your next step</h1>
       <p className="mt-3 text-kv-muted">
-        Can&apos;t find it? Ask the chat, or call{" "}
+        Start here for help with size, price, and moving in. Have another question? Ask the chat, or call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
           {BRAND.phone}
         </a>

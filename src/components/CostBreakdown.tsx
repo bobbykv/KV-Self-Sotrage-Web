@@ -29,7 +29,7 @@ export function CostBreakdown({ cost, hstRate }: { cost: MoveInCost; hstRate: nu
           </tr>
         </tbody>
       </table>
-      <p className="mt-3 text-xs text-kv-muted">These amounts come from our booking system. Nothing else is added at payment.</p>
+      <p className="mt-3 text-xs text-kv-muted">Review your rent, fees, and HST here before you decide to continue.</p>
     </div>
   );
 }

@@ -23,7 +23,7 @@ export function HoldCountdown({ holdId, expiresAt, location }: { holdId: string;
           <h2 id="expired-title" className="text-xl font-extrabold text-kv-navy">
             Your hold has ended
           </h2>
-          <p className="mt-2 text-sm text-kv-muted">No problem — nothing was charged and the unit is back on the list. You can start again whenever you&apos;re ready.</p>
+          <p className="mt-2 text-sm text-kv-muted">Your checkout time has ended. You can browse the available spaces and start again whenever you&apos;re ready.</p>
           <Link href={`/units?location=${location}`} className="btn-primary mt-5 w-full">
             Back to available units
           </Link>
@@ -37,7 +37,7 @@ export function HoldCountdown({ holdId, expiresAt, location }: { holdId: string;
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl bg-kv-navy px-4 py-3 text-white" role="timer" aria-live="off">
       <p className="text-sm">
-        We&apos;re holding this unit for you. Take your time — if the timer runs out, you can just start again.
+        Your space is held while you review your rental. Complete this step before the timer ends to keep it held.
       </p>
       <p className="shrink-0 font-mono text-2xl font-bold text-kv-yellow tabular-nums" aria-label={`${m} minutes ${s} seconds left`}>
         {m}:{String(s).padStart(2, "0")}

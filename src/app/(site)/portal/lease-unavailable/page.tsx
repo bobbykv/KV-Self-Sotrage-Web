@@ -8,7 +8,7 @@ export default function LeaseUnavailable() {
     <div className="container-kv max-w-xl py-16 text-center">
       <h1 className="h2">Your lease isn&apos;t available online yet</h1>
       <p className="mt-3 text-kv-muted">
-        Online lease signing isn&apos;t set up for this unit. Contact the office at {BRAND.phone} or {BRAND.email} and we&apos;ll email you a copy.
+        Need to review or sign your lease? Contact us at {BRAND.phone} or {BRAND.email} and we&apos;ll help you get a copy.
       </p>
       <Link href="/portal" className="btn-primary mt-6">
         Back to my account

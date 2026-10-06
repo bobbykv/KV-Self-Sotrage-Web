@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | KV Self Storage",
   },
   description:
-    "Local self storage in Antigonish and Stellarton, Nova Scotia. Live unit prices, 24/7 access, climate-controlled units and RV/boat parking. Hold a unit online in minutes.",
+    "Make room for your next chapter with clean, secure storage in Antigonish and Stellarton. Compare sizes and prices, with 24/7 access and local help.",
   openGraph: { siteName: "KV Self Storage", locale: "en_CA", type: "website" },
   icons: { icon: "/favicon.ico" },
 };

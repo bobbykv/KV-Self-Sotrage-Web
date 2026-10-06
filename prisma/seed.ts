@@ -24,7 +24,7 @@ async function main() {
         title: "How to pick the right storage unit size",
         slug: "how-to-pick-a-storage-unit-size",
         excerpt: "A quick guide to choosing between small, medium and large units so you don't pay for space you won't use.",
-        body: "## Start with what you're storing\n\nA 5x10 fits the contents of a small bedroom. A 10x10 fits a one-bedroom apartment. A 10x20 fits most of a two- or three-bedroom home.\n\n## Not sure?\n\nTry our [size finder](/size-finder) or call (902) 867-3779 and we'll help.",
+        body: "## Start with what you're storing\n\nAs a starting estimate, compare 5x5 to 5x10 for boxes or dorm-room belongings, 5x10 to 10x10 for a studio or one-bedroom apartment, and 10x15 to 10x20 for a two- to three-bedroom home. Furniture dimensions, the number of boxes, and room to reach your things all affect the fit.\n\n## Not sure?\n\nTry our [size finder](/size-finder) or call (902) 867-3779 and we'll help.",
         published: false,
       },
     });

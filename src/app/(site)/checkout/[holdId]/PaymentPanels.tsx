@@ -10,10 +10,10 @@ export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: st
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-kv-navy-50 p-4 text-sm text-kv-navy">
-        <p className="font-bold">How payment works right now</p>
+        <p className="font-bold">Your next step</p>
         <p className="mt-1">
-          Confirm below and we&apos;ll keep this unit reserved for you for {hours} hours. Our office will contact you to take payment and finish your move-in
-          {payOnlineUrl ? ", or you can pay through our secure online payment page" : ""}. Nothing is charged on this website.
+          Reserve this space for {hours} hours while you arrange payment and finish your rental. We&apos;ll contact you to help you complete those steps
+          {payOnlineUrl ? ", or you can pay through our secure online payment page" : ""}. Confirming your reservation doesn&apos;t take a payment. Access is arranged after your rental is complete.
         </p>
       </div>
       {error && (
@@ -60,7 +60,7 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
     const data = await res?.json().catch(() => null);
     if (res?.ok) router.push(`/checkout/${holdId}/confirmation`);
     else {
-      setError(data?.error ?? "The payment didn't go through and nothing was charged.");
+      setError(data?.error ?? "We couldn't confirm your payment. Please call (902) 867-3779 before trying again so we can check it.");
       setPending(false);
     }
   }
@@ -99,9 +99,9 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
         </p>
       )}
       <button className="btn-primary w-full" disabled={pending}>
-        {pending ? "Processing…" : `Pay ${total} and move in`}
+        {pending ? "Processing…" : `Pay ${total} and complete my rental`}
       </button>
-      <p className="text-xs text-kv-muted">Your card is sent securely to our booking and payment system (SiteLink). We never store your card details.</p>
+      <p className="text-xs text-kv-muted">Pay securely to complete your rental. Your confirmation will explain the next steps for your lease and access.</p>
     </form>
   );
 }

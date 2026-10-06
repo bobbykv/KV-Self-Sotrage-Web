@@ -6,15 +6,15 @@ import { BRAND } from "@/config/locations";
 import { getTenantSession } from "@/lib/auth";
 import { loginAction } from "../actions";
 
-export const metadata: Metadata = { title: "Tenant login", robots: { index: false } };
+export const metadata: Metadata = { title: "Sign In to My Storage", robots: { index: false } };
 
 export default async function PortalLogin() {
   if (await getTenantSession()) redirect("/portal");
   return (
     <div className="container-kv max-w-md py-12 sm:py-20">
-      <p className="eyebrow">Tenant portal</p>
+      <p className="eyebrow">My storage</p>
       <h1 className="h2 mt-2">Sign in</h1>
-      <p className="mt-2 text-sm text-kv-muted">See your balance, access code and lease, schedule a move-out, or report a maintenance issue.</p>
+      <p className="mt-2 text-sm text-kv-muted">Manage your storage in one place. Check your balance and access details, view your lease, or let us know when your plans change.</p>
       <div className="card mt-6 p-6">
         <ActionForm action={loginAction} submitLabel="Sign in" pendingLabel="Signing in…" hideOnSuccess={false}>
           <label className="block">
@@ -28,7 +28,7 @@ export default async function PortalLogin() {
         </ActionForm>
       </div>
       <p className="mt-6 text-sm text-kv-muted">
-        No portal password yet, or forgot it? Call{" "}
+        Need help signing in or setting up your password? Call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-semibold text-kv-red">
           {BRAND.phone}
         </a>{" "}

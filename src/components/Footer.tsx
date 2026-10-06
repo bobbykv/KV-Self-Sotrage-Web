@@ -7,7 +7,7 @@ export function Footer() {
       <div className="container-kv grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="text-lg font-extrabold text-white">KV Self Storage</p>
-          <p className="mt-2 text-sm">Local, family-run storage in Antigonish and Pictou County.</p>
+          <p className="mt-2 text-sm">Space for what matters, close to home in Antigonish and Pictou County.</p>
           <a href={`tel:${BRAND.phoneE164}`} className="mt-4 block text-lg font-bold text-kv-yellow">
             {BRAND.phone}
           </a>
@@ -26,7 +26,7 @@ export function Footer() {
               </p>
             ))}
             <Link href={`/units?location=${l.key}`} className="mt-2 inline-block font-semibold text-kv-yellow underline">
-              See units
+              Find your space
             </Link>
           </div>
         ))}
@@ -38,7 +38,7 @@ export function Footer() {
             <Link href="/self-storage-antigonish">Antigonish</Link>
             <Link href="/self-storage-new-glasgow">New Glasgow</Link>
             <Link href="/self-storage-stellarton">Stellarton</Link>
-            <Link href="/blog">Blog</Link>
+            <Link href="/blog">Storage tips</Link>
             <Link href="/reviews">Reviews</Link>
             <Link href="/contact">Contact</Link>
             <Link href="/maintenance">Report an issue</Link>

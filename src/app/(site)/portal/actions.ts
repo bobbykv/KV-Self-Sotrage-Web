@@ -56,8 +56,8 @@ export async function scheduleMoveOutAction(_prev: FormState, form: FormData): P
     await sitelink.scheduleMoveOut(link.locationKey, ledgerId, when);
     await audit(`tenant:${link.tenantId}`, "portal.schedule_move_out", `${link.locationKey}:${ledger.unitName}`, { date });
     return { ok: true, message: `Move-out scheduled for ${when.toLocaleDateString("en-CA", { dateStyle: "long", timeZone: "UTC" })}. The office will process it on that date.` };
-  } catch (err) {
-    return { error: `We couldn't schedule that online (${safeErrorMessage(err, 80)}). Please call (902) 867-3779.` };
+  } catch {
+    return { error: `We couldn't save your move-out date. Please call (902) 867-3779 and we'll help you arrange it.` };
   }
 }
 
@@ -66,14 +66,14 @@ export async function maintenanceAction(_prev: FormState, form: FormData): Promi
   applyUnitChoice(form);
   const link = linkFor(session, String(form.get("locationKey")));
   if (!link) return { error: "Choose your location." };
-  if (!(await rateLimit(`maint:${link.tenantId}`, 10, 3600))) return { error: "You've sent several requests — please call us if it's urgent." };
+  if (!(await rateLimit(`maint:${link.tenantId}`, 10, 3600))) return { error: "We've received several requests from you. For an urgent problem, please call us." };
   const parsed = maintenanceSchema.safeParse({ ...Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")), email: form.get("email") ?? session.email });
   if (!parsed.success) return { error: "Please choose the unit and issue type, and describe the problem." };
   try {
     const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
     const photoIds = (await Promise.all(photos.map((p) => saveImage(p, "maintenance_photo", false)))).filter(Boolean) as string[];
     await createMaintenanceRequest(parsed.data, { tenantId: link.tenantId, verified: true, photoIds });
-    return { ok: true, message: "Thanks — your request is in the owner's maintenance list. We'll follow up the way you asked." };
+    return { ok: true, message: "Thanks. We've received your report and your follow-up preference." };
   } catch (err) {
     return { error: safeErrorMessage(err, 120) };
   }
@@ -84,7 +84,7 @@ export async function transferAction(_prev: FormState, form: FormData): Promise<
   applyUnitChoice(form);
   const link = linkFor(session, String(form.get("locationKey")));
   if (!link) return { error: "Choose your current location." };
-  if (!(await rateLimit(`transfer:${link.tenantId}`, 5, 3600))) return { error: "You've sent several requests — we'll be in touch." };
+  if (!(await rateLimit(`transfer:${link.tenantId}`, 5, 3600))) return { error: "We've received several requests from you. Please call if you need help sooner." };
   const parsed = transferSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: "Please tell us your current unit, what you'd like, and when." };
   const info = await sitelink.tenantInfo(link.locationKey, link.tenantId).catch(() => null);

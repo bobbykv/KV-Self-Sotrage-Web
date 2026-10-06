@@ -37,9 +37,9 @@ export function HoldForm({ location, unitId, holdMinutes, minDate, maxDate }: { 
         </p>
       )}
       <button type="submit" disabled={pending} className="btn-primary w-full">
-        {pending ? "Holding your unit…" : `Hold this unit for ${holdMinutes} minutes`}
+        {pending ? "Preparing your checkout…" : "Continue with this space"}
       </button>
-      <p className="text-xs text-kv-muted">Nothing is charged to hold. You&apos;ll see the full price breakdown, including HST, on the next screen.</p>
+      <p className="text-xs text-kv-muted">Your space is held for {holdMinutes} minutes while you review the total, including HST. Starting this step doesn&apos;t take a payment.</p>
     </form>
   );
 }

@@ -4,13 +4,13 @@ import { LeadForm } from "@/components/LeadForm";
 import { PromoBanner } from "@/components/PromoBanner";
 import { UnitGroupCard } from "@/components/UnitCards";
 import { LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
-import { filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory } from "@/lib/catalog";
+import { areaRangeFromParams, filterFullTypes, filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 
 export const metadata: Metadata = {
   title: "Available Storage Units & Prices",
-  description: "Live storage unit availability and monthly prices at KV Self Storage in Antigonish, Addington Forks and Stellarton, NS.",
+  description: "Compare storage sizes and monthly prices in Antigonish, Addington Forks, and Stellarton. Find a space for your belongings and get help choosing the right fit.",
 };
 
 const CATS = Object.keys(SIZE_LABELS) as SizeCategory[];
@@ -28,15 +28,19 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   const location = isLocationKey(sp.location) ? sp.location : undefined;
   const category = CATS.includes(sp.size as SizeCategory) ? (sp.size as SizeCategory) : undefined;
   const climate = sp.climate === "1";
+  const range = category ? {} : areaRangeFromParams(sp);
+  const filter: UnitFilter = { location, category, climate: climate || undefined, vehicle: category === "parking" ? true : false, ...range };
   const notice = sp.notice;
 
   const [inventory, promos] = await Promise.all([getInventory(), getLivePromotions({ placement: "units", location })]);
   const groups = groupUnits(inventory.flatMap((l) => l.units));
-  const shown = filterGroups(groups, { location, category, climate: climate || undefined, vehicle: category === "parking" ? true : undefined });
-  const full = fullTypes(
+  // Without a storage-size preference, include vehicle spaces in browsing too.
+  if (!category && !range.minArea && !range.maxArea) filter.vehicle = undefined;
+  const shown = filterGroups(groups, filter);
+  const full = filterFullTypes(fullTypes(
     inventory.flatMap((l) => l.priceList),
     groups,
-  ).filter((p) => (!location || p.locationKey === location) && (!climate || p.climate));
+  ), filter);
   const oldest = inventory
     .filter((l) => !location || l.location === location)
     .map((l) => l.refreshedAt)
@@ -46,15 +50,18 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   return (
     <div className="container-kv py-8 sm:py-12">
       <p className="eyebrow">Units & prices</p>
-      <h1 className="h1 mt-2">{location ? `Available at ${getLocation(location).shortName}` : "What's open right now"}</h1>
+      <h1 className="h1 mt-2">{location ? `Find your space at ${getLocation(location).shortName}` : "Find a space that fits your life"}</h1>
+      <p className="mt-3 max-w-2xl text-kv-muted">Compare sizes and monthly rent for the belongings you&apos;re keeping. Need help with the fit? <Link href="/size-finder" className="font-semibold text-kv-red underline">Start with the size guide</Link>.</p>
       <p className="mt-3 text-sm text-kv-muted">
-        Live from our booking system · updated {updatedLabel(oldest)}. Prices are per month; HST is added and shown at checkout.
-        {anyError && " Some data may be a little behind — call us to confirm."}
+        Listings updated {updatedLabel(oldest)}. Monthly rent is shown before HST. Review your full move-in total at checkout.
+        {anyError && " We couldn't update some listings. Please call to confirm your options."}
       </p>
 
       {notice && <p className="mt-4 rounded-xl bg-kv-red-50 p-4 font-semibold text-kv-red" role="alert">{notice}</p>}
 
       <form method="get" className="mt-6 grid gap-3 rounded-2xl border border-kv-line p-4 sm:grid-cols-4">
+        {range.minArea && <input type="hidden" name="minArea" value={range.minArea} />}
+        {range.maxArea && <input type="hidden" name="maxArea" value={range.maxArea} />}
         <label className="block">
           <span className="label">Location</span>
           <select name="location" defaultValue={location ?? ""} className="input">
@@ -69,7 +76,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
         <label className="block">
           <span className="label">Size</span>
           <select name="size" defaultValue={category ?? ""} className="input">
-            <option value="">Any size</option>
+            <option value="">{range.minArea && range.maxArea ? `Suggested range: ${range.minArea}–${range.maxArea} sq ft` : "Any size"}</option>
             {CATS.map((c) => (
               <option key={c} value={c}>
                 {SIZE_LABELS[c].label}
@@ -83,6 +90,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
         </label>
         <button className="btn-navy self-end">Show units</button>
       </form>
+      {(category || location || climate || range.minArea || range.maxArea) && <Link href="/units" className="mt-3 inline-block text-sm font-semibold text-kv-red underline">Clear filters and compare all spaces</Link>}
 
       <div className="mt-6">
         <PromoBanner promos={promos} compact />
@@ -96,10 +104,10 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
         </div>
       ) : (
         <div className="card mt-8 p-6">
-          <h2 className="text-xl font-extrabold text-kv-navy">Nothing matching is open right now</h2>
-          <p className="mt-1 text-kv-muted">Leave your details and we&apos;ll contact you as soon as one opens up. No charge to be on the list.</p>
+          <h2 className="text-xl font-extrabold text-kv-navy">Let&apos;s find another option for you</h2>
+          <p className="mt-1 text-kv-muted">No spaces match these filters at the moment. Try another size or location, or leave your details and we&apos;ll contact you when a suitable space opens. Joining the waitlist is free.</p>
           <div className="mt-4 max-w-xl">
-            <LeadForm reason="unavailable_unit" locationKey={location} unitType={category ? SIZE_LABELS[category].label : undefined} />
+            <LeadForm reason="unavailable_unit" locationKey={location} unitType={category ? SIZE_LABELS[category].label : undefined} unitSize={range.minArea && range.maxArea ? `${range.minArea}–${range.maxArea} sq ft` : undefined} />
           </div>
         </div>
       )}
@@ -107,7 +115,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
       {full.length > 0 && (
         <section className="mt-12">
           <h2 className="h2 text-xl sm:text-2xl">Currently full</h2>
-          <p className="mt-1 text-sm text-kv-muted">These sizes are all rented. Join the list and we&apos;ll call you when one frees up.</p>
+          <p className="mt-1 text-sm text-kv-muted">Prefer one of these sizes? Join the free waitlist and we&apos;ll contact you when a space opens.</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {full.slice(0, 8).map((p) => (
               <details key={`${p.locationKey}-${p.unitTypeId}`} className="card p-5">

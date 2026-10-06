@@ -41,7 +41,7 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
           <p className="mt-4 text-lg text-kv-muted">{page.intro}</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link href={page.locations.length === 1 ? `/units?location=${page.locations[0]}` : "/units"} className="btn-primary">
-              See available units
+              Find your space
             </Link>
             <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
               Call {BRAND.phone}
@@ -62,7 +62,7 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
 
       {groups.length > 0 && (
         <section className="mt-14">
-          <h2 className="h2">Open right now</h2>
+          <h2 className="h2">Compare spaces for your next step</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((g) => (
               <UnitGroupCard key={g.key} g={g} />

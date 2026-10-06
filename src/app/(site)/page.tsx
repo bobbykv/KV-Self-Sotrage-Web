@@ -7,6 +7,7 @@ import { ReviewsBlock } from "@/components/Reviews";
 import { BRAND } from "@/config/locations";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
+import { env } from "@/lib/env";
 
 export default async function Home() {
   const [promos, inventory] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory()]);
@@ -22,20 +23,20 @@ export default async function Home() {
       <section className="container-kv grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-2">
         <div>
           <p className="eyebrow">Antigonish · Addington Forks · Stellarton</p>
-          <h1 className="h1 mt-3">Local storage, honest prices, open 24/7.</h1>
+          <h1 className="h1 mt-3">Make room for what&apos;s next. Keep what matters.</h1>
           <p className="mt-4 max-w-lg text-lg text-kv-muted">
-            See real prices and what&apos;s open right now. Hold a unit online for 20 minutes while you check out — no surprise fees, HST shown up front.
+            Moving or settling into a smaller home? You don&apos;t have to part with belongings you&apos;re not ready to let go of. Find clean, secure storage close to home, with help choosing the right size.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/units" className="btn-primary">
-              Find a unit
+              Find your space
             </Link>
             <Link href="/size-finder" className="btn-ghost">
-              Not sure what size?
+              Help me choose a size
             </Link>
           </div>
           <p className="mt-6 text-sm text-kv-muted">
-            Rather talk to someone?{" "}
+            Want help deciding? Call{" "}
             <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
               {BRAND.phone}
             </a>
@@ -46,10 +47,46 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="container-kv pb-16">
+        <p className="eyebrow">When life needs a little more space</p>
+        <h2 className="h2 mt-2">Your next chapter doesn&apos;t have to mean letting go</h2>
+        <p className="mt-4 max-w-3xl text-kv-muted">A move, a smaller home, or a growing business can leave you short on room. Give your belongings a place of their own so you can take your next step with less clutter and more peace of mind.</p>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {[
+            ["Moving or downsizing", "Keep furniture, keepsakes, and the things you still want while you get settled."],
+            ["Room for your business", "Store stock, tools, and equipment so your workspace can work for you."],
+            ["Between school terms", "Leave your belongings near campus instead of packing them home for the summer."],
+          ].map(([title, body]) => (
+            <div key={title} className="card p-6">
+              <h3 className="text-lg font-extrabold text-kv-navy">{title}</h3>
+              <p className="mt-2 text-sm text-kv-muted">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="container-kv pb-16">
+        <p className="eyebrow">A little guidance goes a long way</p>
+        <h2 className="h2 mt-2">Feel good about where your belongings are</h2>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {[
+            ["Choose the space you need", "Start with the size guide, compare monthly prices, and ask us if you need a second opinion."],
+            ["Store with peace of mind", "Clean units, gated entry, and camera surveillance help you feel confident about where you store."],
+            ["Get to your things when you need them", "With 24/7 access, you can collect a box or add a load when it fits your day."],
+          ].map(([title, body]) => (
+            <div key={title} className="card p-6">
+              <h3 className="text-lg font-extrabold text-kv-navy">{title}</h3>
+              <p className="mt-2 text-sm text-kv-muted">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="bg-kv-navy-50 py-16">
         <div className="container-kv">
           <p className="eyebrow">Three locations</p>
-          <h2 className="h2 mt-2">Pick the one closest to you</h2>
+          <h2 className="h2 mt-2">Keep your belongings within reach</h2>
+          <p className="mt-3 max-w-2xl text-kv-muted">Choose a location that fits your day in Antigonish, Addington Forks, or Stellarton. All three offer 24/7 access.</p>
           <div className="mt-8">
             <LocationCards counts={counts} />
           </div>
@@ -62,13 +99,12 @@ export default async function Home() {
         </div>
         <div>
           <p className="eyebrow">How it works</p>
-          <h2 className="h2 mt-2">Rent in a few minutes, from your phone</h2>
+          <h2 className="h2 mt-2">From needing room to feeling settled</h2>
           <ol className="mt-6 space-y-5">
             {[
-              ["Pick your unit", "Live sizes and prices from our booking system, updated about every 30 minutes."],
-              ["We hold it for 20 minutes", "The unit is set aside for you while you check out. If time runs out, it just goes back on the list."],
-              ["See every line before you pay", "Rent, any admin fee or deposit, and HST — each on its own line. No end-of-checkout surprises."],
-              ["Move in", "We'll confirm your access details. Need help? We're local and we answer the phone."],
+              ["Find your space", "Tell us what you're storing or compare sizes and monthly prices. We'll help if you're unsure."],
+              ["Arrange your rental", env.PAYMENT_MODE === "passthrough" ? "Choose your move-in date, review the full total, and pay online. Your confirmation explains your lease and access." : "Choose your move-in date and reserve online. We'll help you finish payment and your rental before you move in."],
+              ["Move forward with peace of mind", "Once your rental and access are ready, bring your belongings over. They're nearby whenever you need them."],
             ].map(([t, d], i) => (
               <li key={t} className="flex gap-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kv-yellow font-extrabold text-kv-navy">{i + 1}</span>
@@ -87,11 +123,11 @@ export default async function Home() {
       <section className="container-kv">
         <div className="flex flex-col items-start gap-4 rounded-3xl bg-kv-red px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
           <div>
-            <h2 className="text-2xl font-extrabold">Questions before you book?</h2>
-            <p className="mt-1 text-white/85">Hours, access, Noke smart locks, student storage — it&apos;s all in the FAQ.</p>
+            <h2 className="text-2xl font-extrabold">Ready for a little more breathing room?</h2>
+            <p className="mt-1 text-white/85">Find a space for what matters and take your next step.</p>
           </div>
-          <Link href="/faq" className="btn-yellow">
-            Read the FAQ
+          <Link href="/units" className="btn-yellow">
+            Find your space
           </Link>
         </div>
       </section>

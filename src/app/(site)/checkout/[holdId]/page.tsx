@@ -42,8 +42,8 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
         <h1 className="h2">{failed ? "We couldn't complete your payment" : "This hold has ended"}</h1>
         <p className="mt-3 text-kv-muted">
           {failed
-            ? `Nothing was charged. We've let the office know — please call ${BRAND.phone} and we'll finish this with you.`
-            : "Nothing was charged and the unit is back on the list. You can start again any time."}
+            ? `We couldn't confirm your payment. Please call ${BRAND.phone} before trying again so we can check it and help you finish.`
+            : "Your checkout time has ended. Browse the available spaces to start again."}
         </p>
         <Link href={`/units?location=${hold.locationKey}`} className="btn-primary mt-6">
           Back to units
@@ -94,7 +94,7 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
               <CostBreakdown cost={cost} hstRate={env.HST_RATE} />
             ) : (
               <p className="rounded-xl bg-kv-yellow-light p-4 text-sm">
-                We couldn&apos;t load your exact move-in total from our booking system just now. Refresh in a moment — we won&apos;t take payment until every line, including HST, is shown here.
+                Your full move-in total isn&apos;t available yet. Refresh in a moment, or contact us for help. You can continue once the total, including HST, is shown.
               </p>
             )}
           </div>
@@ -107,7 +107,7 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
         </section>
 
         <aside className="card self-start p-6">
-          <h2 className="font-extrabold text-kv-navy">{env.PAYMENT_MODE === "passthrough" ? "Pay & move in" : "Confirm your reservation"}</h2>
+          <h2 className="font-extrabold text-kv-navy">{env.PAYMENT_MODE === "passthrough" ? "Complete your rental" : "Confirm your reservation"}</h2>
           <div className="mt-4">
             {!cost ? (
               <p className="text-sm text-kv-muted">Waiting for your total…</p>
@@ -118,10 +118,10 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
             )}
           </div>
           <form action={cancelHold.bind(null, hold.id)} className="mt-4 text-center">
-            <button className="text-sm font-semibold text-kv-muted underline hover:text-kv-red">Cancel and release this unit</button>
+            <button className="text-sm font-semibold text-kv-muted underline hover:text-kv-red">Cancel this checkout</button>
           </form>
           <p className="mt-4 text-xs text-kv-muted">
-            Refunds are handled personally by the owner — call {BRAND.phone} if anything changes.
+            Questions about the total or a change of plans? Call {BRAND.phone} and we&apos;ll help you work through it.
           </p>
         </aside>
       </div>

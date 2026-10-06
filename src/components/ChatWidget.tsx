@@ -47,7 +47,7 @@ export function ChatWidget() {
         body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })) }),
       });
       const data = await res.json();
-      setMsgs([...history, { role: "assistant", content: data.reply ?? `Sorry, something went wrong. Please call ${PHONE}.`, actions: data.actions ?? [] }]);
+      setMsgs([...history, { role: "assistant", content: data.reply ?? `I couldn’t get an answer just now. For help, call ${PHONE}.`, actions: data.actions ?? [] }]);
     } catch {
       setMsgs([...history, { role: "assistant", content: `I'm having trouble connecting. Please call us at ${PHONE}.`, actions: [{ type: "call" }] }]);
     } finally {
@@ -88,7 +88,7 @@ export function ChatWidget() {
           <header className="flex items-center justify-between bg-kv-navy px-4 py-3 text-white">
             <div>
               <p className="font-bold">KV Self Storage assistant</p>
-              <p className="text-xs text-white/75">Virtual assistant · a person can take over any time</p>
+              <p className="text-xs text-white/75">Virtual assistant · ask for a callback</p>
             </div>
             <button onClick={() => setOpen(false)} className="rounded-full p-2 hover:bg-white/10" aria-label="Close chat">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
@@ -139,7 +139,7 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               maxLength={600}
-              placeholder="Ask about units, hours, access…"
+              placeholder="What are you storing?"
               className="input min-h-11 flex-1 rounded-full"
               aria-label="Message"
             />

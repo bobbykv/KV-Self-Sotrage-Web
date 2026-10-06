@@ -84,7 +84,7 @@ export async function runTool(name: ToolName, args: Args, channel: AgentChannel)
         const saved = await captureLead(lead);
         return { ok: true, lead_id: saved.id, message: "Lead saved. Staff will follow up." };
       } catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : "Could not save lead — need a name and a phone or email." };
+        return { ok: false, error: err instanceof Error ? err.message : "Please add your name and a phone number or email so we can follow up." };
       }
     }
     case "handoff_to_human":

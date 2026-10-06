@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   const ip = await clientIp();
   if (!(await rateLimit(`chat:${ip}`, 30, 600)) || !(await rateLimit(`chat-day:${ip}`, 200, 86400))) {
-    return NextResponse.json({ reply: "You've sent a lot of messages — let's get a person on it. Call (902) 867-3779.", actions: [{ type: "call" }] }, { status: 429 });
+    return NextResponse.json({ reply: "For more help with your questions, please call (902) 867-3779.", actions: [{ type: "call" }] }, { status: 429 });
   }
   return NextResponse.json(await chat(parsed.data.messages));
 }
