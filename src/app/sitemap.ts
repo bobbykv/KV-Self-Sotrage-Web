@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { SEO_PAGES } from "@/content/seo-pages";
 import { getPublishedPosts } from "@/lib/cms";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.APP_URL ?? "https://kvselfstorage.ca";
   const staticPaths = ["", "/units", "/locations", "/size-finder", "/faq", "/blog", "/reviews", "/contact", "/maintenance", "/privacy", "/terms"];
