@@ -84,7 +84,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
                 </p>
                 <p className="text-xs text-kv-muted">
                   SiteLink tenant #{h.tenantId ?? "—"} · WaitingID {h.waitingId ?? "—"} · {h.status === "active" ? "expires" : "until"} {h.expiresAt.toLocaleString("en-CA", { timeZone: "America/Halifax" })}
-                  {cost && ` · total ${money(cost.total)} (HST ${money(cost.tax)})`}
+                  {cost && ` · total ${money(cost.total)} (HST ${money(cost.tax)}${cost.taxSource === "computed" ? ", computed locally — SiteLink returned no tax lines" : ""})`}
                   {h.paymentRef && ` · receipt ${h.paymentRef}`}
                 </p>
                 {h.lastFailure && <p className="mt-1 text-xs text-kv-red">Last failure: {h.lastFailure} ({h.failureCount}×)</p>}
