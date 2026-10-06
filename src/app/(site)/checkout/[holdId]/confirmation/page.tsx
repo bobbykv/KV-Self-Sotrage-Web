@@ -107,13 +107,18 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             <li>Follow your access instructions. Call us if you haven&apos;t received them.</li>
           </ol>
         )}
-        {loc.amenities.nokeRemoteUnlock && (
+        {loc.amenities.nokeRemoteUnlock && !env.appTestMode && env.sitelinkMode !== "mock" && (
           <p className="mt-4 rounded-xl border border-kv-yellow bg-kv-yellow-light p-3 text-sm text-kv-navy">
             Addington Forks and Stellarton use the Nokē app to unlock your unit. Follow the setup instructions you receive after completing your rental. Missing the
             invitation? Call {BRAND.phone}.
           </p>
         )}
-        {!loc.amenities.nokeRemoteUnlock && (
+        {(env.appTestMode || env.sitelinkMode === "mock") && (
+          <p className="mt-4 rounded-xl border border-kv-line bg-kv-navy-50 p-3 text-sm text-kv-navy">
+            Simulator: access codes shown in the portal are sample data only. Nokē is not activated here.
+          </p>
+        )}
+        {!loc.amenities.nokeRemoteUnlock && !env.appTestMode && env.sitelinkMode !== "mock" && (
           <p className="mt-4 text-sm text-kv-muted">
             Follow the gate and unit-access instructions provided with your rental. Call {BRAND.phone} if you need help getting in.
           </p>
