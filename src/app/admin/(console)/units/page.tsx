@@ -4,6 +4,7 @@ import { formatSize, money } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import type { Unit } from "@/lib/sitelink/types";
 import { refreshCacheAction } from "../actions";
+import { blockingHoldWhere } from "@/lib/hold-status";
 
 export const metadata = { title: "Units" };
 
@@ -14,7 +15,7 @@ export default async function AdminUnits({ searchParams }: { searchParams: Promi
   const q = (sp.q ?? "").trim().toLowerCase();
   const locs = location ? [location] : [...LOCATION_KEYS];
   const snaps = await db.siteLinkSnapshot.findMany({ where: { locationKey: { in: locs }, kind: { in: ["all", "available"] } } });
-  const holds = await db.hold.findMany({ where: { status: "active", expiresAt: { gt: new Date() } }, select: { locationKey: true, unitId: true, firstName: true, lastName: true, expiresAt: true } });
+  const holds = await db.hold.findMany({ where: blockingHoldWhere(), select: { locationKey: true, unitId: true, firstName: true, lastName: true, expiresAt: true } });
 
   const rows: (Unit & { source: string })[] = [];
   for (const loc of locs) {

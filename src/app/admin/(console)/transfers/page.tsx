@@ -46,7 +46,7 @@ export default async function AdminTransfers({ searchParams }: { searchParams: P
                 See vacant units
               </Link>
             </div>
-            <form action={updateTransferAction.bind(null, r.id)} className="flex w-full flex-col gap-2 sm:w-72">
+            <form key={`${r.status}:${r.updatedAt.getTime()}`} action={updateTransferAction.bind(null, r.id)} className="flex w-full flex-col gap-2 sm:w-72">
               <select name="status" defaultValue={r.status} className="input min-h-10">
                 <option value="new">New</option>
                 <option value="in_progress">In progress</option>

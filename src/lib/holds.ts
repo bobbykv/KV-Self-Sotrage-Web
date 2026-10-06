@@ -12,6 +12,7 @@ import { getSettings } from "./settings";
 import { sitelink, SiteLinkError } from "./sitelink/client";
 import { RESERVATION_CANCEL_TYPE, RESERVATION_STATUS_CANCELLED } from "./sitelink/enums";
 import type { MoveInCost } from "./sitelink/types";
+import { BLOCKING_HOLD_STATUSES } from "./hold-status";
 
 export const HOLD_COOKIE = "kv_hold";
 const MAX_PAYMENT_ATTEMPTS = 3;
@@ -37,7 +38,7 @@ export type HoldInput = {
 
 /** Marks lapsed holds expired and (only if SiteLink confirmed the status enum) cancels them there too. */
 export async function expireHolds(): Promise<number> {
-  const lapsed = await db.hold.findMany({ where: { status: "active", expiresAt: { lte: new Date() } } });
+  const lapsed = await db.hold.findMany({ where: { status: { in: BLOCKING_HOLD_STATUSES }, expiresAt: { lte: new Date() } } });
   for (const h of lapsed) {
     await db.hold.update({ where: { id: h.id }, data: { status: "expired" } });
     if (RESERVATION_STATUS_CANCELLED !== null && h.waitingId && h.tenantId) {

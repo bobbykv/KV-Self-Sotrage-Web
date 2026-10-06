@@ -47,7 +47,7 @@ export default async function AdminMaintenance({ searchParams }: { searchParams:
                   </div>
                 )}
               </div>
-              <form action={updateMaintenanceAction.bind(null, r.id)} className="flex w-full flex-col gap-2 sm:w-72">
+              <form key={`${r.status}:${r.updatedAt.getTime()}`} action={updateMaintenanceAction.bind(null, r.id)} className="flex w-full flex-col gap-2 sm:w-72">
                 <select name="status" defaultValue={r.status} className="input min-h-10">
                   <option value="new">New</option>
                   <option value="in_progress">In progress</option>

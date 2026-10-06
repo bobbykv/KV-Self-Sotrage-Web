@@ -7,6 +7,7 @@ import { log, safeErrorMessage } from "./log";
 import { getSettings } from "./settings";
 import { sitelink } from "./sitelink/client";
 import type { PriceListEntry, Unit } from "./sitelink/types";
+import { blockingHoldWhere } from "./hold-status";
 
 type Kind = "available" | "all" | "pricelist" | "report";
 const snapshotId = (loc: LocationKey, kind: Kind) => `${loc}:${kind}`;
@@ -154,7 +155,7 @@ export async function getInventory(): Promise<LocationInventory[]> {
     snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
   }
   const held = await db.hold.findMany({
-    where: { status: "active", expiresAt: { gt: new Date() } },
+    where: blockingHoldWhere(),
     select: { locationKey: true, unitId: true },
   });
   const heldKey = new Set(held.map((h) => `${h.locationKey}:${h.unitId}`));
