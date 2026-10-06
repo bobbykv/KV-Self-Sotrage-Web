@@ -4,8 +4,8 @@ import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
 import { db } from "./db";
-import { env } from "./env";
-import { getInventory } from "./inventory";
+import { cookieNames, env } from "./env";
+import { getInventory, refreshInventory } from "./inventory";
 import { log, safeErrorMessage } from "./log";
 import { notifyStaff } from "./notify";
 import { getSettings } from "./settings";
@@ -14,7 +14,7 @@ import { RESERVATION_CANCEL_TYPE, RESERVATION_STATUS_CANCELLED } from "./sitelin
 import type { MoveInCost } from "./sitelink/types";
 import { BLOCKING_HOLD_STATUSES } from "./hold-status";
 
-export const HOLD_COOKIE = "kv_hold";
+export const HOLD_COOKIE = cookieNames.hold;
 const MAX_PAYMENT_ATTEMPTS = 3;
 
 export class HoldError extends Error {
@@ -236,6 +236,9 @@ export async function payPassthrough(id: string, card: CardInput): Promise<Hold>
       where: { id },
       data: { status: "moved_in", ledgerId: result.ledgerId || null, paymentRef: result.receiptRef, lastFailure: null },
     });
+    if (env.sitelinkMode === "mock") {
+      await refreshInventory({ force: true, kinds: ["available"] }).catch((err) => log.warn("post-move-in inventory refresh failed", { err }));
+    }
     await notifyStaff("move_in_completed", `Website move-in ${h.unitName} (${loc}) — ${h.firstName} ${h.lastName}`, { holdId: id, ledgerId: result.ledgerId });
     return updated;
   } catch (err) {

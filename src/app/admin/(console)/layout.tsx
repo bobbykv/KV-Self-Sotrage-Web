@@ -51,7 +51,11 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       </aside>
       <div className="min-w-0 flex-1">
         {env.sitelinkMode === "mock" && (
-          <p className="bg-kv-yellow px-4 py-2 text-center text-xs font-bold text-kv-navy">Demo mode: SiteLink is mocked. Add SiteLink credentials to go live.</p>
+          <p className="bg-kv-yellow px-4 py-2 text-center text-xs font-bold text-kv-navy">
+            {env.appTestMode
+              ? "APP_TEST_MODE: simulated SiteLink, payments and portal. Live integrations are blocked."
+              : "Demo mode: SiteLink is mocked. Add SiteLink credentials to go live."}
+          </p>
         )}
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
         <form action={adminLogout} className="px-4 pb-6 lg:hidden">

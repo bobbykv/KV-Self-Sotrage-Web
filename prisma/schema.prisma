@@ -229,3 +229,11 @@ model RateLimit {
   windowStart DateTime
   count       Int
 }
+
+/// Persistent mock SiteLink facility state for APP_TEST_MODE / hosted demos.
+/// Survives Vercel serverless cold starts so fake rentals and portal logins stick.
+model MockSiteLinkState {
+  id        String   @id @default("default")
+  payload   Json
+  updatedAt DateTime @updatedAt
+}
