@@ -38,8 +38,6 @@ export function ChatWidget() {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open]);
 
-  const CARD_MASK = /\b(?:\d[ -]?){12,19}\b/g;
-
   function maskCards(text: string) {
     return text.replace(/\b(?:\d[ -]?){12,19}\b/g, "[removed]");
   }

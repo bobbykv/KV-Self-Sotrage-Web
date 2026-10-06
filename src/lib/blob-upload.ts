@@ -46,7 +46,7 @@ export async function uploadGalleryImage(file: File): Promise<{ url: string; blo
   }
   // Local / no-blob fallback: store in Upload table and serve via /api/uploads/:id
   const row = await db.upload.create({
-    data: { mime, size: buffer.length, bytes: buffer, isPublic: true, purpose: "gallery_photo" },
+    data: { mime, size: buffer.length, bytes: new Uint8Array(buffer), isPublic: true, purpose: "gallery_photo" },
   });
   log.info("gallery photo stored in Postgres (no BLOB_READ_WRITE_TOKEN)", { id: row.id });
   return { url: `/api/uploads/${row.id}`, blobPath: null, widthPx: width, heightPx: height, mime, size: buffer.length };

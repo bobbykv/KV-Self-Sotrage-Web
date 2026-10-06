@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const blobHost = process.env.BLOB_HOST_PATTERN || "*.public.blob.vercel-storage.com";
-
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",

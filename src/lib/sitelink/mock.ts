@@ -533,7 +533,7 @@ export function resetMockMemory() {
 }
 
 /** Clear a ledger balance after a simulated portal payment. */
-export async function applyMockBalancePayment(loc: LocationKey, ledgerId: number, _amount: number) {
+export async function applyMockBalancePayment(loc: LocationKey, ledgerId: number) {
   const st = await loadState();
   const l = st.ledgers[loc]?.find((x) => x.LedgerID === ledgerId);
   if (!l) throw new Error("Ledger not found");

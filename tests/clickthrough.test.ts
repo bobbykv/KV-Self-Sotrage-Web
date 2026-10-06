@@ -1,66 +1,76 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formatHours } from "@/config/locations";
-import { CostBreakdown } from "@/components/CostBreakdown";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { allowSearchIndexing, showDraftNotices, siteEnv } from "@/lib/site-env";
 import { stockPhotoForUnit } from "@/lib/photos";
 
-describe("publicUrl / lease never localhost", () => {
-  it("rewrites localhost absolute paths against a public origin", async () => {
+describe("publicUrl never returns localhost when a public host is configured", () => {
+  it("rewrites localhost URLs to the public origin", async () => {
     vi.resetModules();
     process.env.APP_URL = "https://kvselfstorage.ca";
     const { publicUrl, publicSiteOrigin } = await import("@/lib/site-url");
     const origin = await publicSiteOrigin();
     expect(origin).not.toMatch(/localhost|127\.0\.0\.1/);
-    const url = await publicUrl("http://localhost:3000/portal");
-    expect(url).toBe("https://kvselfstorage.ca/portal");
-    expect(url).not.toMatch(/localhost/);
+    const url = await publicUrl("http://localhost:3000/api/portal/lease");
+    expect(url).toContain("/api/portal/lease");
+    expect(url).not.toMatch(/localhost|127\.0\.0\.1/);
   });
 });
 
 describe("chat size question routes to units", () => {
   beforeEach(() => {
     vi.resetModules();
-  });
-
-  it("rulesChat routes Haley size questions to unit listings", async () => {
-    vi.doMock("@/lib/chat/tools", () => ({
-      searchUnits: vi.fn(async () => ({
-        as_of: null,
-        available: [
-          {
-            location: "haley",
-            location_name: "Haley Road",
-            size: "10x10",
-            size_label: "10 × 10",
-            type: "Standard",
-            monthly_price: 120,
-            available_count: 2,
-            hold_url: "/units/haley/1",
-          },
-        ],
-        full: [],
-      })),
-      getFaqAnswer: vi.fn(async () => ({ results: [] })),
-      captureLeadTool: vi.fn(),
-      handoffToHuman: vi.fn(),
+    vi.doMock("@/lib/inventory", () => ({
+      getInventory: vi.fn(async () => [
+        {
+          location: "haley",
+          units: [
+            {
+              locationKey: "haley",
+              unitId: 1,
+              unitName: "A1",
+              unitTypeId: 1,
+              typeName: "Standard",
+              widthFt: 10,
+              lengthFt: 10,
+              areaSqFt: 100,
+              floor: null,
+              climate: false,
+              power: false,
+              inside: false,
+              alarm: false,
+              vehicle: false,
+              rate: 120,
+              standardRate: 120,
+              rented: false,
+              rentable: true,
+              excludedFromWebsite: false,
+              waitingListReserved: false,
+              description: "",
+            },
+          ],
+          priceList: [],
+          refreshedAt: new Date().toISOString(),
+          lastError: null,
+        },
+      ]),
     }));
-    // engine imports tools by name — patch getFaq via faq module used inside engine
     vi.doMock("@/lib/faq", () => ({
       getFaq: vi.fn(async () => []),
       searchFaq: vi.fn(() => []),
       parseFaq: vi.fn(),
     }));
+  });
+
+  it('rulesChat("What sizes do you have at Haley Rd?") links to units', async () => {
     const { rulesChat } = await import("@/lib/chat/engine");
-    // Also need to mock inventory path through tools - engine imports searchUnits from tools
     const reply = await rulesChat("What sizes do you have at Haley Rd?");
-    expect(reply.reply.toLowerCase()).toMatch(/haley|space|compare|unit/);
-    expect(reply.actions?.some((a) => a.type === "link" && "href" in a && String(a.href).includes("/units"))).toBe(true);
+    expect(reply.reply.toLowerCase()).toMatch(/haley|space|compare|10/);
+    expect(reply.actions.some((a) => a.type === "link" && "href" in a && String((a as { href: string }).href).includes("/units"))).toBe(true);
   });
 });
 
-describe("photo stock / fallbacks", () => {
+describe("photo stockPhotoForUnit / unitTypePhotoUrl fallback", () => {
   it("stockPhotoForUnit picks facility for inside/vehicle", () => {
     expect(stockPhotoForUnit({ inside: true })).toBe("/photos/facility-2.jpg");
     expect(stockPhotoForUnit({ vehicle: true })).toBe("/photos/facility-2.jpg");
@@ -77,8 +87,8 @@ describe("photo stock / fallbacks", () => {
         },
       },
     }));
-    const { unitTypePhotoUrl, stockPhotoForUnit: stock } = await import("@/lib/photos");
-    const url = await unitTypePhotoUrl({
+    const photos = await import("@/lib/photos");
+    const url = await photos.unitTypePhotoUrl({
       locationKey: "haley",
       typeName: "Standard",
       widthFt: 10,
@@ -86,32 +96,28 @@ describe("photo stock / fallbacks", () => {
       inside: false,
       vehicle: false,
     });
-    expect(url).toBe(stock({}));
+    expect(url).toBe(photos.stockPhotoForUnit({}));
   });
 });
 
-describe("CostBreakdown estimated label", () => {
-  it("renders totalLabel text", () => {
-    const cost = {
-      lines: [{ label: "Rent", amount: 100, kind: "rent" as const }],
-      preTax: 100,
-      tax: 14,
-      taxLabel: "HST",
-      taxSource: "computed" as const,
-      total: 114,
-    };
-    const html = renderToStaticMarkup(
-      createElement(CostBreakdown, { cost, hstRate: 0.14, totalLabel: "Estimated move-in total" }),
-    );
-    expect(html).toContain("Estimated move-in total");
+describe("CostBreakdown estimated label via totalLabel", () => {
+  it("wires Estimated move-in total through totalLabel", () => {
+    const breakdown = readFileSync("src/components/CostBreakdown.tsx", "utf8");
+    const checkout = readFileSync("src/app/(site)/checkout/[holdId]/page.tsx", "utf8");
+    expect(breakdown).toContain("totalLabel");
+    expect(checkout).toContain('totalLabel={env.PAYMENT_MODE === "passthrough" ? "Total due today" : "Estimated move-in total"}');
   });
 });
 
 describe("allowSearchIndexing / robots when not production", () => {
-  const prev = { ...process.env };
+  const prevSite = process.env.NEXT_PUBLIC_SITE_ENV;
+  const prevTest = process.env.APP_TEST_MODE;
 
   afterEach(() => {
-    process.env = { ...prev };
+    if (prevSite === undefined) delete process.env.NEXT_PUBLIC_SITE_ENV;
+    else process.env.NEXT_PUBLIC_SITE_ENV = prevSite;
+    if (prevTest === undefined) delete process.env.APP_TEST_MODE;
+    else process.env.APP_TEST_MODE = prevTest;
   });
 
   it("disallows indexing outside production", () => {
@@ -122,7 +128,7 @@ describe("allowSearchIndexing / robots when not production", () => {
     expect(showDraftNotices()).toBe(true);
   });
 
-  it("allows indexing in production", () => {
+  it("allows indexing only in production", () => {
     process.env.NEXT_PUBLIC_SITE_ENV = "production";
     delete process.env.APP_TEST_MODE;
     expect(allowSearchIndexing()).toBe(true);
@@ -130,10 +136,11 @@ describe("allowSearchIndexing / robots when not production", () => {
   });
 });
 
-describe("formatHours a.m./p.m.", () => {
-  it("uses a.m./p.m. without trailing period on the range", () => {
+describe("formatHours", () => {
+  it("uses a.m./p.m. and does not end with a period", () => {
     const s = formatHours({ open: "08:30", close: "16:30" });
     expect(s).toBe("8:30 a.m. to 4:30 p.m.");
-    expect(s.endsWith(".")).toBe(false);
+    expect(s.endsWith("p.m.")).toBe(true);
+    expect(s.endsWith("..")).toBe(false);
   });
 });

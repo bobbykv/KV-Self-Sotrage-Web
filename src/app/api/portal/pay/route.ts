@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await sitelink.clearLedgerBalance(locationKey, ledgerId, amount);
+    await sitelink.clearLedgerBalance(locationKey, ledgerId);
     const ref = `PB${Date.now().toString(36).toUpperCase()}`;
     await db.paymentReceipt.create({
       data: {
