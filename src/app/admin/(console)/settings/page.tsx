@@ -49,7 +49,7 @@ export default async function AdminSettings() {
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField name="holdMinutes" label="Hold length (minutes)" value={s.holdMinutes} min={5} max={60} />
               <NumberField name="confirmedReservationHours" label="Pay-separately reservation (hours)" value={s.confirmedReservationHours} min={1} max={168} hint="How long a confirmed web reservation stays on the SiteLink waiting list." />
-              <NumberField name="pollIntervalMinutes" label="Vacant-unit poll (minutes)" value={s.pollIntervalMinutes} min={30} max={720} hint="Minimum 30. The cron runs every 30 minutes." />
+              <NumberField name="pollIntervalMinutes" label="Vacant-unit poll (minutes)" value={s.pollIntervalMinutes} min={30} max={720} hint="Minimum 30. Used when a refresh runs. Automatic scheduling is off on the free Vercel plan — use Refresh SiteLink cache." />
               <NumberField name="allUnitsPollMinutes" label="All-units poll (minutes)" value={s.allUnitsPollMinutes} min={30} max={1440} />
               <NumberField name="priceListPollMinutes" label="Price list poll (minutes)" value={s.priceListPollMinutes} min={30} max={1440} />
             </div>

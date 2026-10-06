@@ -12,24 +12,25 @@ Browser ──► Next.js server (route handlers / server actions)
               ├── GoHighLevel          lead webhook or LeadConnector API
               ├── LLM (optional)       website chat, tool-calling only
               └── NOTIFY_WEBHOOK_URL   staff alerts
-Vercel Cron ─► /api/cron/inventory (every 30 min) · /api/cron/nightly (07:15 UTC)
+Staff dashboard ► refresh cache · run reports   (same work as /api/cron/*, which is not scheduled)
 Retell ──────► /api/agent/brain · /api/agent/tools/*  (Bearer AGENT_TOOL_SECRET)
 ```
 
 ## SiteLink usage and the API budget
 
-* **Inventory** is read from Postgres, never live on page view. The cron calls
-  `UnitsInformationAvailableUnitsOnly_v2` with `lngLastTimePolled` at most
-  every `pollIntervalMinutes` (≥ 30) per location and merges changes into the
-  snapshot. The nightly job forces a full refresh (`lngLastTimePolled = 0`) and
-  rebuilds the all-units / price-list snapshots.
+* **Inventory** is read from Postgres, never live on page view. Staff press
+  “Refresh SiteLink cache” (or call `/api/cron/inventory` with `CRON_SECRET`)
+  to poll `UnitsInformationAvailableUnitsOnly_v2` with `lngLastTimePolled`.
+  “Run reports now” (or `/api/cron/nightly`) forces a full refresh
+  (`lngLastTimePolled = 0`) and rebuilds the all-units / price-list snapshots.
+  Vercel Cron is not configured, so this deploys on the Hobby plan.
 * **Live calls** happen only on actions: hold (`UnitsInformationByUnitID` →
   `TenantSearchDetailed` / `TenantNewDetailed_v3` → `ReservationNewWithSource_v5`
   → `MoveInCostRetrieveWithDiscount_Reservation_v4`), checkout, portal sign-in
   and portal pages.
 * **Reporting API** (`PastDueBalances`, `MoveInsAndMoveOuts`,
-  `OccupancyStatistics`) runs only in the nightly job or when staff press
-  “Run reports”, never on a customer request.
+  `OccupancyStatistics`) runs only when staff press “Run reports”, never on a
+  customer request.
 * Every call increments `ApiCallCounter` (per location per month). The
   dashboard shows usage against the 10,000/location/month allowance.
 * A Postgres job lock prevents two refreshes running at once.
@@ -47,7 +48,7 @@ Retell ──────► /api/agent/brain · /api/agent/tools/*  (Bearer AGE
    stored on the hold for the checkout breakdown.
 
 Held units disappear from the public list immediately. Expired holds are swept
-on every inventory cron run and on page load.
+when inventory is refreshed and on page load.
 
 ## Checkout and the HST line
 
@@ -123,4 +124,4 @@ console — only whether each integration is configured.
 * Promotions are display-only; matching discounts must exist in SiteLink.
 * No customer reviews are shown until real ones are supplied (`src/content/reviews.ts`).
 * Noke unlock is not integrated; the portal links customers to the Noke app.
-* The 30-minute cron needs Vercel Pro (Hobby only allows daily crons).
+* Scheduled refreshes are off so the site deploys on Vercel's Hobby plan. Put the cron entries back in `vercel.json` on Pro: inventory `*/30 * * * *`, nightly `15 7 * * *`. Until then, use the dashboard buttons.

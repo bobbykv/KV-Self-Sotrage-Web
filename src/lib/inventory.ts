@@ -52,7 +52,8 @@ export type RefreshResult = { location: LocationKey; kind: Kind; ok: boolean; sk
 
 /**
  * Polls SiteLink only for snapshots that are due. Public pages never call
- * this per request; it runs from cron (every 30 min) and the admin button.
+ * this per request. Staff trigger it from the dashboard; /api/cron/inventory
+ * does the same when a scheduler is configured (Vercel crons are off on Hobby).
  * `full` resets the delta cursor (the nightly cache clear SiteLink recommends).
  */
 export async function refreshInventory(opts: { force?: boolean; full?: boolean; kinds?: Kind[] } = {}): Promise<RefreshResult[] | null> {

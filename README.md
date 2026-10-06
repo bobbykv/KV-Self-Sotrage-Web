@@ -48,7 +48,8 @@ npm run sitelink:check        # compare against the live SiteLink WSDL
    Credentials live only in the host's environment settings.
 3. Build command `npm run build`; run `npm run db:migrate` and
    `npm run db:seed` once against production.
-4. `vercel.json` schedules the inventory cron every 30 minutes (needs Vercel
-   Pro) and the nightly refresh. Set `CRON_SECRET`.
+4. Scheduled crons are off, so this deploys on the free Hobby plan. Refresh
+   inventory and reports from the staff dashboard. The `/api/cron/*` routes
+   are still there if you later add a scheduler; they expect `CRON_SECRET`.
 5. In Retell, point the agent at `GET /api/agent/brain?channel=retell` with
    `Authorization: Bearer $AGENT_TOOL_SECRET` and register the returned tools.
