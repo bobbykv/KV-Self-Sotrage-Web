@@ -28,6 +28,20 @@ export function stockPhotoForUnit(opts: { inside?: boolean; vehicle?: boolean })
   return opts.inside || opts.vehicle ? STOCK.facility : STOCK.hero;
 }
 
+/** Static unit photos shipped in /public/photos — no database required. */
+const STATIC_UNIT_PHOTOS: { widthFt: number; lengthFt: number; url: string }[] = [
+  { widthFt: 5, lengthFt: 10, url: "/photos/unit-5x10.jpg" },
+  { widthFt: 10, lengthFt: 15, url: "/photos/unit-10x15.jpg" },
+  { widthFt: 10, lengthFt: 20, url: "/photos/unit-10x20.jpg" },
+];
+
+/** Fast path for the public units list: bundled photos first, then stock art. */
+export function listingUnitPhotoUrl(g: { widthFt: number; lengthFt: number; inside?: boolean; vehicle?: boolean }): string {
+  const match = STATIC_UNIT_PHOTOS.find((p) => p.widthFt === g.widthFt && p.lengthFt === g.lengthFt);
+  if (match) return match.url;
+  return stockPhotoForUnit({ inside: g.inside, vehicle: g.vehicle });
+}
+
 export async function listLocationPhotos(locationKey: LocationKey): Promise<PhotoRecord[]> {
   try {
     const rows = await db.galleryPhoto.findMany({

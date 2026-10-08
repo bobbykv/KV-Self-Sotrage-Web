@@ -7,7 +7,7 @@ import { LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
 import { areaRangeFromParams, filterFullTypes, filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
-import { unitTypePhotoUrl } from "@/lib/photos";
+import { listingUnitPhotoUrl } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Storage Units & Prices in Antigonish and Stellarton",
@@ -48,19 +48,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   const groups = groupUnits(inventory.flatMap((l) => l.units));
   if (!category && !storageType && !range.minArea && !range.maxArea) filter.vehicle = undefined;
   const shown = filterGroups(groups, filter);
-  const imageUrls = await Promise.all(
-    shown.map((g) =>
-      unitTypePhotoUrl({
-        locationKey: g.locationKey,
-        typeName: g.typeName,
-        widthFt: g.widthFt,
-        lengthFt: g.lengthFt,
-        climate: g.climate,
-        inside: g.inside,
-        vehicle: g.vehicle,
-      }),
-    ),
-  );
+  const imageUrls = shown.map((g) => listingUnitPhotoUrl(g));
   const full = filterFullTypes(
     fullTypes(
       inventory.flatMap((l) => l.priceList),
