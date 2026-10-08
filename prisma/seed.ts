@@ -96,6 +96,66 @@ async function main() {
   if (photoCount > 0) {
     console.log(`Added ${photoCount} unit type photo(s).`);
   }
+
+  // Seed facility location photos
+  const facilityPhotos = [
+    {
+      locationKey: "stellarton",
+      url: "/photos/facility-stellarton-gate.jpg",
+      caption: "Secure gated entrance at KV Self Storage Stellarton",
+      altText: "KV Self Storage Stellarton facility entrance with security gate and stone pillars",
+      isCover: true,
+    },
+    {
+      locationKey: "hwy4",
+      url: "/photos/facility-exit31-exterior.jpg",
+      caption: "KV Self Storage at Exit 31 - Highway 4",
+      altText: "Exterior view of KV Self Storage facility at Exit 31 with multiple storage units at sunset",
+      isCover: true,
+    },
+  ];
+
+  let facilityPhotoCount = 0;
+
+  for (const photo of facilityPhotos) {
+    const existing = await db.galleryPhoto.findFirst({
+      where: {
+        kind: "location",
+        locationKey: photo.locationKey,
+        url: photo.url,
+      },
+    });
+
+    if (!existing) {
+      const count = await db.galleryPhoto.count({
+        where: { kind: "location", locationKey: photo.locationKey },
+      });
+
+      if (photo.isCover) {
+        await db.galleryPhoto.updateMany({
+          where: { kind: "location", locationKey: photo.locationKey, isCover: true },
+          data: { isCover: false },
+        });
+      }
+
+      await db.galleryPhoto.create({
+        data: {
+          kind: "location",
+          locationKey: photo.locationKey,
+          url: photo.url,
+          caption: photo.caption,
+          altText: photo.altText,
+          sortOrder: count,
+          isCover: photo.isCover || count === 0,
+        },
+      });
+      facilityPhotoCount++;
+    }
+  }
+
+  if (facilityPhotoCount > 0) {
+    console.log(`Added ${facilityPhotoCount} facility photo(s).`);
+  }
 }
 
 main()
