@@ -30,6 +30,72 @@ async function main() {
     });
     console.log("Added a sample draft blog post.");
   }
+
+  // Seed unit type photos
+  const unitPhotos = [
+    {
+      widthFt: 5,
+      lengthFt: 10,
+      url: "/photos/unit-5x10.jpg",
+      caption: "5x10 storage unit interior",
+      altText: "Clean 5x10 storage unit with metal roll-up door",
+    },
+    {
+      widthFt: 10,
+      lengthFt: 15,
+      url: "/photos/unit-10x15.jpg",
+      caption: "10x15 storage unit interior",
+      altText: "Spacious 10x15 storage unit with climate control",
+    },
+    {
+      widthFt: 10,
+      lengthFt: 20,
+      url: "/photos/unit-10x20.jpg",
+      caption: "10x20 storage unit interior",
+      altText: "Large 10x20 storage unit perfect for household goods",
+    },
+  ];
+
+  const locations = ["haley", "hwy4", "stellarton"];
+  let photoCount = 0;
+
+  for (const location of locations) {
+    for (const photo of unitPhotos) {
+      const existing = await db.galleryPhoto.findFirst({
+        where: {
+          kind: "unit_type",
+          locationKey: location,
+          widthFt: photo.widthFt,
+          lengthFt: photo.lengthFt,
+        },
+      });
+
+      if (!existing) {
+        const count = await db.galleryPhoto.count({
+          where: { kind: "unit_type", locationKey: location },
+        });
+
+        await db.galleryPhoto.create({
+          data: {
+            kind: "unit_type",
+            locationKey: location,
+            widthFt: photo.widthFt,
+            lengthFt: photo.lengthFt,
+            url: photo.url,
+            caption: photo.caption,
+            altText: photo.altText,
+            sortOrder: count,
+            isCover: false,
+          },
+        });
+        photoCount++;
+      }
+    }
+  }
+
+  if (photoCount > 0) {
+    console.log(`Added ${photoCount} unit type photo(s).`);
+  }
 }
 
 main()
