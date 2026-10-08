@@ -5,6 +5,11 @@ import { log, safeErrorMessage } from "./log";
 import { sitelink } from "./sitelink/client";
 import type { Balance, BillingInfo, Ledger, Tenant } from "./sitelink/types";
 
+/** Show Nokē copy at sites that have the amenity. Simulator still does not activate locks. */
+function showNoke(locationKey: LocationKey) {
+  return getLocation(locationKey).amenities.nokeRemoteUnlock;
+}
+
 export type PortalAccount = {
   locationKey: LocationKey;
   locationName: string;
@@ -30,7 +35,7 @@ export async function loadPortalAccounts(links: TenantLink[]): Promise<PortalAcc
         return {
           locationKey,
           locationName: loc.name,
-          noke: loc.amenities.nokeRemoteUnlock,
+          noke: showNoke(locationKey),
           tenant: info?.tenant ?? null,
           ledgers: ledgers.ledgers.map((l) => {
             const b = balances.find((x) => x.ledgerId === l.ledgerId) ?? balances.find((x) => x.unitName === l.unitName);
@@ -41,7 +46,7 @@ export async function loadPortalAccounts(links: TenantLink[]): Promise<PortalAcc
         };
       } catch (err) {
         log.warn("portal load failed", { locationKey, err });
-        return { locationKey, locationName: loc.name, noke: loc.amenities.nokeRemoteUnlock, tenant: null, ledgers: [], billing: null, error: safeErrorMessage(err, 120) };
+        return { locationKey, locationName: loc.name, noke: showNoke(locationKey), tenant: null, ledgers: [], billing: null, error: safeErrorMessage(err, 120) };
       }
     }),
   );

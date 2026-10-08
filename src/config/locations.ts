@@ -7,6 +7,8 @@ export type Location = {
   key: LocationKey;
   name: string;
   shortName: string;
+  /** Full card headline, e.g. "Antigonish: Haley Road". */
+  cardTitle: string;
   street: string;
   city: string;
   region: string;
@@ -41,11 +43,17 @@ export function getLocation(key: LocationKey): Location {
 export function formatHours(h: { open: string; close: string }): string {
   const fmt = (t: string) => {
     const [hh, mm] = t.split(":").map(Number);
-    const suffix = hh >= 12 ? "pm" : "am";
+    const suffix = hh >= 12 ? "p.m." : "a.m.";
     const h12 = ((hh + 11) % 12) + 1;
-    return mm ? `${h12}:${String(mm).padStart(2, "0")}${suffix}` : `${h12}${suffix}`;
+    return mm ? `${h12}:${String(mm).padStart(2, "0")} ${suffix}` : `${h12} ${suffix}`;
   };
-  return `${fmt(h.open)}–${fmt(h.close)}`;
+  // No trailing period — callers may append punctuation.
+  return `${fmt(h.open)} to ${fmt(h.close)}`;
+}
+
+/** e.g. "Monday to Friday, 8:30 a.m. to 4:30 p.m." */
+export function formatOfficeHours(l: Location): string {
+  return l.officeHours.map((h) => `${h.days}, ${formatHours(h)}`).join("; ");
 }
 
 export function fullAddress(l: Location): string {

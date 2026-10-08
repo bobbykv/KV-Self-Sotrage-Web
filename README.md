@@ -33,22 +33,27 @@ ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='Choose-A-Strong-Pass-1' npm run db:s
 npm run dev
 ```
 
-Demo logins in mock mode: portal `demo@kvselfstorage.ca` / `demo1234`; test
-card `4242 4242 4242 4242` (only when `PAYMENT_MODE=passthrough`).
+Demo logins in mock / `APP_TEST_MODE`: portal `demo@kvselfstorage.ca` / `demo1234`;
+test cards `4242 4242 4242 4242` (approve), `4000 0000 0000 0002` (decline),
+`4000 0000 0000 0119` (timeout). See [docs/TEST_ENVIRONMENT.md](docs/TEST_ENVIRONMENT.md).
 
 ```bash
 npm run typecheck && npm run lint && npm test
 npm run sitelink:check        # compare against the live SiteLink WSDL
+npm run dev:test              # Docker Postgres on :55432 + app on :3001
 ```
 
 ## Deploying (Vercel)
 
-1. Create a Postgres database and set `DATABASE_URL`.
-2. Set the environment variables from `.env.example` (SiteLink, GHL, secrets).
-   Credentials live only in the host's environment settings.
+1. Create a **separate** Postgres database for testing (do not share with a future
+   live SiteLink deployment) and set `DATABASE_URL`.
+2. Set `APP_TEST_MODE=1` and `APP_URL` to the Vercel URL. SiteLink / GHL /
+   notify secrets are ignored while test mode is on. Other variables from
+   `.env.example` can stay blank.
 3. Build command `npm run build`; run `npm run db:migrate` and
-   `npm run db:seed` once against production.
-4. `vercel.json` schedules the inventory cron every 30 minutes (needs Vercel
-   Pro) and the nightly refresh. Set `CRON_SECRET`.
-5. In Retell, point the agent at `GET /api/agent/brain?channel=retell` with
-   `Authorization: Bearer $AGENT_TOOL_SECRET` and register the returned tools.
+   `npm run db:seed` once against the **test** database.
+4. Confirm the yellow demo banner and open `/testing` for portal login and card
+   scenarios. Scheduled crons are off on Hobby; refresh inventory from the
+   staff dashboard after the first deploy if units look empty.
+5. When you are ready for live SiteLink, remove `APP_TEST_MODE`, point
+   `DATABASE_URL` at a production database, and set real credentials.

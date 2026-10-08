@@ -46,10 +46,13 @@ export default async function AdminSettings() {
             <label className="flex items-center gap-2 font-semibold text-kv-navy">
               <input type="checkbox" name="chatEnabled" defaultChecked={s.chatEnabled} className="h-5 w-5" /> Website chat enabled
             </label>
+            <label className="flex items-center gap-2 font-semibold text-kv-navy">
+              <input type="checkbox" name="showReviews" defaultChecked={s.showReviews} className="h-5 w-5" /> Show reviews on the website
+            </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField name="holdMinutes" label="Hold length (minutes)" value={s.holdMinutes} min={5} max={60} />
               <NumberField name="confirmedReservationHours" label="Pay-separately reservation (hours)" value={s.confirmedReservationHours} min={1} max={168} hint="How long a confirmed web reservation stays on the SiteLink waiting list." />
-              <NumberField name="pollIntervalMinutes" label="Vacant-unit poll (minutes)" value={s.pollIntervalMinutes} min={30} max={720} hint="Minimum 30. The cron runs every 30 minutes." />
+              <NumberField name="pollIntervalMinutes" label="Vacant-unit poll (minutes)" value={s.pollIntervalMinutes} min={30} max={720} hint="Minimum 30. Used when a refresh runs. Automatic scheduling is off on the free Vercel plan — use Refresh SiteLink cache." />
               <NumberField name="allUnitsPollMinutes" label="All-units poll (minutes)" value={s.allUnitsPollMinutes} min={30} max={1440} />
               <NumberField name="priceListPollMinutes" label="Price list poll (minutes)" value={s.priceListPollMinutes} min={30} max={1440} />
             </div>
@@ -57,10 +60,12 @@ export default async function AdminSettings() {
 
           <h2 className="mt-6 mb-3 text-lg font-bold text-kv-navy">Environment (read only)</h2>
           <dl className="card grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 p-5 text-sm">
+            <dt className="font-semibold">App test mode</dt>
+            <dd>{env.appTestMode ? "On — live SiteLink, GHL, staff webhooks and Nokē activation are blocked" : "Off"}</dd>
             <dt className="font-semibold">SiteLink</dt>
             <dd>{env.sitelinkMode === "mock" ? "Mock (demo data)" : `Live${env.sitelinkTestMode ? " · test mode" : ""}`}</dd>
             <dt className="font-semibold">Payment mode</dt>
-            <dd>{env.PAYMENT_MODE === "passthrough" ? "Card pass-through to SiteLink" : "Pay separately (no card on website)"}</dd>
+            <dd>{env.PAYMENT_MODE === "passthrough" ? (env.appTestMode ? "Simulated card payments (APP_TEST_MODE)" : "Card pass-through to SiteLink") : "Pay separately (no card on website)"}</dd>
             <dt className="font-semibold">HST rate</dt>
             <dd>{(env.HST_RATE * 100).toFixed(1)}% (used only if SiteLink doesn&apos;t return tax lines)</dd>
             <dt className="font-semibold">GoHighLevel</dt>

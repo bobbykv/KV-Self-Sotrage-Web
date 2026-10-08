@@ -52,7 +52,8 @@ export type RefreshResult = { location: LocationKey; kind: Kind; ok: boolean; sk
 
 /**
  * Polls SiteLink only for snapshots that are due. Public pages never call
- * this per request; it runs from cron (every 30 min) and the admin button.
+ * this per request. Staff trigger it from the dashboard; /api/cron/inventory
+ * does the same when a scheduler is configured (Vercel crons are off on Hobby).
  * `full` resets the delta cursor (the nightly cache clear SiteLink recommends).
  */
 export async function refreshInventory(opts: { force?: boolean; full?: boolean; kinds?: Kind[] } = {}): Promise<RefreshResult[] | null> {
@@ -154,9 +155,14 @@ export async function getInventory(): Promise<LocationInventory[]> {
   try {
     let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
     const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
+    const settings = await getSettings();
+    const staleMs = settings.pollIntervalMinutes * 60_000;
+    const oldestAvailable = snaps.filter((s) => s.kind === "available" && s.refreshedAt.getTime() > 0).map((s) => s.refreshedAt.getTime());
+    const oldest = oldestAvailable.length ? Math.min(...oldestAvailable) : 0;
+    const isStale = oldest > 0 && Date.now() - oldest >= staleMs;
     const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
-    if (neverLoaded && !failedRecently) {
-      await refreshInventory({ kinds: ["available", "pricelist"] });
+    if ((neverLoaded || isStale) && !failedRecently) {
+      await refreshInventory({ kinds: ["available", "pricelist"], force: isStale });
       snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
     }
     const held = await db.hold.findMany({

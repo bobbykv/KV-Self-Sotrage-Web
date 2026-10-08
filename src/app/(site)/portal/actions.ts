@@ -55,9 +55,28 @@ export async function scheduleMoveOutAction(_prev: FormState, form: FormData): P
   try {
     await sitelink.scheduleMoveOut(link.locationKey, ledgerId, when);
     await audit(`tenant:${link.tenantId}`, "portal.schedule_move_out", `${link.locationKey}:${ledger.unitName}`, { date });
-    return { ok: true, message: `Move-out scheduled for ${when.toLocaleDateString("en-CA", { dateStyle: "long", timeZone: "UTC" })}. The office will process it on that date.` };
-  } catch (err) {
-    return { error: `We couldn't schedule that online (${safeErrorMessage(err, 80)}). Please call (902) 867-3779.` };
+    return {
+      ok: true,
+      message: `Your move-out has been requested for ${date}. We still need to process it to close your rental. Any outstanding balance remains due.`,
+    };
+  } catch {
+    return { error: `We couldn't send your move-out date. Try again or call (902) 867-3779.` };
+  }
+}
+
+export async function cancelMoveOutAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const session = await requireTenant();
+  const link = linkFor(session, String(form.get("locationKey")));
+  const ledgerId = Number(form.get("ledgerId"));
+  if (!link || !ledgerId) return { error: "Choose a unit." };
+  const ledger = await tenantOwnsLedger(link, ledgerId);
+  if (!ledger) return { error: "We couldn't find that unit on your account." };
+  try {
+    await sitelink.scheduleMoveOut(link.locationKey, ledgerId, null);
+    await audit(`tenant:${link.tenantId}`, "portal.cancel_move_out", `${link.locationKey}:${ledger.unitName}`);
+    return { ok: true, message: "Your move-out request has been cancelled." };
+  } catch {
+    return { error: `We couldn't cancel the move-out request. Call (902) 867-3779.` };
   }
 }
 
@@ -66,16 +85,17 @@ export async function maintenanceAction(_prev: FormState, form: FormData): Promi
   applyUnitChoice(form);
   const link = linkFor(session, String(form.get("locationKey")));
   if (!link) return { error: "Choose your location." };
-  if (!(await rateLimit(`maint:${link.tenantId}`, 10, 3600))) return { error: "You've sent several requests — please call us if it's urgent." };
+  if (!(await rateLimit(`maint:${link.tenantId}`, 10, 3600))) return { error: "We've received several requests from you. For an urgent problem, please call us." };
   const parsed = maintenanceSchema.safeParse({ ...Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")), email: form.get("email") ?? session.email });
   if (!parsed.success) return { error: "Please choose the unit and issue type, and describe the problem." };
   try {
     const photos = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
     const photoIds = (await Promise.all(photos.map((p) => saveImage(p, "maintenance_photo", false)))).filter(Boolean) as string[];
-    await createMaintenanceRequest(parsed.data, { tenantId: link.tenantId, verified: true, photoIds });
-    return { ok: true, message: "Thanks — your request is in the owner's maintenance list. We'll follow up the way you asked." };
+    const row = await createMaintenanceRequest(parsed.data, { tenantId: link.tenantId, verified: true, photoIds });
+    const ref = row.id.slice(0, 8).toUpperCase();
+    return { ok: true, message: `Your report has been sent. Reference number: ${ref}.` };
   } catch (err) {
-    return { error: safeErrorMessage(err, 120) };
+    return { error: safeErrorMessage(err, 120) || "We couldn't send your report. Try again or call (902) 867-3779." };
   }
 }
 
@@ -84,7 +104,14 @@ export async function transferAction(_prev: FormState, form: FormData): Promise<
   applyUnitChoice(form);
   const link = linkFor(session, String(form.get("locationKey")));
   if (!link) return { error: "Choose your current location." };
-  if (!(await rateLimit(`transfer:${link.tenantId}`, 5, 3600))) return { error: "You've sent several requests — we'll be in touch." };
+  if (!(await rateLimit(`transfer:${link.tenantId}`, 5, 3600))) return { error: "We've received several requests from you. Please call if you need help sooner." };
+  const timing = String(form.get("timing") ?? "");
+  const specificDate = String(form.get("specificDate") ?? "").trim();
+  if (timing === "specific_date" && !/^\d{4}-\d{2}-\d{2}$/.test(specificDate)) {
+    return { error: "Choose the date you need the new unit." };
+  }
+  const reasonParts = [String(form.get("reason") ?? "").trim(), timing === "specific_date" ? `Needed by ${specificDate}` : ""].filter(Boolean);
+  form.set("reason", reasonParts.join(" · "));
   const parsed = transferSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: "Please tell us your current unit, what you'd like, and when." };
   const info = await sitelink.tenantInfo(link.locationKey, link.tenantId).catch(() => null);
@@ -94,5 +121,5 @@ export async function transferAction(_prev: FormState, form: FormData): Promise<
     email: info?.tenant.email || session.email,
     phone: info?.tenant.phone,
   });
-  return { ok: true, message: "Got it. Staff will check what's available and contact you. Nothing changes on your account until we confirm with you." };
+  return { ok: true, message: "Your request has been sent. We'll contact you about the options." };
 }

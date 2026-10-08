@@ -1,27 +1,31 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/config/locations";
+import { showDraftNotices } from "@/lib/site-env";
 
 export const metadata: Metadata = { title: "Terms" };
 
 export default function Terms() {
   return (
     <div className="container-kv prose-kv max-w-3xl py-10 sm:py-16">
-      <h1 className="h1">Terms of use</h1>
-      <p className="text-sm text-kv-muted">Draft — to be reviewed by the owner before launch. Your signed rental agreement governs your tenancy.</p>
+      <h1 className="h1">KV Self Storage website terms</h1>
+      {showDraftNotices() && (
+        <p className="text-sm text-kv-muted">Draft. To be reviewed by the owner before launch. Your signed rental agreement governs your tenancy.</p>
+      )}
+      {!showDraftNotices() && <p className="text-sm text-kv-muted">Your signed rental agreement governs your tenancy.</p>}
       <h2>Online holds</h2>
-      <p>Choosing &ldquo;Hold this unit&rdquo; reserves it for a short time (shown on screen) while you check out. If the timer ends, the hold is released and nothing is charged.</p>
+      <p>Starting checkout holds your selected unit for 20 minutes. When the timer ends, the hold is released. Starting a hold does not take a payment or give you access.</p>
       <h2>Prices</h2>
-      <p>Prices come from our booking system and refresh regularly. The total shown at checkout — including HST as its own line — is what you pay at move-in.</p>
+      <p>Monthly rent is shown before HST. Checkout shows the full move-in total, including fees and HST, before you pay. Availability can change. We check your unit again when you start a hold.</p>
       <h2>Promotions</h2>
-      <p>Promotions apply as described, at the locations and dates shown, and may be changed or ended at any time.</p>
+      <p>Promotions apply only at the locations and dates shown. They may change or end at any time.</p>
       <h2>Refunds</h2>
       <p>
-        Refunds are never automatic. They are reviewed and handled personally by the owner. Contact {BRAND.phone} or {BRAND.email}.
+        The owner reviews refund requests. Refunds are not automatic. Call {BRAND.phone} or email {BRAND.email} about your situation.
       </p>
-      <h2>Move-outs</h2>
-      <p>Scheduling a move-out online lets us know your plans. Your tenancy ends when staff process the move-out.</p>
+      <h2>Moving out</h2>
+      <p>Submit your planned move-out date through My storage. Follow your rental agreement. Empty the unit and remove any personal lock by that date. We process the move-out to close your rental.</p>
       <h2>Unit sizes</h2>
-      <p>All sizes are approximate.</p>
+      <p>All unit sizes are approximate.</p>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export type ChatReply = { reply: string; actions: ChatAction[]; handoff?: boolea
 const PAN_RE = /\b(?:\d[ -]?){12,19}\b/;
 const CARD_REPLY: ChatReply = {
   reply:
-    "Please don't share card details in chat — I can't take payments here, and I've ignored that message. You can pay securely at checkout, through the tenant portal, or by calling the office.",
+    "Please don't share card details in chat. To arrange payment, follow your checkout instructions, use your account's payment link, or call the office.",
   actions: [{ type: "call" }],
 };
 
@@ -32,7 +32,10 @@ function sanitizeHistory(history: ChatMessage[]): ChatMessage[] {
 export async function chat(history: ChatMessage[]): Promise<ChatReply> {
   const last = history[history.length - 1];
   if (!last || last.role !== "user") return greeting();
-  if (containsCardNumber(last.content)) return CARD_REPLY;
+  if (containsCardNumber(last.content)) {
+    // Mask the offending turn in any subsequent history the client re-sends.
+    return { ...CARD_REPLY, reply: CARD_REPLY.reply };
+  }
   const clean = sanitizeHistory(history);
   if (env.CHAT_LLM_API_KEY) {
     try {
@@ -44,12 +47,17 @@ export async function chat(history: ChatMessage[]): Promise<ChatReply> {
   return rulesChat(clean[clean.length - 1].content);
 }
 
+/** Exported for tests — masks card-looking numbers in chat transcripts. */
+export function maskCardNumbersInHistory(history: ChatMessage[]): ChatMessage[] {
+  return sanitizeHistory(history);
+}
+
 export function greeting(): ChatReply {
   return {
-    reply: "Hi! I'm KV Self Storage's virtual assistant. I can check what units are open, answer questions, or get a person to call you. What are you looking to store?",
+    reply: "Need help with a size, price or location? Ask here. You can also call (902) 867-3779.",
     actions: [
-      { type: "link", href: "/units", label: "See available units" },
-      { type: "link", href: "/size-finder", label: "Help me pick a size" },
+      { type: "link", href: "/units", label: "See units & prices" },
+      { type: "link", href: "/size-finder", label: "Help me choose a size" },
     ],
   };
 }
@@ -102,7 +110,7 @@ async function llmChat(history: ChatMessage[]): Promise<ChatReply> {
         }
         if (name === "search_units") {
           const r = result as Awaited<ReturnType<typeof searchUnits>>;
-          r.available.slice(0, 3).forEach((u) => actions.push({ type: "link", href: u.hold_url, label: `Hold ${u.size} at ${u.location_name}` }));
+          r.available.slice(0, 3).forEach((u) => actions.push({ type: "link", href: u.hold_url, label: `View ${u.size} at ${u.location_name}` }));
         }
       }
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result).slice(0, 6000) });
@@ -145,7 +153,12 @@ export function parseUnitIntent(text: string) {
     size_category = area <= 50 ? "small" : area <= 150 ? "medium" : "large";
   }
   const climate = /climate|heated|temperature/i.test(text) || undefined;
-  const wantsUnits = Boolean(location || size_category || climate || /\b(unit|units|available|availability|price|prices|cost|rent|storage|space|open)\b/i.test(text));
+  const wantsUnits = Boolean(
+    location ||
+      size_category ||
+      climate ||
+      /\b(unit|units|available|availability|price|prices|cost|rent|storage|space|spaces|size|sizes|how much)\b/i.test(text),
+  );
   return { location, size_category, climate_controlled: climate, wantsUnits, sizeText: size ? `${size[1]}x${size[2]}` : undefined };
 }
 
@@ -153,7 +166,7 @@ export async function rulesChat(text: string): Promise<ChatReply> {
   if (/\b(human|person|someone|agent|staff|call me|speak|talk to)\b/i.test(text) || /refund|complain|dispute|manager/i.test(text)) {
     const refund = /refund/i.test(text);
     return {
-      reply: `${refund ? "Refunds are handled personally by the owner, so I'll get someone to look at it. " : ""}You can reach the KV team at ${BRAND.phone} (Mon–Fri office hours, or leave a message), or leave your details and we'll call you back.`,
+      reply: `${refund ? "Refund requests need a personal review. You can contact the team or request a callback. " : ""}You can reach the KV team at ${BRAND.phone} (Mon–Fri office hours, or leave a message), or leave your details and we'll call you back.`,
       actions: [{ type: "call" }, { type: "lead_form", reason: "human_handoff" }],
       handoff: true,
     };
@@ -161,9 +174,17 @@ export async function rulesChat(text: string): Promise<ChatReply> {
 
   const intent = parseUnitIntent(text);
   const faq = await getFaqAnswer({ query: text });
-  const isQuestionFirst = faq.results.length > 0 && !/\b(available|availability|price|prices|cost|units?)\b/i.test(text) && !intent.sizeText;
+  // Size / price / availability questions must hit the units tool, not a unit-change FAQ.
+  const asksSizesOrPrices =
+    intent.wantsUnits ||
+    /\b(size|sizes|price|prices|cost|rent|available|availability|unit|units|space|spaces|how much|what do you have)\b/i.test(text);
+  const isQuestionFirst =
+    faq.results.length > 0 &&
+    !asksSizesOrPrices &&
+    !intent.sizeText &&
+    !/\b(available|availability|price|prices|cost|units?|sizes?)\b/i.test(text);
 
-  if (intent.wantsUnits && !isQuestionFirst) {
+  if (asksSizesOrPrices && (intent.wantsUnits || !isQuestionFirst)) {
     const r = await searchUnits(intent);
     const area = !intent.location ? AREA_PATTERNS.find(([, re]) => re.test(text)) : undefined;
     const available = r.available
@@ -171,14 +192,14 @@ export async function rulesChat(text: string): Promise<ChatReply> {
       .sort((a, b) => Number(b.size === intent.sizeText) - Number(a.size === intent.sizeText));
     const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : area ? `our ${area[0]} locations` : "our locations";
     if (available.length) {
-      const lines = available.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name} — ${money(u.monthly_price)}/mo (${u.available_count} open)`);
+      const lines = available.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name}: ${money(u.monthly_price)}/month + HST (${u.available_count} listed)`);
       return {
-        reply: `Here's what's open at ${where} right now:\n${lines.join("\n")}\n\nTap one to hold it online for 20 minutes while you check out.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,
-        actions: available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `Hold ${u.size} · ${u.location_name}` })),
+        reply: `Here are some spaces to compare at ${where}:\n${lines.join("\n")}\n\nChoose one to review the details and your move-in total. Starting checkout holds the space for the time shown there.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,
+        actions: available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `View ${u.size} · ${u.location_name}` })),
       };
     }
     return {
-      reply: `Nothing matching that is open at ${where} right now. Leave your name and number and we'll let you know as soon as one opens up — no charge to be on the list.`,
+      reply: `No spaces match that request at ${where} at the moment. Compare another size or location, or leave your details for the free waitlist. We'll contact you when a suitable space opens.`,
       actions: [
         { type: "lead_form", reason: "unavailable_unit", locationKey: intent.location, unitSize: intent.sizeText, unitType: intent.size_category },
         { type: "link", href: "/units", label: "See everything that's open" },
@@ -195,7 +216,7 @@ export async function rulesChat(text: string): Promise<ChatReply> {
   }
 
   return {
-    reply: `I'm not sure about that one. I can show you available units, answer common questions (hours, access, Noke, payments, moving out), or have someone from KV call you at a time that suits.`,
+    reply: `I'm not sure about that. I can help you compare sizes and prices, answer questions about access or your rental, or request a callback from the KV team.`,
     actions: [
       { type: "link", href: "/units", label: "See available units" },
       { type: "link", href: "/faq", label: "Browse the FAQ" },

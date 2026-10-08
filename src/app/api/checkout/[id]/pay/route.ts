@@ -32,6 +32,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (err) {
     if (err instanceof HoldError) return NextResponse.json({ error: err.userMessage }, { status: 402, headers: noStore });
     log.error("pay route unexpected error", { holdId: id, name: err instanceof Error ? err.name : "unknown" });
-    return NextResponse.json({ error: "The payment didn't go through and nothing was charged. Please try again or call us." }, { status: 500, headers: noStore });
+    return NextResponse.json({ error: "We couldn't confirm your payment. Please call (902) 867-3779 before trying again so we can check it." }, { status: 500, headers: noStore });
   }
 }

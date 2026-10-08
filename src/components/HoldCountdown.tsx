@@ -21,11 +21,11 @@ export function HoldCountdown({ holdId, expiresAt, location }: { holdId: string;
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-kv-navy/70 p-4" role="alertdialog" aria-labelledby="expired-title">
         <div className="max-w-sm rounded-3xl bg-white p-6 text-center">
           <h2 id="expired-title" className="text-xl font-extrabold text-kv-navy">
-            Your hold has ended
+            Your unit hold has ended
           </h2>
-          <p className="mt-2 text-sm text-kv-muted">No problem — nothing was charged and the unit is back on the list. You can start again whenever you&apos;re ready.</p>
+          <p className="mt-2 text-sm text-kv-muted">Check availability and start a new hold.</p>
           <Link href={`/units?location=${location}`} className="btn-primary mt-5 w-full">
-            Back to available units
+            See available units
           </Link>
         </div>
       </div>
@@ -35,13 +35,11 @@ export function HoldCountdown({ holdId, expiresAt, location }: { holdId: string;
   const m = Math.floor(left / 60000);
   const s = Math.floor((left % 60000) / 1000);
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-kv-navy px-4 py-3 text-white" role="timer" aria-live="off">
-      <p className="text-sm">
-        We&apos;re holding this unit for you. Take your time — if the timer runs out, you can just start again.
+    <div className="rounded-2xl bg-kv-navy px-4 py-3 text-white" role="timer" aria-live="off">
+      <p className="text-sm font-semibold" aria-label={`${m} minutes ${s} seconds left`}>
+        Your hold ends in {m}:{String(s).padStart(2, "0")}.
       </p>
-      <p className="shrink-0 font-mono text-2xl font-bold text-kv-yellow tabular-nums" aria-label={`${m} minutes ${s} seconds left`}>
-        {m}:{String(s).padStart(2, "0")}
-      </p>
+      <p className="mt-1 text-xs text-white/80">We hold your unit for 20 minutes while you check out. A hold does not take a payment or give you access.</p>
     </div>
   );
 }

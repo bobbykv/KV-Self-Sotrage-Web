@@ -9,18 +9,19 @@ export function PortalPasswordForm({ holdId, email }: { holdId: string; email: s
   if (state.ok)
     return (
       <p className="rounded-xl bg-kv-navy-50 p-4 text-sm text-kv-navy">
-        Done — sign in any time at <Link href="/portal/login" className="font-bold underline">kvselfstorage.ca/portal</Link> with {email}.
+        Your password is set. You can sign in to <Link href="/portal/login" className="font-bold underline">My storage</Link> with {email}.
       </p>
     );
   return (
     <form action={action} className="space-y-3">
       <label className="block">
-        <span className="label">Create a tenant portal password</span>
+        <span className="label">Password</span>
         <input name="password" type="password" required minLength={8} autoComplete="new-password" className="input" />
       </label>
+      <p className="text-xs text-kv-muted">Use at least 8 characters, including a letter and a number.</p>
       {state.error && <p className="text-sm font-semibold text-kv-red">{state.error}</p>}
       <button className="btn-navy w-full" disabled={pending}>
-        {pending ? "Saving…" : "Set up my portal"}
+        {pending ? "Saving…" : "Set my password"}
       </button>
     </form>
   );

@@ -5,7 +5,7 @@ export function ReviewsBlock() {
     <section className="container-kv py-16" aria-labelledby="reviews-heading">
       <p className="eyebrow">Reviews</p>
       <h2 id="reviews-heading" className="h2 mt-2">
-        What our neighbours say
+        Hear from people who have stored here
       </h2>
       {REVIEWS.length ? (
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -24,9 +24,9 @@ export function ReviewsBlock() {
         </div>
       ) : (
         <div className="card mt-8 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-kv-ink">We&apos;d rather show you real reviews than write our own. Read what local customers say about KV Self Storage on Google.</p>
+          <p className="max-w-xl text-kv-ink">Choosing a place for your belongings is a personal decision. Find KV Self Storage on Google to explore customer reviews.</p>
           <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="btn-navy">
-            Read our Google reviews
+            Find us on Google
           </a>
         </div>
       )}

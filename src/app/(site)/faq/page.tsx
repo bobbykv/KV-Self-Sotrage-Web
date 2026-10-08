@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { BRAND } from "@/config/locations";
 import { getFaq } from "@/lib/faq";
 import { renderMarkdown } from "@/lib/markdown";
+import { showDraftNotices } from "@/lib/site-env";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions",
-  description: "Hours, 24/7 access, Noke smart locks, climate-controlled units, RV parking, payments, student storage and more at KV Self Storage.",
+  title: "Self Storage Questions in Antigonish and Stellarton",
+  description: "Get answers about storage sizes, prices, reservations, office hours and access at KV Self Storage in Antigonish and Stellarton.",
 };
 
 export default async function FaqPage() {
@@ -18,10 +19,10 @@ export default async function FaqPage() {
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-      <p className="eyebrow">FAQ</p>
-      <h1 className="h1 mt-2">Questions, answered</h1>
+      {showDraftNotices() && <p className="text-sm text-kv-muted">Draft. FAQ answers are still being reviewed before launch.</p>}
+      <h1 className="h1">Self storage questions for Antigonish and Stellarton</h1>
       <p className="mt-3 text-kv-muted">
-        Can&apos;t find it? Ask the chat, or call{" "}
+        Here&apos;s what to know before you book. Need help with your own situation? Call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
           {BRAND.phone}
         </a>

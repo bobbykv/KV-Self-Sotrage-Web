@@ -2,6 +2,7 @@ import "server-only";
 import contractJson from "./contract.generated.json";
 import { parseDataSetResponse, str, type DataSet } from "./dataset";
 import { redactString } from "../redact";
+import { isAppTestMode } from "../test-mode";
 
 type Param = { name: string; type: string };
 type MethodSig = { service: "callcenter" | "reporting"; namespace: string; params: Param[] };
@@ -101,6 +102,9 @@ export type LiveConfig = {
 };
 
 export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locationCode: string, args: Args): Promise<DataSet> {
+  if (isAppTestMode()) {
+    throw new Error(`${method}: live SiteLink calls are blocked in APP_TEST_MODE`);
+  }
   const sig = CONTRACT[method];
   const auth = {
     sCorpCode: cfg.corpCode,

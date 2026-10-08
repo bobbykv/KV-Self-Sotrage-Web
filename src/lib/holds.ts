@@ -4,8 +4,8 @@ import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
 import { db } from "./db";
-import { env } from "./env";
-import { getInventory } from "./inventory";
+import { cookieNames, env } from "./env";
+import { getInventory, refreshInventory } from "./inventory";
 import { log, safeErrorMessage } from "./log";
 import { notifyStaff } from "./notify";
 import { getSettings } from "./settings";
@@ -14,7 +14,7 @@ import { RESERVATION_CANCEL_TYPE, RESERVATION_STATUS_CANCELLED } from "./sitelin
 import type { MoveInCost } from "./sitelink/types";
 import { BLOCKING_HOLD_STATUSES } from "./hold-status";
 
-export const HOLD_COOKIE = "kv_hold";
+export const HOLD_COOKIE = cookieNames.hold;
 const MAX_PAYMENT_ATTEMPTS = 3;
 
 export class HoldError extends Error {
@@ -70,11 +70,11 @@ export async function createHold(input: HoldInput): Promise<Hold> {
 
   const inventory = await getInventory();
   const unit = inventory.find((l) => l.location === input.locationKey)?.units.find((u) => u.unitId === input.unitId);
-  if (!unit) throw new HoldError("unit not in cache", "Sorry — that unit was just taken. Here are the others that are still open.");
+  if (!unit) throw new HoldError("unit not in cache", "This unit is no longer available. Check the other units at this location.");
 
   const fresh = await sitelink.unitById(input.locationKey, input.unitId);
   if (!fresh || fresh.rented || !fresh.rentable || fresh.waitingListReserved) {
-    throw new HoldError("unit no longer vacant in SiteLink", "Sorry — that unit was just rented. Here are the others that are still open.");
+    throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
   }
 
   const id = randomBytes(18).toString("base64url");
@@ -127,7 +127,7 @@ export async function createHold(input: HoldInput): Promise<Hold> {
     });
   } catch (err) {
     await db.hold.update({ where: { id }, data: { status: "error", lastFailure: safeErrorMessage(err) } });
-    throw new HoldError(safeErrorMessage(err), "We couldn't place the hold with our booking system. Please try again or call (902) 867-3779.");
+    throw new HoldError(safeErrorMessage(err), "We couldn't hold that space for you. Please try again or call (902) 867-3779.");
   }
 }
 
@@ -161,7 +161,7 @@ export async function releaseHold(id: string) {
 function assertActive(h: Hold | null): asserts h is Hold {
   if (!h) throw new HoldError("hold not found", "We couldn't find that reservation.");
   if (h.status !== "active" || h.expiresAt <= new Date()) {
-    throw new HoldError("hold not active", "This hold has expired. The unit has gone back on the list — you can start again any time.");
+    throw new HoldError("hold not active", "Your unit hold has ended. Check availability and start a new hold.");
   }
 }
 
@@ -184,7 +184,7 @@ export async function confirmPaySeparately(id: string): Promise<Hold> {
     });
     await sitelink.reservationNote(loc, h.waitingId!, `Website: customer confirmed reservation. Pay separately (PAYMENT_MODE=pay_separately). Phone ${h.phone}, email ${h.email}.`).catch(() => undefined);
   } catch (err) {
-    throw new HoldError(safeErrorMessage(err), "We couldn't confirm the reservation with our booking system. Please call (902) 867-3779 and we'll finish it with you.");
+    throw new HoldError(safeErrorMessage(err), "We couldn't confirm your reservation. Try again or call (902) 867-3779.");
   }
   const updated = await db.hold.update({ where: { id }, data: { status: "confirmed_pay_separately", expiresAt: newExpiry } });
   await notifyStaff("hold_confirmed_pay_separately", `Website reservation ${h.unitName} (${loc}) for ${h.firstName} ${h.lastName} — collect payment`, {
@@ -236,6 +236,21 @@ export async function payPassthrough(id: string, card: CardInput): Promise<Hold>
       where: { id },
       data: { status: "moved_in", ledgerId: result.ledgerId || null, paymentRef: result.receiptRef, lastFailure: null },
     });
+    await db.paymentReceipt.create({
+      data: {
+        locationKey: loc,
+        tenantId: h.tenantId!,
+        ledgerId: result.ledgerId || null,
+        holdId: id,
+        amount: cost.total,
+        paymentRef: result.receiptRef,
+        description: `Move-in payment · unit ${h.unitName}`,
+        periodLabel: "Move-in",
+      },
+    });
+    if (env.sitelinkMode === "mock") {
+      await refreshInventory({ force: true, kinds: ["available"] }).catch((err) => log.warn("post-move-in inventory refresh failed", { err }));
+    }
     await notifyStaff("move_in_completed", `Website move-in ${h.unitName} (${loc}) — ${h.firstName} ${h.lastName}`, { holdId: id, ledgerId: result.ledgerId });
     return updated;
   } catch (err) {
@@ -251,8 +266,8 @@ export async function payPassthrough(id: string, card: CardInput): Promise<Hold>
     throw new HoldError(
       reason,
       failureCount >= MAX_PAYMENT_ATTEMPTS
-        ? "Your payment didn't go through after a few tries. Nothing was charged. We've let the office know — please call (902) 867-3779."
-        : "The payment didn't go through and nothing was charged. Please check your card details and try again.",
+        ? "We couldn't confirm your payment after a few tries. We've let the office know. Please call (902) 867-3779 before trying again so we can check it."
+        : "We couldn't confirm your payment. Please call (902) 867-3779 before trying again so we can check it.",
     );
   }
 }

@@ -38,16 +38,21 @@ export function ChatWidget() {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open]);
 
+  function maskCards(text: string) {
+    return text.replace(/\b(?:\d[ -]?){12,19}\b/g, "[removed]");
+  }
+
   async function send(history: Msg[]) {
     setBusy(true);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content: maskCards(content) })) }),
       });
       const data = await res.json();
-      setMsgs([...history, { role: "assistant", content: data.reply ?? `Sorry, something went wrong. Please call ${PHONE}.`, actions: data.actions ?? [] }]);
+      const maskedHistory = history.map((m) => ({ ...m, content: maskCards(m.content) }));
+      setMsgs([...maskedHistory, { role: "assistant", content: data.reply ?? `I couldn’t get an answer just now. For help, call ${PHONE}.`, actions: data.actions ?? [] }]);
     } catch {
       setMsgs([...history, { role: "assistant", content: `I'm having trouble connecting. Please call us at ${PHONE}.`, actions: [{ type: "call" }] }]);
     } finally {
@@ -65,7 +70,9 @@ export function ChatWidget() {
     const text = input.trim();
     if (!text || busy) return;
     setInput("");
-    const next = [...msgs, { role: "user" as const, content: text }];
+    const looksLikeCard = /\b(?:\d[ -]?){12,19}\b/.test(text);
+    const display = looksLikeCard ? maskCards(text) : text;
+    const next = [...msgs, { role: "user" as const, content: display }];
     setMsgs(next);
     void send(next);
   }
@@ -73,22 +80,21 @@ export function ChatWidget() {
   return (
     <>
       {!open && (
-        <button onClick={openChat} className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full bg-kv-navy px-5 py-3.5 font-semibold text-white shadow-xl hover:bg-kv-navy-light" aria-label="Open chat assistant">
+        <button onClick={openChat} className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full bg-kv-navy px-5 py-3.5 font-semibold text-white shadow-xl hover:bg-kv-navy-light" aria-label="Ask KV Self Storage">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
             <path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z" />
           </svg>
-          Questions? Chat
+          Ask KV Self Storage
         </button>
       )}
       {open && (
         <section
           className="fixed inset-x-0 bottom-0 z-50 flex h-[85dvh] flex-col overflow-hidden rounded-t-3xl border border-kv-line bg-white shadow-2xl sm:inset-x-auto sm:right-4 sm:bottom-4 sm:h-[600px] sm:w-[390px] sm:rounded-3xl"
-          aria-label="KV Self Storage chat assistant"
+          aria-label="Ask KV Self Storage"
         >
           <header className="flex items-center justify-between bg-kv-navy px-4 py-3 text-white">
             <div>
-              <p className="font-bold">KV Self Storage assistant</p>
-              <p className="text-xs text-white/75">Virtual assistant · a person can take over any time</p>
+              <p className="font-bold">Ask KV Self Storage</p>
             </div>
             <button onClick={() => setOpen(false)} className="rounded-full p-2 hover:bg-white/10" aria-label="Close chat">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
@@ -121,8 +127,9 @@ export function ChatWidget() {
                             locationKey={a.locationKey}
                             unitType={a.unitType}
                             unitSize={a.unitSize}
-                            title={a.reason === "human_handoff" ? "Have someone call me" : a.reason === "unavailable_unit" ? "Tell me when one opens" : "Leave your details"}
-                            submitLabel="Send"
+                            title={a.reason === "human_handoff" ? "Want us to call you?" : a.reason === "unavailable_unit" ? "Tell me when one opens" : "Leave your details"}
+                            submitLabel={a.reason === "human_handoff" ? "Request a callback" : "Send"}
+                            notesPlaceholder={a.reason === "human_handoff" ? "What do you need help with?" : undefined}
                           />
                         </div>
                       ),
@@ -139,7 +146,7 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               maxLength={600}
-              placeholder="Ask about units, hours, access…"
+              placeholder="What do you need help with?"
               className="input min-h-11 flex-1 rounded-full"
               aria-label="Message"
             />
@@ -147,7 +154,7 @@ export function ChatWidget() {
               Send
             </button>
           </form>
-          <p className="px-4 pb-3 text-[11px] text-kv-muted">Please don&apos;t share card numbers here. Need a person? Call {PHONE}.</p>
+          <p className="px-4 pb-3 text-[11px] text-kv-muted">This is an automated assistant. Don&apos;t share card numbers, passwords or access codes.</p>
         </section>
       )}
     </>

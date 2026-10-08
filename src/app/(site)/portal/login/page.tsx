@@ -4,39 +4,54 @@ import { redirect } from "next/navigation";
 import { ActionForm } from "@/components/ActionForm";
 import { BRAND } from "@/config/locations";
 import { getTenantSession } from "@/lib/auth";
+import { env } from "@/lib/env";
 import { loginAction } from "../actions";
 
-export const metadata: Metadata = { title: "Tenant login", robots: { index: false } };
+export const metadata: Metadata = { title: "Sign in to My storage", robots: { index: false } };
 
 export default async function PortalLogin() {
   if (await getTenantSession()) redirect("/portal");
   return (
     <div className="container-kv max-w-md py-12 sm:py-20">
-      <p className="eyebrow">Tenant portal</p>
-      <h1 className="h2 mt-2">Sign in</h1>
-      <p className="mt-2 text-sm text-kv-muted">See your balance, access code and lease, schedule a move-out, or report a maintenance issue.</p>
+      <h1 className="h2">Sign in to your KV Self Storage account</h1>
+      <p className="mt-2 text-sm text-kv-muted">Check your rental, payment and access details for your unit in Antigonish, Addington Forks or Stellarton.</p>
       <div className="card mt-6 p-6">
-        <ActionForm action={loginAction} submitLabel="Sign in" pendingLabel="Signing in…" hideOnSuccess={false}>
+        <ActionForm action={loginAction} submitLabel="Sign in" pendingLabel="Signing in..." hideOnSuccess={false}>
           <label className="block">
             <span className="label">Email</span>
-            <input name="email" type="email" required autoComplete="email" className="input" />
+            <input name="email" type="email" required autoComplete="email" className="input" defaultValue={env.appTestMode ? "demo@kvselfstorage.ca" : undefined} />
           </label>
           <label className="block">
             <span className="label">Password</span>
             <input name="password" type="password" required autoComplete="current-password" className="input" />
           </label>
         </ActionForm>
+        <p className="mt-4 text-sm">
+          <Link href="/portal/forgot-password" className="font-semibold text-kv-navy underline">
+            Forgot password?
+          </Link>
+        </p>
+        {env.appTestMode && (
+          <p className="mt-4 rounded-xl bg-kv-yellow-light p-3 text-sm text-kv-navy">
+            Test login: <strong>demo@kvselfstorage.ca</strong> / <strong>demo1234</strong>. See{" "}
+            <Link href="/testing" className="font-semibold underline">
+              test instructions
+            </Link>
+            .
+          </p>
+        )}
       </div>
       <p className="mt-6 text-sm text-kv-muted">
-        No portal password yet, or forgot it? Call{" "}
+        Need help signing in? Call{" "}
         <a href={`tel:${BRAND.phoneE164}`} className="font-semibold text-kv-red">
           {BRAND.phone}
-        </a>{" "}
-        and we&apos;ll set it up. To report a problem without signing in, use our{" "}
-        <Link href="/maintenance" className="font-semibold underline">
-          maintenance form
-        </Link>
+        </a>
         .
+      </p>
+      <p className="mt-2 text-sm">
+        <Link href="/maintenance" className="font-semibold text-kv-navy underline">
+          Report a problem without signing in
+        </Link>
       </p>
     </div>
   );
