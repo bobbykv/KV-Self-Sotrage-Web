@@ -25,6 +25,29 @@ DATABASE_URL='…test…' npm run db:migrate
 ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='Choose-A-Strong-Pass-1' DATABASE_URL='…test…' npm run db:seed
 ```
 
+### Neon (Vercel + `testkv`)
+
+Neon gives two connection strings. **Do not run `prisma migrate` through the pooler** — you will get `P1002` / advisory lock timeout.
+
+| Neon UI label | Use for |
+| --- | --- |
+| **Pooled** (host contains `-pooler`) | `DATABASE_URL` on Vercel at runtime |
+| **Direct** (same host without `-pooler`) | Migrations and seed only |
+
+Run migrations once from your laptop (or CI), not in the Vercel build:
+
+```sh
+# Option A: paste Neon’s *direct* string
+DIRECT_DATABASE_URL='postgresql://…@ep-….neon.tech/…?sslmode=require' npm run db:migrate:neon
+
+# Option B: paste the pooled Vercel URL — we strip `-pooler` automatically
+DATABASE_URL='postgresql://…@ep-….pooler.neon.tech/…' npm run db:migrate:neon
+```
+
+Vercel **Build Command** should stay `prisma generate && next build` (no `migrate deploy` in the build).
+
+Optional: add `DIRECT_DATABASE_URL` in Vercel as a secret env var (not used by the app) so you can copy it for local migrate without hunting in Neon.
+
 Redeploy. Open the site, confirm the yellow demo banner, then:
 
 * Instructions: `/testing`

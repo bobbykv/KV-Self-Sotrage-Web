@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:migrate": "prisma migrate deploy",
+    "db:migrate:neon": "bash scripts/db-migrate-neon.sh",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "postinstall": "prisma generate"
