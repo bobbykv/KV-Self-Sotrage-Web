@@ -1,32 +1,49 @@
 import "server-only";
 import type { LocationKey } from "@/config/locations";
 import { db } from "./db";
+import { log, safeErrorMessage } from "./log";
 import { isPromoLive, promoMatches, type Placement } from "./promotions";
 
 export async function getLivePromotions(opts: { placement?: Placement; location?: LocationKey | null } = {}) {
   const now = new Date();
-  const rows = await db.promotion.findMany({
-    where: {
-      active: true,
-      OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-      AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
-    },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-  });
+  let rows;
+  try {
+    rows = await db.promotion.findMany({
+      where: {
+        active: true,
+        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+        AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+      },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    });
+  } catch (err) {
+    log.error("promotions read failed", { err: safeErrorMessage(err) });
+    return [];
+  }
   return rows.filter((p) => isPromoLive(p, now) && promoMatches(p, opts));
 }
 
 export async function getPublishedPosts() {
-  return db.blogPost.findMany({
-    where: { published: true, publishedAt: { lte: new Date() } },
-    orderBy: { publishedAt: "desc" },
-  });
+  try {
+    return await db.blogPost.findMany({
+      where: { published: true, publishedAt: { lte: new Date() } },
+      orderBy: { publishedAt: "desc" },
+    });
+  } catch (err) {
+    log.error("blog read failed", { err: safeErrorMessage(err) });
+    return [];
+  }
 }
 
 export async function getPublishedPost(slug: string) {
-  const post = await db.blogPost.findUnique({ where: { slug } });
-  if (!post || !post.published || !post.publishedAt || post.publishedAt > new Date()) return null;
-  return post;
+  try {
+    const post = await db.blogPost.findUnique({ where: { slug } });
+    if (!post || !post.published || !post.publishedAt || post.publishedAt > new Date()) return null;
+    return post;
+  } catch (err) {
+    log.error("blog read failed", { err: safeErrorMessage(err) });
+    return null;
+  }
 }
 
 export function slugify(s: string): string {

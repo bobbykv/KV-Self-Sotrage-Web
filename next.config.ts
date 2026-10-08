@@ -26,7 +26,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  outputFileTracingIncludes: { "/**": ["./agent-brain/**"] },
+  serverExternalPackages: ["@prisma/client", "prisma"],
+  // The FAQ, shared prompt and tool schema are read from disk at runtime.
+  // Prisma's query engine has to be traced in or Vercel throws on the first query.
+  outputFileTracingIncludes: {
+    "/**": ["./agent-brain/**", "./node_modules/.prisma/client/**", "./node_modules/@prisma/client/**"],
+  },
   experimental: { serverActions: { bodySizeLimit: "12mb" } },
   images: {
     remotePatterns: [

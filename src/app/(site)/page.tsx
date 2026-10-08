@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const [promos, inventory, settings] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory(), getSettings()]);
+  const availabilityDown = inventory.every((l) => l.units.length === 0 && l.lastError && !l.refreshedAt);
   const counts = Object.fromEntries(inventory.map((l) => [l.location, l.units.length]));
 
   return (
@@ -83,8 +84,17 @@ export default async function Home() {
         <div className="container-kv">
           <h2 className="h2">Choose your location</h2>
           <div className="mt-8">
-            <LocationCards counts={counts} />
+            <LocationCards counts={availabilityDown ? undefined : counts} />
           </div>
+          {availabilityDown && (
+            <p className="mt-4 text-sm text-kv-muted">
+              Live availability isn&apos;t connected yet. Call{" "}
+              <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
+                {BRAND.phone}
+              </a>{" "}
+              and we&apos;ll tell you what&apos;s open.
+            </p>
+          )}
         </div>
       </section>
 

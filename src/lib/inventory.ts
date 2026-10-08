@@ -147,39 +147,48 @@ export type LocationInventory = {
  * calls. Units under an active website hold are hidden so two visitors can't
  * hold the same unit even before SiteLink's waiting list catches up.
  */
-export async function getInventory(): Promise<LocationInventory[]> {
-  let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
-  const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
-  const settings = await getSettings();
-  const staleMs = settings.pollIntervalMinutes * 60_000;
-  const oldestAvailable = snaps.filter((s) => s.kind === "available" && s.refreshedAt.getTime() > 0).map((s) => s.refreshedAt.getTime());
-  const oldest = oldestAvailable.length ? Math.min(...oldestAvailable) : 0;
-  const isStale = oldest > 0 && Date.now() - oldest >= staleMs;
-  const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
-  if ((neverLoaded || isStale) && !failedRecently) {
-    await refreshInventory({ kinds: ["available", "pricelist"], force: isStale });
-    snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
-  }
-  const held = await db.hold.findMany({
-    where: blockingHoldWhere(),
-    select: { locationKey: true, unitId: true },
-  });
-  const heldKey = new Set(held.map((h) => `${h.locationKey}:${h.unitId}`));
+function unavailableInventory(message: string): LocationInventory[] {
+  return LOCATION_KEYS.map((location) => ({ location, units: [], priceList: [], refreshedAt: null, lastError: message }));
+}
 
-  return LOCATION_KEYS.map((loc) => {
-    const avail = snaps.find((s) => s.id === snapshotId(loc, "available"));
-    const price = snaps.find((s) => s.id === snapshotId(loc, "pricelist"));
-    const units = ((avail?.data as Unit[]) ?? []).filter(
-      (u) => !u.rented && u.rentable && !u.excludedFromWebsite && !u.waitingListReserved && !heldKey.has(`${loc}:${u.unitId}`),
-    );
-    return {
-      location: loc,
-      units,
-      priceList: (price?.data as PriceListEntry[]) ?? [],
-      refreshedAt: avail && avail.refreshedAt.getTime() > 0 ? avail.refreshedAt.toISOString() : null,
-      lastError: avail?.lastError ?? null,
-    };
-  });
+export async function getInventory(): Promise<LocationInventory[]> {
+  try {
+    let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
+    const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
+    const settings = await getSettings();
+    const staleMs = settings.pollIntervalMinutes * 60_000;
+    const oldestAvailable = snaps.filter((s) => s.kind === "available" && s.refreshedAt.getTime() > 0).map((s) => s.refreshedAt.getTime());
+    const oldest = oldestAvailable.length ? Math.min(...oldestAvailable) : 0;
+    const isStale = oldest > 0 && Date.now() - oldest >= staleMs;
+    const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
+    if ((neverLoaded || isStale) && !failedRecently) {
+      await refreshInventory({ kinds: ["available", "pricelist"], force: isStale });
+      snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
+    }
+    const held = await db.hold.findMany({
+      where: blockingHoldWhere(),
+      select: { locationKey: true, unitId: true },
+    });
+    const heldKey = new Set(held.map((h) => `${h.locationKey}:${h.unitId}`));
+
+    return LOCATION_KEYS.map((loc) => {
+      const avail = snaps.find((s) => s.id === snapshotId(loc, "available"));
+      const price = snaps.find((s) => s.id === snapshotId(loc, "pricelist"));
+      const units = ((avail?.data as Unit[]) ?? []).filter(
+        (u) => !u.rented && u.rentable && !u.excludedFromWebsite && !u.waitingListReserved && !heldKey.has(`${loc}:${u.unitId}`),
+      );
+      return {
+        location: loc,
+        units,
+        priceList: (price?.data as PriceListEntry[]) ?? [],
+        refreshedAt: avail && avail.refreshedAt.getTime() > 0 ? avail.refreshedAt.toISOString() : null,
+        lastError: avail?.lastError ?? null,
+      };
+    });
+  } catch (err) {
+    log.error("inventory read failed", { err: safeErrorMessage(err) });
+    return unavailableInventory("Live availability isn't connected yet.");
+  }
 }
 
 export async function getSnapshots() {
