@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LeadForm } from "@/components/LeadForm";
 import { PromoBanner } from "@/components/PromoBanner";
 import { UnitGroupCard } from "@/components/UnitCards";
-import { LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
+import { LOCATIONS, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
 import { areaRangeFromParams, filterFullTypes, filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
@@ -45,17 +45,13 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   const notice = sp.notice;
 
   const [inventory, promos] = await Promise.all([getInventory(), getLivePromotions({ placement: "units", location })]);
-  const groups = groupUnits(inventory.flatMap((l) => l.units));
+  const vacantUnits = inventory.flatMap((l) => (Array.isArray(l.units) ? l.units : []));
+  const groups = groupUnits(vacantUnits);
   if (!category && !storageType && !range.minArea && !range.maxArea) filter.vehicle = undefined;
   const shown = filterGroups(groups, filter);
   const imageUrls = shown.map((g) => listingUnitPhotoUrl(g));
-  const full = filterFullTypes(
-    fullTypes(
-      inventory.flatMap((l) => l.priceList),
-      groups,
-    ),
-    filter,
-  );
+  const priceList = inventory.flatMap((l) => (Array.isArray(l.priceList) ? l.priceList : []));
+  const full = filterFullTypes(fullTypes(priceList, groups), filter);
   const oldest = inventory
     .filter((l) => !location || l.location === location)
     .map((l) => l.refreshedAt)
@@ -163,7 +159,8 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
                   <span>
                     <span className="block font-extrabold text-kv-navy">{formatSize(p.widthFt, p.lengthFt)} storage unit</span>
                     <span className="text-sm text-kv-muted">
-                      {getLocation(p.locationKey).shortName} · No units available in this size.
+                      {(isLocationKey(p.locationKey) ? getLocation(p.locationKey as LocationKey) : null)?.shortName ?? "KV"} · No units
+                      available in this size.
                     </span>
                   </span>
                   <span className="btn-ghost btn-sm">Join the waitlist</span>
