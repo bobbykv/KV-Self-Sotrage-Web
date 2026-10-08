@@ -100,6 +100,13 @@ async function main() {
   // Seed facility location photos
   const facilityPhotos = [
     {
+      locationKey: "haley",
+      url: "/photos/facility-haley-office.jpg",
+      caption: "KV Self Storage Haley Road office and facility",
+      altText: "KV Self Storage Haley Road location with office building and storage units",
+      isCover: true,
+    },
+    {
       locationKey: "stellarton",
       url: "/photos/facility-stellarton-gate.jpg",
       caption: "Secure gated entrance at KV Self Storage Stellarton",

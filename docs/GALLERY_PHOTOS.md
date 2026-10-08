@@ -6,10 +6,11 @@ This directory contains photos of storage facilities and units that have been ad
 
 ### Facility Location Photos
 
-Two facility location photos have been added to the `public/photos/` directory:
+Three facility location photos have been added to the `public/photos/` directory:
 
-1. **facility-stellarton-gate.jpg** (6.1MB) - Secure gated entrance at KV Self Storage Stellarton with stone pillars
-2. **facility-exit31-exterior.jpg** (665KB) - Exterior view of KV Self Storage at Exit 31 (Highway 4) with multiple units at sunset
+1. **facility-haley-office.jpg** (460KB) - KV Self Storage Haley Road office and facility with storage units
+2. **facility-stellarton-gate.jpg** (6.1MB) - Secure gated entrance at KV Self Storage Stellarton with stone pillars
+3. **facility-exit31-exterior.jpg** (665KB) - Exterior view of KV Self Storage at Exit 31 (Highway 4) with multiple units at sunset
 
 ### Storage Unit Photos
 
@@ -68,6 +69,7 @@ npx tsx scripts/seed-unit-photos.ts
 
 ### Facility Photos
 The facility location photos will be set as cover photos for their respective locations:
+- **Haley Road** - Shows the office building and storage units
 - **Stellarton** - Shows the secure gated entrance with stone pillars
 - **Highway 4 (Exit 31)** - Shows the exterior units at sunset
 
