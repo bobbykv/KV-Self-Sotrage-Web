@@ -22,8 +22,11 @@ function updatedLabel(iso: string | null) {
   // Atlantic Time (America/Halifax) — includes ADT/AST with abbreviation.
   return d.toLocaleString("en-CA", {
     timeZone: "America/Halifax",
-    dateStyle: "medium",
-    timeStyle: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
     timeZoneName: "short",
   });
 }
