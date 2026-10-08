@@ -1,6 +1,7 @@
 import "server-only";
 import type { LocationKey } from "@/config/locations";
 import { db } from "./db";
+import { log, safeErrorMessage } from "./log";
 import { deleteBlobIfAny, uploadGalleryImage, type GalleryKind } from "./blob-upload";
 
 export type PhotoRecord = {
@@ -28,21 +29,31 @@ export function stockPhotoForUnit(opts: { inside?: boolean; vehicle?: boolean })
 }
 
 export async function listLocationPhotos(locationKey: LocationKey): Promise<PhotoRecord[]> {
-  const rows = await db.galleryPhoto.findMany({
-    where: { kind: "location", locationKey },
-    orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
-  });
-  return rows.map(mapRow);
+  try {
+    const rows = await db.galleryPhoto.findMany({
+      where: { kind: "location", locationKey },
+      orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return rows.map(mapRow);
+  } catch (err) {
+    log.warn("listLocationPhotos failed", { locationKey, err: safeErrorMessage(err) });
+    return [];
+  }
 }
 
 export async function locationCoverUrl(locationKey: LocationKey): Promise<string> {
-  const cover = await db.galleryPhoto.findFirst({
-    where: { kind: "location", locationKey, isCover: true },
-    orderBy: { sortOrder: "asc" },
-  });
-  if (cover) return cover.url;
-  const any = await db.galleryPhoto.findFirst({ where: { kind: "location", locationKey }, orderBy: { sortOrder: "asc" } });
-  return any?.url ?? STOCK.hero;
+  try {
+    const cover = await db.galleryPhoto.findFirst({
+      where: { kind: "location", locationKey, isCover: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    if (cover) return cover.url;
+    const any = await db.galleryPhoto.findFirst({ where: { kind: "location", locationKey }, orderBy: { sortOrder: "asc" } });
+    return any?.url ?? STOCK.hero;
+  } catch (err) {
+    log.warn("locationCoverUrl failed", { locationKey, err: safeErrorMessage(err) });
+    return STOCK.hero;
+  }
 }
 
 export async function unitTypePhotoUrl(opts: {
@@ -54,20 +65,24 @@ export async function unitTypePhotoUrl(opts: {
   inside?: boolean;
   vehicle?: boolean;
 }): Promise<string> {
-  const exact = await db.galleryPhoto.findFirst({
-    where: {
-      kind: "unit_type",
-      locationKey: opts.locationKey,
-      OR: [
-        { widthFt: opts.widthFt, lengthFt: opts.lengthFt },
-        { unitTypeName: opts.typeName },
-      ],
-    },
-    orderBy: [{ sortOrder: "asc" }],
-  });
-  if (exact) return exact.url;
-  const cover = await locationCoverUrl(opts.locationKey);
-  if (cover !== STOCK.hero) return cover;
+  try {
+    const exact = await db.galleryPhoto.findFirst({
+      where: {
+        kind: "unit_type",
+        locationKey: opts.locationKey,
+        OR: [
+          { widthFt: opts.widthFt, lengthFt: opts.lengthFt },
+          { unitTypeName: opts.typeName },
+        ],
+      },
+      orderBy: [{ sortOrder: "asc" }],
+    });
+    if (exact) return exact.url;
+    const cover = await locationCoverUrl(opts.locationKey);
+    if (cover !== STOCK.hero) return cover;
+  } catch (err) {
+    log.warn("unitTypePhotoUrl failed", { locationKey: opts.locationKey, err: safeErrorMessage(err) });
+  }
   return stockPhotoForUnit({ inside: opts.inside, vehicle: opts.vehicle });
 }
 
