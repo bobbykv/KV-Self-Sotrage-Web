@@ -24,7 +24,14 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
     <article className="card flex flex-col gap-4 p-5">
       {imageUrl && (
         <div className="overflow-hidden rounded-2xl">
-          <Image src={imageUrl} alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`} width={640} height={400} className="aspect-[16/10] w-full object-cover" />
+          <Image
+            src={imageUrl}
+            alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`}
+            width={640}
+            height={400}
+            unoptimized={imageUrl.startsWith("/")}
+            className="aspect-[16/10] w-full object-cover"
+          />
         </div>
       )}
       <div className="flex items-start justify-between gap-4">
