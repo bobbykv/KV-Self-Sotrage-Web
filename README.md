@@ -50,8 +50,11 @@ npm run dev:test              # Docker Postgres on :55432 + app on :3001
 2. Set `APP_TEST_MODE=1` and `APP_URL` to the Vercel URL. SiteLink / GHL /
    notify secrets are ignored while test mode is on. Other variables from
    `.env.example` can stay blank.
-3. Build command `npm run build`; run `npm run db:migrate` and
-   `npm run db:seed` once against the **test** database.
+3. **Build command must be** `prisma generate && next build` (or `npm run build`).
+   **Do not** put `prisma migrate deploy` in the Vercel build — Neon will fail with
+   `P1002` (advisory lock), especially on pooled URLs. Run migrations **once** from
+   your computer instead (see [docs/TEST_ENVIRONMENT.md](docs/TEST_ENVIRONMENT.md)
+   → Neon). Then optional `npm run db:seed` against the test database.
 4. Confirm the yellow demo banner and open `/testing` for portal login and card
    scenarios. Scheduled crons are off on Hobby; refresh inventory from the
    staff dashboard after the first deploy if units look empty.
