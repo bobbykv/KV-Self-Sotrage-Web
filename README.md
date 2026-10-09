@@ -36,6 +36,7 @@ npm run dev
 ```
 
 Demo logins in mock / `APP_TEST_MODE`: portal `demo@kvselfstorage.ca` / `demo1234`;
+staff `owner@kvselfstorage.ca` / `Kv-Storage-Demo-2026!` (auto-created in test mode);
 test cards `4242 4242 4242 4242` (approve), `4000 0000 0000 0002` (decline),
 `4000 0000 0000 0119` (timeout). See [docs/TEST_ENVIRONMENT.md](docs/TEST_ENVIRONMENT.md).
 

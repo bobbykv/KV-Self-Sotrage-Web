@@ -15,7 +15,7 @@ Vercel project at that database and enable the simulator:
 | `APP_URL` | `https://kv-self-storage-web.vercel.app` (or your custom domain) |
 | `SITELINK_MODE` | leave blank or `mock` (forced to mock when `APP_TEST_MODE=1`) |
 | SiteLink / GHL / `NOTIFY_WEBHOOK_URL` / `PAY_ONLINE_URL` / `CHAT_LLM_API_KEY` | may stay set; they are **ignored** while `APP_TEST_MODE=1` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | optional — run seed once for a staff login |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | optional custom staff account; test mode also auto-creates `owner@kvselfstorage.ca` |
 
 After setting env vars (Production + Preview if you use both):
 
@@ -29,6 +29,8 @@ Redeploy. Open the site, confirm the yellow demo banner, then:
 
 * Instructions: `/testing`
 * Portal: `/portal/login` → `demo@kvselfstorage.ca` / `demo1234`
+* Staff: `/admin/login` → `owner@kvselfstorage.ca` / `Kv-Storage-Demo-2026!`
+  (created automatically when `APP_TEST_MODE=1`; no separate seed required)
 
 Fake rentals, holds, sessions and the mock SiteLink facility state are stored in
 Postgres (`MockSiteLinkState`), so they survive Vercel cold starts.
