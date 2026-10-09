@@ -16,8 +16,8 @@ backed by SiteLink.
   brain editor, feature flags, staff accounts, audit log.
 * **Retell** — set `NEXT_PUBLIC_RETELL_PUBLIC_KEY` + `NEXT_PUBLIC_RETELL_CHAT_AGENT_ID`
   to embed Retell's website chat widget (same FAQ/tools as the built-in chat).
-  `/api/agent/brain` and `/api/agent/tools/*` also power the phone agent.
-  Setup notes: [docs/RETELL.md](docs/RETELL.md).
+  Point the agent webhook at `/api/retell/webhook` so transcripts and contacts
+  go straight to GoHighLevel. Setup: [docs/RETELL.md](docs/RETELL.md).
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (including the **payment-mode
 decision**) and [docs/SITELINK.md](docs/SITELINK.md) (verified vs. unverified

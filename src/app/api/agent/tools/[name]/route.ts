@@ -18,5 +18,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ name: s
   const channel = parseAgentChannel(new URL(req.url).searchParams.get("channel"), "retell");
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const args = (body.args && typeof body.args === "object" ? body.args : body) as Record<string, unknown>;
+  // Retell sends `{ name, args, call|chat }`; stamp externalId so webhook + tool don't double-create.
+  const call = (body.call && typeof body.call === "object" ? body.call : null) as Record<string, unknown> | null;
+  const chat = (body.chat && typeof body.chat === "object" ? body.chat : null) as Record<string, unknown> | null;
+  const retellId = typeof chat?.chat_id === "string" ? chat.chat_id : typeof call?.call_id === "string" ? call.call_id : undefined;
+  if (retellId && name === "capture_lead" && !args.external_id) {
+    args.external_id = `${channel === "website_chat" ? "retell:chat" : "retell:call"}:${retellId}`;
+  }
   return NextResponse.json(await runTool(name as ToolName, args, channel));
 }

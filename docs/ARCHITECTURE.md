@@ -15,6 +15,7 @@ Browser ──► Next.js server (route handlers / server actions)
               └── NOTIFY_WEBHOOK_URL   staff alerts
 Staff dashboard ► refresh cache · run reports   (same work as /api/cron/*, which is not scheduled)
 Retell ──────► /api/agent/brain · /api/agent/tools/*  (Bearer AGENT_TOOL_SECRET)
+         └──► /api/retell/webhook  → GoHighLevel (transcript + contact)
 ```
 
 ## SiteLink usage and the API budget
@@ -111,9 +112,11 @@ the phone agent. Tool URLs include `?channel=` so leads are tagged correctly.
 When `NEXT_PUBLIC_RETELL_PUBLIC_KEY` and `NEXT_PUBLIC_RETELL_CHAT_AGENT_ID` are
 set, the public site embeds Retell's widget; otherwise the built-in
 `ChatWidget` + `/api/chat` path is used. Tools: `search_units` (cached
-inventory, real prices only), `get_faq`, `capture_lead`, `handoff_to_human`.
-The chat never takes card numbers and does not use any SiteLink AI features.
-See [RETELL.md](RETELL.md).
+inventory, real prices only), `get_faq`, `capture_lead` (writes to GoHighLevel
+immediately), `handoff_to_human`. Retell's agent webhook
+(`/api/retell/webhook`) also forwards finished chat/call transcripts and
+contacts to `GHL_WEBHOOK_URL`. The chat never takes card numbers and does not
+use any SiteLink AI features. See [RETELL.md](RETELL.md).
 
 ## Staff console
 

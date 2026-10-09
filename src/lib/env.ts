@@ -36,6 +36,8 @@ const schema = z.object({
 
   CRON_SECRET: z.string().optional(),
   AGENT_TOOL_SECRET: z.string().min(16).optional(),
+  /** Retell API key with the webhook badge — verifies X-Retell-Signature on /api/retell/webhook. */
+  RETELL_API_KEY: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -83,6 +85,7 @@ export const env = {
   CHAT_LLM_API_KEY: appTestMode ? undefined : raw.CHAT_LLM_API_KEY,
   NOTIFY_WEBHOOK_URL: appTestMode ? undefined : raw.NOTIFY_WEBHOOK_URL,
   OWNER_NOTIFY_EMAIL: appTestMode ? undefined : raw.OWNER_NOTIFY_EMAIL,
+  RETELL_API_KEY: appTestMode ? undefined : raw.RETELL_API_KEY,
 };
 
 /** Called lazily (not at import) so `next build` works without production secrets. */
