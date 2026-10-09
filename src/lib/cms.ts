@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { LocationKey } from "@/config/locations";
 import { db } from "./db";
 import { log, safeErrorMessage } from "./log";
@@ -23,7 +24,7 @@ export async function getLivePromotions(opts: { placement?: Placement; location?
   return rows.filter((p) => isPromoLive(p, now) && promoMatches(p, opts));
 }
 
-export async function getPublishedPosts() {
+export const getPublishedPosts = cache(async () => {
   try {
     return await db.blogPost.findMany({
       where: { published: true, publishedAt: { lte: new Date() } },
@@ -33,7 +34,21 @@ export async function getPublishedPosts() {
     log.error("blog read failed", { err: safeErrorMessage(err) });
     return [];
   }
-}
+});
+
+/** Existence check for footer/nav — avoids loading full post rows. */
+export const hasPublishedPosts = cache(async (): Promise<boolean> => {
+  try {
+    const post = await db.blogPost.findFirst({
+      where: { published: true, publishedAt: { lte: new Date() } },
+      select: { id: true },
+    });
+    return Boolean(post);
+  } catch (err) {
+    log.error("blog existence check failed", { err: safeErrorMessage(err) });
+    return false;
+  }
+});
 
 export async function getPublishedPost(slug: string) {
   try {

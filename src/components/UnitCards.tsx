@@ -29,7 +29,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
             alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`}
             width={640}
             height={400}
-            unoptimized={imageUrl.startsWith("/")}
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
             className="aspect-[16/10] w-full object-cover"
           />
         </div>

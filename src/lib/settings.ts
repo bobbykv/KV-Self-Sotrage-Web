@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { db } from "./db";
 
 export type Settings = {
@@ -37,14 +38,14 @@ const LIMITS: Partial<Record<keyof Settings, [number, number]>> = {
   confirmedReservationHours: [1, 168],
 };
 
-export async function getSettings(): Promise<Settings> {
+export const getSettings = cache(async (): Promise<Settings> => {
   try {
     const row = await db.setting.findUnique({ where: { key: "app" } });
     return { ...DEFAULT_SETTINGS, ...((row?.value as Partial<Settings>) ?? {}) };
   } catch {
     return DEFAULT_SETTINGS;
   }
-}
+});
 
 export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   const current = await getSettings();

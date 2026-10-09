@@ -23,7 +23,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-kv-line bg-white/95 backdrop-blur">
       <div className="container-kv flex h-16 items-center justify-between gap-3 sm:h-20">
         <Link href="/" className="flex shrink-0 items-center" aria-label="KV Self Storage home">
-          <Image src="/photos/logo-original.jpg" alt="KV Self Storage" width={1134} height={496} priority className="h-11 w-auto sm:h-14" />
+          <Image src="/photos/logo-original.jpg" alt="KV Self Storage" width={200} height={88} sizes="160px" className="h-11 w-auto sm:h-14" />
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-6 text-sm font-semibold text-kv-navy lg:flex">
