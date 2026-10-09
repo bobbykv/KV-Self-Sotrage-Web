@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AmenityList } from "@/components/LocationCards";
@@ -47,14 +48,15 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {gallery.map((p) => (
           <figure key={p.id} className="overflow-hidden rounded-3xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={p.url}
-              alt={p.altText || `Storage at ${loc.shortName}`}
-              className="aspect-[4/3] w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
+            <div className="relative aspect-[4/3]">
+              <Image
+                src={p.url}
+                alt={p.altText || `Storage at ${loc.shortName}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
+              />
+            </div>
             {p.caption && <figcaption className="mt-2 text-sm text-kv-muted">{p.caption}</figcaption>}
           </figure>
         ))}

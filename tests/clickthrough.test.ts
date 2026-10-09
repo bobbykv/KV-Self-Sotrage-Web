@@ -77,7 +77,7 @@ describe("photo stockPhotoForUnit / unitTypePhotoUrl fallback", () => {
     expect(stockPhotoForUnit({})).toBe("/photos/hero.jpg");
   });
 
-  it("unitTypePhotoUrl falls back to stock when gallery is empty", async () => {
+  it("unitTypePhotoUrl falls back to static facility cover when gallery is empty", async () => {
     vi.resetModules();
     vi.doMock("@/lib/db", () => ({
       db: {
@@ -96,7 +96,7 @@ describe("photo stockPhotoForUnit / unitTypePhotoUrl fallback", () => {
       inside: false,
       vehicle: false,
     });
-    expect(url).toBe(photos.stockPhotoForUnit({}));
+    expect(url).toBe(photos.staticFacilityCoverUrl("haley"));
   });
 });
 

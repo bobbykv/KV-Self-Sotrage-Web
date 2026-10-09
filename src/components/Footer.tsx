@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { BRAND, LOCATIONS, formatOfficeHours, fullAddress } from "@/config/locations";
-import { getPublishedPosts } from "@/lib/cms";
+import { hasPublishedPosts } from "@/lib/cms";
 import { getSettings } from "@/lib/settings";
 
 export async function Footer() {
-  const [settings, posts] = await Promise.all([getSettings(), getPublishedPosts().catch(() => [])]);
+  const [settings, showBlog] = await Promise.all([getSettings(), hasPublishedPosts()]);
   return (
     <footer className="mt-20 bg-kv-navy text-white/85">
       <div className="container-kv grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -40,7 +40,7 @@ export async function Footer() {
             <Link href="/self-storage-antigonish">Antigonish storage</Link>
             <Link href="/self-storage-stellarton">Stellarton storage</Link>
             <Link href="/self-storage-new-glasgow">Storage near New Glasgow</Link>
-            {posts.length > 0 && <Link href="/blog">Storage tips</Link>}
+            {showBlog && <Link href="/blog">Storage tips</Link>}
             {settings.showReviews && <Link href="/reviews">Reviews</Link>}
             <Link href="/contact">Contact</Link>
             <Link href="/maintenance">Report a problem</Link>

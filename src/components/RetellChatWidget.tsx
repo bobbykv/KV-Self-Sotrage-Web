@@ -30,9 +30,9 @@ export function RetellChatWidget(config: RetellWidgetConfig) {
   return (
     <>
       {config.recaptchaKey && (
-        <Script src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(config.recaptchaKey)}`} strategy="afterInteractive" />
+        <Script src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(config.recaptchaKey)}`} strategy="lazyOnload" />
       )}
-      <Script id="retell-widget" src="https://dashboard.retellai.com/retell-widget-v2.js" type="module" strategy="afterInteractive" {...attrs} />
+      <Script id="retell-widget" src="https://dashboard.retellai.com/retell-widget-v2.js" type="module" strategy="lazyOnload" {...attrs} />
     </>
   );
 }

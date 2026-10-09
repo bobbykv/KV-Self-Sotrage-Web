@@ -1,5 +1,7 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { after } from "next/server";
+import { cache } from "react";
 import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { db } from "./db";
 import { withJobLock } from "./job-lock";
@@ -11,7 +13,7 @@ import { blockingHoldWhere } from "./hold-status";
 
 type Kind = "available" | "all" | "pricelist" | "report";
 const snapshotId = (loc: LocationKey, kind: Kind) => `${loc}:${kind}`;
-/** After a failed first load, page views wait this long before trying SiteLink again. */
+/** After a failed background warm, skip scheduling another SiteLink try this long. */
 const COLD_START_RETRY_MS = 2 * 60 * 1000;
 
 async function saveSnapshot(loc: LocationKey, kind: Kind, data: unknown, lastTimePolled?: string) {
@@ -151,9 +153,9 @@ function unavailableInventory(message: string): LocationInventory[] {
   return LOCATION_KEYS.map((location) => ({ location, units: [], priceList: [], refreshedAt: null, lastError: message }));
 }
 
-export async function getInventory(): Promise<LocationInventory[]> {
+export const getInventory = cache(async (): Promise<LocationInventory[]> => {
   try {
-    let snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
+    const snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
     const neverLoaded = !snaps.some((s) => s.kind === "available" && s.refreshedAt.getTime() > 0);
     const settings = await getSettings();
     const staleMs = settings.pollIntervalMinutes * 60_000;
@@ -161,9 +163,13 @@ export async function getInventory(): Promise<LocationInventory[]> {
     const oldest = oldestAvailable.length ? Math.min(...oldestAvailable) : 0;
     const isStale = oldest > 0 && Date.now() - oldest >= staleMs;
     const failedRecently = snaps.some((s) => s.lastErrorAt && Date.now() - s.lastErrorAt.getTime() < COLD_START_RETRY_MS);
+    // Never block HTML on SiteLink SOAP. Serve the DB snapshot and warm in the background.
     if ((neverLoaded || isStale) && !failedRecently) {
-      await refreshInventory({ kinds: ["available", "pricelist"], force: isStale });
-      snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
+      after(() => {
+        void refreshInventory({ kinds: ["available", "pricelist"], force: isStale }).catch((err) =>
+          log.warn("background inventory warm failed", { err: safeErrorMessage(err) }),
+        );
+      });
     }
     const held = await db.hold.findMany({
       where: blockingHoldWhere(),
@@ -195,7 +201,7 @@ export async function getInventory(): Promise<LocationInventory[]> {
     log.error("inventory read failed", { err: safeErrorMessage(err) });
     return unavailableInventory("Live availability isn't connected yet.");
   }
-}
+});
 
 export async function getSnapshots() {
   return db.siteLinkSnapshot.findMany({ orderBy: { id: "asc" } });

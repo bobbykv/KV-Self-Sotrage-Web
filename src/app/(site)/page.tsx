@@ -43,7 +43,7 @@ export default async function Home() {
           </div>
         </div>
         <div className="relative overflow-hidden rounded-3xl">
-          <Image src="/photos/hero.jpg" alt="Row of white roll-up storage doors at KV Self Storage" width={929} height={622} priority className="h-full w-full object-cover" />
+          <Image src="/photos/hero.jpg" alt="Row of white roll-up storage doors at KV Self Storage" width={929} height={622} priority sizes="(max-width: 1024px) 100vw, 50vw" className="h-full w-full object-cover" />
         </div>
       </section>
 

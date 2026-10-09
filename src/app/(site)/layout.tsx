@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ChatWidget } from "@/components/ChatWidget";
-import { RetellChatWidget } from "@/components/RetellChatWidget";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { SiteChat } from "@/components/SiteChat";
 import { getSettings } from "@/lib/settings";
 import { env } from "@/lib/env";
 import { getRetellWidgetConfig } from "@/lib/retell";
@@ -34,7 +33,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       )}
       <main>{children}</main>
       <Footer />
-      {settings.chatEnabled && (retell ? <RetellChatWidget {...retell} /> : <ChatWidget />)}
+      {settings.chatEnabled && <SiteChat retell={retell} />}
     </>
   );
 }
