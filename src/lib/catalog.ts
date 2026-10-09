@@ -42,6 +42,7 @@ export function groupKey(u: Pick<Unit, "typeName" | "widthFt" | "lengthFt" | "cl
 export function groupUnits(units: Unit[]): UnitGroup[] {
   const map = new Map<string, UnitGroup>();
   for (const u of units) {
+    if (!u?.locationKey || !Number.isFinite(u.widthFt) || !Number.isFinite(u.lengthFt) || !Number.isFinite(u.rate)) continue;
     const key = `${u.locationKey}:${groupKey(u)}`;
     const g = map.get(key);
     if (!g) {

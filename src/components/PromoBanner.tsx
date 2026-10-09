@@ -2,8 +2,9 @@ import type { Promotion } from "@prisma/client";
 import { getLocation, isLocationKey } from "@/config/locations";
 
 function where(p: Promotion) {
-  if (p.locations.includes("all") || !p.locations.length) return "All locations";
-  return p.locations.filter(isLocationKey).map((k) => getLocation(k).shortName).join(" · ");
+  const locations = Array.isArray(p.locations) ? p.locations : [];
+  if (locations.includes("all") || !locations.length) return "All locations";
+  return locations.filter(isLocationKey).map((k) => getLocation(k).shortName).join(" · ");
 }
 
 export function PromoBanner({ promos, compact = false }: { promos: Promotion[]; compact?: boolean }) {

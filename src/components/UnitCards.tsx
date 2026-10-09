@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getLocation } from "@/config/locations";
 import { formatSize, money, type UnitGroup } from "@/lib/catalog";
@@ -24,13 +23,13 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
     <article className="card flex flex-col gap-4 p-5">
       {imageUrl && (
         <div className="overflow-hidden rounded-2xl">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={imageUrl}
             alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`}
-            width={640}
-            height={400}
-            unoptimized={imageUrl.startsWith("/")}
             className="aspect-[16/10] w-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       )}

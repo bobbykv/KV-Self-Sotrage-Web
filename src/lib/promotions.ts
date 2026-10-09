@@ -20,8 +20,10 @@ export function isPromoLive(p: PromoLike, now = new Date()): boolean {
 }
 
 export function promoMatches(p: PromoLike, opts: { placement?: Placement; location?: LocationKey | null }): boolean {
-  if (opts.placement && !p.placements.includes(opts.placement)) return false;
-  if (opts.location && !(p.locations.includes("all") || p.locations.includes(opts.location))) return false;
+  const placements = Array.isArray(p.placements) ? p.placements : [];
+  const locations = Array.isArray(p.locations) ? p.locations : [];
+  if (opts.placement && !placements.includes(opts.placement)) return false;
+  if (opts.location && !(locations.includes("all") || locations.includes(opts.location))) return false;
   return true;
 }
 
