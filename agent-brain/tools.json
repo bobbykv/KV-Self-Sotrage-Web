@@ -28,7 +28,7 @@
     },
     {
       "name": "capture_lead",
-      "description": "Send the person's details straight to GoHighLevel (and store them for staff). Call this as soon as you have a name plus a phone or email — waitlist, unavailable unit, callback, human handoff, or any visitor who shared contact info. Confirm details with the person first.",
+      "description": "Save the person's details for staff follow-up and attempt GoHighLevel delivery when configured. Call this as soon as you have a name plus a phone or email — waitlist, unavailable unit, callback, human handoff, or any visitor who shared contact info. Confirm details with the person first. Check ghl_status in the response before saying delivery was confirmed.",
       "http": { "method": "POST", "path": "/api/agent/tools/capture_lead" },
       "parameters": {
         "type": "object",
@@ -40,7 +40,7 @@
           "location": { "type": "string", "enum": ["haley", "hwy4", "stellarton"] },
           "unit_type": { "type": "string", "description": "e.g. 'Climate Controlled', 'Drive-up', 'Outdoor Parking'" },
           "unit_size": { "type": "string", "description": "e.g. '10x10'" },
-          "notes": { "type": "string" }
+          "notes": { "type": "string", "description": "Brief summary of the person's storage need and requested follow-up. Never include the full conversation." }
         },
         "required": ["reason", "name"]
       }

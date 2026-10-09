@@ -6,7 +6,8 @@ import { env } from "@/lib/env";
 /**
  * Shared agent brain for Retell (phone voice + website chat widget) and any
  * other runtime that should answer like the built-in website chat.
- * Point the agent prompt / knowledge sync at this URL and register the tools.
+ * Export the filled prompt and tool definitions for manual Retell setup.
+ * Retell does not fetch this URL as a live prompt automatically.
  * Use `?channel=website_chat` for the Retell chat agent, `?channel=retell` (default) for phone.
  */
 export async function GET(req: Request) {

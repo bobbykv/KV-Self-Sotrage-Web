@@ -83,7 +83,14 @@ export async function runTool(name: ToolName, args: Args, channel: AgentChannel)
       };
       try {
         const saved = await captureLead(lead);
-        return { ok: true, lead_id: saved.id, message: "Lead saved and sent to GoHighLevel. Staff will follow up." };
+        return {
+          ok: true,
+          lead_id: saved.id,
+          ghl_status: saved.ghlStatus,
+          message: saved.ghlStatus === "sent"
+            ? "Lead saved for staff follow-up."
+            : "Lead saved for staff follow-up; GoHighLevel delivery is not confirmed.",
+        };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : "Please add your name and a phone number or email so we can follow up." };
       }

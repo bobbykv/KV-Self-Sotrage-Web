@@ -15,7 +15,7 @@ Browser ──► Next.js server (route handlers / server actions)
               └── NOTIFY_WEBHOOK_URL   staff alerts
 Staff dashboard ► refresh cache · run reports   (same work as /api/cron/*, which is not scheduled)
 Retell ──────► /api/agent/brain · /api/agent/tools/*  (Bearer AGENT_TOOL_SECRET)
-         └──► /api/retell/webhook  → GoHighLevel (transcript + contact)
+         └──► /api/retell/webhook  → GoHighLevel (contact + summary note)
 ```
 
 ## SiteLink usage and the API budget
@@ -97,25 +97,29 @@ Noke instructions are shown for Highway 4 and Stellarton only.
 
 ## Leads (units that aren't available)
 
-Leads are written to Postgres first, then sent to GoHighLevel (webhook or
-LeadConnector `contacts/upsert` + note) with `source = website`. Failed sends
+Leads are written to Postgres first, then sent to GoHighLevel (LeadConnector
+`contacts/upsert` + separate tag and note calls, or a configured workflow
+webhook) with `source = website`. Failed sends
 stay visible in `/admin/leads` with a retry button. We never create fake
 SiteLink reservations to capture interest.
 
 ## Shared agent brain (website chat + Retell)
 
 `agent-brain/brain.md` (prompt), `agent-brain/faq.md` (canonical FAQ, editable
-in `/admin/faq`) and `agent-brain/tools.json` (tool schema) are the single
-source for every channel. `/api/agent/brain?channel=website_chat` is for the
+in `/admin/faq`) and `agent-brain/tools.json` (tool schema) are the authoring
+source for every channel. The built-in chat reads them at runtime; Retell's
+dashboard configuration must be refreshed from `/api/agent/brain` after edits.
+`/api/agent/brain?channel=website_chat` is for the
 Retell website chat agent; `/api/agent/brain?channel=retell` (default) is for
 the phone agent. Tool URLs include `?channel=` so leads are tagged correctly.
 When `NEXT_PUBLIC_RETELL_PUBLIC_KEY` and `NEXT_PUBLIC_RETELL_CHAT_AGENT_ID` are
 set, the public site embeds Retell's widget; otherwise the built-in
 `ChatWidget` + `/api/chat` path is used. Tools: `search_units` (cached
 inventory, real prices only), `get_faq`, `capture_lead` (writes to GoHighLevel
-immediately), `handoff_to_human`. Retell's agent webhook
-(`/api/retell/webhook`) also forwards finished chat/call transcripts and
-contacts to `GHL_WEBHOOK_URL`. The chat never takes card numbers and does not
+immediately when configured), `handoff_to_human`. Retell's agent webhook
+(`/api/retell/webhook`) saves analyzed chat/call contacts and summaries, then
+uses the same GHL delivery path. It does not send full transcripts to GHL.
+The chat never takes card numbers and does not
 use any SiteLink AI features. See [RETELL.md](RETELL.md).
 
 ## Staff console

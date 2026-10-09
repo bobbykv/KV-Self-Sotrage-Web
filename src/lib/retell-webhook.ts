@@ -1,10 +1,9 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { LOCATION_KEYS, isLocationKey, type LocationKey } from "@/config/locations";
-import { type LeadInput, sendLeadToGhl } from "./leads";
+import { captureLead, type LeadInput } from "./leads";
 import { env } from "./env";
 import { db } from "./db";
-import { log, safeErrorMessage } from "./log";
 
 /** Retell signs webhooks as `v=<unix_ms>,d=<hmac_sha256_hex>` of `rawBody + timestamp`. */
 export function verifyRetellSignature(rawBody: string, apiKey: string, signature: string, now = Date.now()): boolean {
@@ -54,6 +53,21 @@ function extractFromText(text: string | undefined) {
   };
 }
 
+function customerText(session: Loose): string | undefined {
+  const turns = Array.isArray(session.transcript_object) ? session.transcript_object : [];
+  const structured = turns
+    .map(asObj)
+    .filter((turn) => turn.role === "user")
+    .map((turn) => asStr(turn.content))
+    .filter(Boolean)
+    .join("\n");
+  if (structured) return structured;
+  const transcript = asStr(session.transcript);
+  return transcript?.split("\n")
+    .filter((line) => /^(?:user|caller|customer)\s*:/i.test(line.trim()))
+    .join("\n");
+}
+
 function resolveLocation(value: string | undefined): LocationKey | undefined {
   if (!value) return undefined;
   const lower = value.toLowerCase();
@@ -73,6 +87,7 @@ export type RetellSession = {
   agentId?: string;
   channel: LeadInput["channel"];
   transcript?: string;
+  userText?: string;
   summary?: string;
   sentiment?: string;
   successful?: boolean;
@@ -92,7 +107,10 @@ export function parseRetellWebhook(body: Loose): { event: string; session: Retel
 
   const analysis = asObj(sessionObj.chat_analysis ?? sessionObj.call_analysis);
   const custom = asObj(analysis.custom_analysis_data);
-  const dynamics = asObj(sessionObj.retell_llm_dynamic_variables ?? sessionObj.collected_dynamic_variables);
+  const dynamics = {
+    ...asObj(sessionObj.retell_llm_dynamic_variables),
+    ...asObj(sessionObj.collected_dynamic_variables),
+  };
   const id = asStr(sessionObj.chat_id) ?? asStr(sessionObj.call_id);
   if (!id) return { event, session: null };
 
@@ -104,6 +122,7 @@ export function parseRetellWebhook(body: Loose): { event: string; session: Retel
       agentId: asStr(sessionObj.agent_id),
       channel: isChat ? "website_chat" : "retell",
       transcript: asStr(sessionObj.transcript),
+      userText: customerText(sessionObj),
       summary: asStr(analysis.chat_summary ?? analysis.call_summary),
       sentiment: asStr(analysis.user_sentiment),
       successful:
@@ -113,38 +132,44 @@ export function parseRetellWebhook(body: Loose): { event: string; session: Retel
             ? (analysis.chat_successful as boolean)
             : undefined,
       custom: { ...dynamics, ...custom },
-      fromNumber: asStr(sessionObj.from_number),
+      // For outbound calls the customer is the recipient; the origin number
+      // belongs to KV and must not become the GHL contact's phone.
+      fromNumber: asStr(sessionObj.direction) === "outbound"
+        ? asStr(sessionObj.to_number)
+        : asStr(sessionObj.from_number),
       toNumber: asStr(sessionObj.to_number),
     },
   };
 }
 
+function retellSummaryNote(session: RetellSession): string {
+  return [
+    session.summary ? `Summary: ${session.summary}` : "Summary unavailable.",
+    session.sentiment && `Sentiment: ${session.sentiment}`,
+    `Retell ${session.kind}_id: ${session.id}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, 2000);
+}
+
 export function leadFromRetellSession(session: RetellSession): LeadInput | null {
   const custom = session.custom ?? {};
-  const fromText = extractFromText([session.transcript, session.summary, JSON.stringify(custom)].filter(Boolean).join("\n"));
+  // Only customer turns are searched for a contact number. Agent turns often
+  // repeat KV's own phone number and must not become a visitor contact.
+  const fromText = extractFromText(session.userText);
   const joinedName = [pickStr(custom, ["first_name", "firstName"]), pickStr(custom, ["last_name", "lastName"])].filter(Boolean).join(" ").trim();
   const name =
     pickStr(custom, ["name", "customer_name", "full_name", "contact_name"]) ??
     (joinedName || undefined) ??
     (session.kind === "chat" ? "Website chat visitor" : "Phone caller");
-  const phone = pickStr(custom, ["phone", "phone_number", "mobile", "from_number"]) ?? session.fromNumber ?? fromText.phone;
+  const phone = pickStr(custom, ["phone", "phone_number", "mobile"]) ?? session.fromNumber ?? fromText.phone;
   const email = pickStr(custom, ["email", "email_address"]) ?? fromText.email;
   if (!phone && !email) return null;
 
   const locationKey = resolveLocation(pickStr(custom, ["location", "preferred_location", "location_key", "locationKey"]));
   const reasonRaw = pickStr(custom, ["reason", "lead_reason"]) ?? "contact_request";
   const reason = (["unavailable_unit", "waitlist", "contact_request", "human_handoff"].includes(reasonRaw) ? reasonRaw : "contact_request") as LeadInput["reason"];
-
-  const notes = [
-    session.summary && `Summary: ${session.summary}`,
-    session.sentiment && `Sentiment: ${session.sentiment}`,
-    pickStr(custom, ["notes", "interest", "message"]),
-    session.transcript && `Transcript:\n${session.transcript.slice(0, 1800)}`,
-    `Retell ${session.kind}_id: ${session.id}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n")
-    .slice(0, 2000);
 
   return {
     channel: session.channel,
@@ -155,185 +180,77 @@ export function leadFromRetellSession(session: RetellSession): LeadInput | null 
     locationKey,
     unitType: pickStr(custom, ["unit_type", "unitType", "type"]),
     unitSize: pickStr(custom, ["unit_size", "unitSize", "size"]),
-    notes,
+    notes: retellSummaryNote(session),
   };
-}
-
-/** Full conversation payload for a GHL workflow webhook (transcript + analysis + contact). */
-export function retellGhlPayload(event: string, session: RetellSession) {
-  const lead = leadFromRetellSession(session);
-  return {
-    source: "retell",
-    event,
-    kind: session.kind,
-    retellId: session.id,
-    agentId: session.agentId,
-    channel: session.channel,
-    fromNumber: session.fromNumber,
-    toNumber: session.toNumber,
-    summary: session.summary,
-    sentiment: session.sentiment,
-    successful: session.successful,
-    transcript: session.transcript,
-    custom: session.custom,
-    contact: lead
-      ? {
-          name: lead.name,
-          phone: lead.phone,
-          email: lead.email,
-          locationKey: lead.locationKey,
-          unitType: lead.unitType,
-          unitSize: lead.unitSize,
-          reason: lead.reason,
-          notes: lead.notes,
-        }
-      : null,
-    tags: ["kv-self-storage", "retell", `channel:${session.channel}`, `retell:${session.kind}`],
-    timestamp: new Date().toISOString(),
-  };
-}
-
-async function postGhlWebhook(payload: unknown): Promise<void> {
-  if (!env.GHL_WEBHOOK_URL) throw new Error("GHL webhook not configured");
-  const res = await fetch(env.GHL_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) throw new Error(`GHL webhook HTTP ${res.status}`);
 }
 
 export function shouldSyncRetellEvent(event: string): boolean {
-  return event === "chat_ended" || event === "chat_analyzed" || event === "call_ended" || event === "call_analyzed";
+  // Analysis contains the summary. Handling the preceding *_ended event too
+  // would create two GHL notes/workflow deliveries for one conversation.
+  return event === "chat_analyzed" || event === "call_analyzed";
 }
 
 /**
- * Push every finished Retell chat/call to GoHighLevel:
- * 1) full conversation to GHL_WEBHOOK_URL (workflow gets transcript + contact)
- * 2) contact row in /admin/leads; LeadConnector upsert when API key is set
+ * Save the contact locally, then deliver the contact and analysis summary to
+ * GHL through the same API-first path used by website forms and agent tools.
  */
-export async function syncRetellSessionToGhl(event: string, session: RetellSession) {
+export async function syncRetellSessionToGhl(_event: string, session: RetellSession) {
   if (env.appTestMode) {
     return { ok: true as const, skipped: "APP_TEST_MODE" as const, leadId: null as string | null };
   }
 
   const externalId = `retell:${session.kind}:${session.id}`;
   const existing = await db.lead.findFirst({ where: { externalId } });
-  const payload = retellGhlPayload(event, session);
-
-  let webhookOk = false;
-  let webhookError: string | null = null;
-  if (env.GHL_WEBHOOK_URL) {
-    try {
-      await postGhlWebhook(payload);
-      webhookOk = true;
-    } catch (err) {
-      webhookError = safeErrorMessage(err);
-      log.warn("Retell→GHL webhook failed", { externalId, err });
-    }
-  }
-
-  const leadInput = leadFromRetellSession(session);
+  const extracted = leadFromRetellSession(session);
+  const leadInput = (extracted && existing
+    ? {
+        ...extracted,
+        name: ["Website chat visitor", "Phone caller"].includes(extracted.name) ? existing.name : extracted.name,
+        // Keep details captured by the tool ahead of regex guesses from text.
+        phone: pickStr(session.custom ?? {}, ["phone", "phone_number", "mobile"])
+          ?? session.fromNumber ?? existing.phone ?? extracted.phone,
+        email: pickStr(session.custom ?? {}, ["email", "email_address"])
+          ?? existing.email ?? extracted.email,
+        locationKey: extracted.locationKey ?? (isLocationKey(existing.locationKey) ? existing.locationKey : undefined),
+        unitType: extracted.unitType ?? existing.unitType ?? undefined,
+        unitSize: extracted.unitSize ?? existing.unitSize ?? undefined,
+        reason: extracted.reason === "contact_request" ? existing.reason as LeadInput["reason"] : extracted.reason,
+      }
+    : extracted) ??
+    (existing && (existing.phone || existing.email)
+      ? {
+          channel: existing.channel as LeadInput["channel"],
+          reason: existing.reason as LeadInput["reason"],
+          name: existing.name,
+          phone: existing.phone ?? undefined,
+          email: existing.email ?? undefined,
+          locationKey: isLocationKey(existing.locationKey) ? existing.locationKey : undefined,
+          unitType: existing.unitType ?? undefined,
+          unitSize: existing.unitSize ?? undefined,
+          notes: retellSummaryNote(session),
+        }
+      : null);
   if (!leadInput) {
     return {
-      ok: !env.GHL_WEBHOOK_URL || webhookOk,
-      webhookOk,
-      webhookError,
+      ok: true,
+      skipped: "No contact details",
       leadId: existing?.id ?? null,
       contact: false,
     };
   }
 
-  if (existing) {
-    await db.lead.update({
-      where: { id: existing.id },
-      data: {
-        notes: leadInput.notes ?? existing.notes,
-        ...(webhookOk ? { ghlStatus: "sent", ghlSentAt: new Date(), ghlError: null } : {}),
-        ...(!webhookOk && webhookError ? { ghlStatus: "failed", ghlError: webhookError } : {}),
-      },
-    });
-    // API-only setups (or webhook failed): retry contact upsert.
-    if ((!env.GHL_WEBHOOK_URL || !webhookOk) && env.GHL_API_KEY && env.GHL_LOCATION_ID) {
-      await sendLeadToGhl(existing.id);
-    }
-    return { ok: true, webhookOk, webhookError, leadId: existing.id, contact: true, deduped: true };
+  if (existing?.ghlStatus === "sent" && existing.notes === leadInput.notes) {
+    return { ok: true, leadId: existing.id, contact: true, deduped: true, ghlStatus: "sent" };
   }
 
-  const lead = await db.lead.create({
-    data: {
-      channel: leadInput.channel,
-      reason: leadInput.reason,
-      name: leadInput.name,
-      phone: leadInput.phone || null,
-      email: leadInput.email || null,
-      locationKey: leadInput.locationKey ?? null,
-      unitType: leadInput.unitType ?? null,
-      unitSize: leadInput.unitSize ?? null,
-      notes: leadInput.notes ?? null,
-      externalId,
-      ghlStatus: webhookOk ? "sent" : env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID) ? "pending" : "skipped",
-      ghlSentAt: webhookOk ? new Date() : null,
-      ghlError: webhookError ?? (env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID) ? null : "GHL not configured"),
-    },
-  });
-
-  // LeadConnector contact upsert when API is configured. Skip a second webhook post —
-  // the rich Retell payload already went to GHL_WEBHOOK_URL above.
-  if (env.GHL_API_KEY && env.GHL_LOCATION_ID) {
-    const prevWebhook = env.GHL_WEBHOOK_URL;
-    try {
-      // Temporarily prefer API path inside sendLeadToGhl by clearing webhook in a local call:
-      // sendLeadToGhl always prefers webhook first, so call the API path via a dedicated push when webhook already succeeded.
-      if (prevWebhook && webhookOk) {
-        await upsertGhlContact(leadInput);
-        await db.lead.update({ where: { id: lead.id }, data: { ghlStatus: "sent", ghlSentAt: new Date(), ghlError: null } });
-      } else {
-        await sendLeadToGhl(lead.id);
-      }
-    } catch (err) {
-      log.warn("Retell→GHL contact upsert failed", { leadId: lead.id, err });
-    }
-  } else if (!webhookOk) {
-    await sendLeadToGhl(lead.id);
-  }
-
-  return { ok: true, webhookOk, webhookError, leadId: lead.id, contact: true };
-}
-
-async function upsertGhlContact(lead: LeadInput) {
-  if (!env.GHL_API_KEY || !env.GHL_LOCATION_ID) return;
-  const [firstName, ...rest] = lead.name.split(/\s+/);
-  const headers = {
-    Authorization: `Bearer ${env.GHL_API_KEY}`,
-    Version: "2021-07-28",
-    "Content-Type": "application/json",
-    Accept: "application/json",
+  // Respond within Retell's 10-second webhook window. The lead's failed
+  // status remains visible in /admin/leads and a non-2xx asks Retell to retry.
+  const saved = await captureLead({ ...leadInput, externalId }, { notifyOnFailure: false });
+  return {
+    ok: saved.ghlStatus !== "failed",
+    leadId: saved.id,
+    contact: true,
+    ghlStatus: saved.ghlStatus,
+    ...(saved.ghlStatus === "skipped" ? { skipped: saved.ghlError ?? "GHL not configured" } : {}),
   };
-  const res = await fetch("https://services.leadconnectorhq.com/contacts/upsert", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      locationId: env.GHL_LOCATION_ID,
-      firstName,
-      lastName: rest.join(" "),
-      email: lead.email || undefined,
-      phone: lead.phone || undefined,
-      source: `website (${lead.channel})`,
-      tags: ["kv-self-storage", `channel:${lead.channel}`, `reason:${lead.reason}`, "retell"],
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) throw new Error(`GHL contacts/upsert HTTP ${res.status}`);
-  const body = (await res.json()) as { contact?: { id?: string } };
-  const contactId = body.contact?.id;
-  if (contactId && lead.notes) {
-    await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ body: lead.notes }),
-      signal: AbortSignal.timeout(10000),
-    }).catch(() => undefined);
-  }
 }

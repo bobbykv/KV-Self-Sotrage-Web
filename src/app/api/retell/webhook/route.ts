@@ -12,8 +12,8 @@ import {
 
 /**
  * Retell agent webhook → GoHighLevel.
- * Point the Retell chat/voice agent webhook URL here so every finished
- * conversation (transcript, summary, contact) lands in GHL.
+ * Point the Retell chat/voice agent webhook URL here so analyzed
+ * conversations can update a contact and summary note in GHL.
  *
  * Auth: X-Retell-Signature verified with RETELL_API_KEY (the key with the
  * webhook badge in Retell). Falls back to Bearer AGENT_TOOL_SECRET for
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
   try {
     const result = await syncRetellSessionToGhl(event, session);
-    return NextResponse.json({ event, ...result, ok: result.ok !== false });
+    return NextResponse.json({ event, ...result }, { status: result.ok === false ? 502 : 200 });
   } catch (err) {
     log.warn("Retell webhook sync failed", { event, sessionId: session.id, err });
     return NextResponse.json({ error: "sync failed" }, { status: 500 });

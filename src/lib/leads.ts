@@ -50,61 +50,81 @@ export function ghlPayload(lead: LeadInput & { id: string; createdAt: Date }) {
   };
 }
 
+export async function upsertGhlContact(payload: ReturnType<typeof ghlPayload>): Promise<void> {
+  if (!env.GHL_API_KEY || !env.GHL_LOCATION_ID) throw new Error("GHL API not configured");
+  // Retell webhooks time out after 10 seconds. Bound the complete three-call
+  // GHL operation so a failed delivery can be reported while Retell can retry.
+  const signal = AbortSignal.timeout(7000);
+  const headers = { Authorization: `Bearer ${env.GHL_API_KEY}`, Version: "2021-07-28", "Content-Type": "application/json", Accept: "application/json" };
+  const res = await fetch("https://services.leadconnectorhq.com/contacts/upsert", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      locationId: env.GHL_LOCATION_ID,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      source: `website (${payload.channel})`,
+      // GHL's upsert replaces every existing tag when `tags` is present.
+    }),
+    signal,
+  });
+  if (!res.ok) throw new Error(`GHL contacts/upsert HTTP ${res.status}`);
+  const body = (await res.json()) as { contact?: { id?: string } };
+  const contactId = body.contact?.id;
+  if (!contactId) throw new Error("GHL contacts/upsert returned no contact ID");
+
+  const tags = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ tags: payload.tags }),
+    signal,
+  });
+  if (!tags.ok) throw new Error(`GHL contacts/tags HTTP ${tags.status}`);
+
+  const note = [
+    `Reason: ${payload.reason}`,
+    `Preferred location: ${payload.preferredLocation}`,
+    payload.unitType && `Unit type: ${payload.unitType}`,
+    payload.unitSize && `Size: ${payload.unitSize}`,
+    payload.notes && `Notes: ${payload.notes}`,
+    `Channel: ${payload.channel} · ${payload.timestamp}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const noteRes = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ body: note }),
+    signal,
+  });
+  if (!noteRes.ok) throw new Error(`GHL contacts/notes HTTP ${noteRes.status}`);
+}
+
 async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> {
+  // Contact + note is the preferred delivery. If the API is configured but
+  // fails, report the failure so staff can retry the incomplete contact/note.
+  if (env.GHL_API_KEY && env.GHL_LOCATION_ID) {
+    await upsertGhlContact(payload);
+    return;
+  }
+  // A webhook-only installation must map the lead fields in its GHL workflow.
   if (env.GHL_WEBHOOK_URL) {
     const res = await fetch(env.GHL_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(7000),
     });
     if (!res.ok) throw new Error(`GHL webhook HTTP ${res.status}`);
-    return;
-  }
-  if (env.GHL_API_KEY && env.GHL_LOCATION_ID) {
-    const headers = { Authorization: `Bearer ${env.GHL_API_KEY}`, Version: "2021-07-28", "Content-Type": "application/json", Accept: "application/json" };
-    const res = await fetch("https://services.leadconnectorhq.com/contacts/upsert", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        locationId: env.GHL_LOCATION_ID,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        phone: payload.phone,
-        source: `website (${payload.channel})`,
-        tags: payload.tags,
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) throw new Error(`GHL contacts/upsert HTTP ${res.status}`);
-    const body = (await res.json()) as { contact?: { id?: string } };
-    const contactId = body.contact?.id;
-    if (contactId) {
-      const note = [
-        `Reason: ${payload.reason}`,
-        `Preferred location: ${payload.preferredLocation}`,
-        payload.unitType && `Unit type: ${payload.unitType}`,
-        payload.unitSize && `Size: ${payload.unitSize}`,
-        payload.notes && `Notes: ${payload.notes}`,
-        `Channel: ${payload.channel} · ${payload.timestamp}`,
-      ]
-        .filter(Boolean)
-        .join("\n");
-      await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ body: note }),
-        signal: AbortSignal.timeout(10000),
-      }).catch(() => undefined);
-    }
     return;
   }
   throw new Error("GHL not configured");
 }
 
 /** Always stores the lead locally first so nothing is lost if GHL is down; staff can retry from /admin/leads. */
-export async function captureLead(input: LeadInput) {
+export async function captureLead(input: LeadInput, options: { notifyOnFailure?: boolean } = {}) {
   const data = leadSchema.parse(input);
   if (!data.phone && !data.email) throw new Error("A phone number or email is required");
 
@@ -124,7 +144,7 @@ export async function captureLead(input: LeadInput) {
           reason: data.reason,
         },
       });
-      return sendLeadToGhl(existing.id);
+      return sendLeadToGhl(existing.id, options);
     }
   }
 
@@ -142,10 +162,10 @@ export async function captureLead(input: LeadInput) {
       externalId: data.externalId ?? null,
     },
   });
-  return sendLeadToGhl(lead.id);
+  return sendLeadToGhl(lead.id, options);
 }
 
-export async function sendLeadToGhl(leadId: string) {
+export async function sendLeadToGhl(leadId: string, options: { notifyOnFailure?: boolean } = {}) {
   const lead = await db.lead.findUniqueOrThrow({ where: { id: leadId } });
   if (env.appTestMode) {
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "skipped", ghlError: "APP_TEST_MODE — GHL delivery blocked" } });
@@ -172,7 +192,9 @@ export async function sendLeadToGhl(leadId: string) {
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "sent", ghlSentAt: new Date(), ghlError: null } });
   } catch (err) {
     log.warn("GHL push failed", { leadId, err });
-    await notifyStaff("lead_ghl_failed", `Lead ${lead.name} saved but not sent to GoHighLevel`, { leadId });
+    if (options.notifyOnFailure !== false) {
+      await notifyStaff("lead_ghl_failed", `Lead ${lead.name} saved but not sent to GoHighLevel`, { leadId });
+    }
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "failed", ghlError: safeErrorMessage(err) } });
   }
 }
