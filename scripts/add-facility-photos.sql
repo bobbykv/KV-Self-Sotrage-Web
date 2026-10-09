@@ -5,8 +5,31 @@
 UPDATE "GalleryPhoto" 
 SET "isCover" = false 
 WHERE kind = 'location' 
-  AND "locationKey" IN ('stellarton', 'hwy4')
+  AND "locationKey" IN ('haley', 'stellarton', 'hwy4')
   AND "isCover" = true;
+
+-- Haley Road facility photo
+INSERT INTO "GalleryPhoto" (
+  id, kind, "locationKey", url, caption, "altText", 
+  "sortOrder", "isCover", "createdAt", "updatedAt"
+)
+VALUES (
+  'facility-haley-office',
+  'location',
+  'haley',
+  '/photos/facility-haley-office.jpg',
+  'KV Self Storage Haley Road office and facility',
+  'KV Self Storage Haley Road location with office building and storage units',
+  (SELECT COALESCE(MAX("sortOrder"), -1) + 1 FROM "GalleryPhoto" WHERE kind = 'location' AND "locationKey" = 'haley'),
+  true,
+  NOW(),
+  NOW()
+)
+ON CONFLICT (id) DO UPDATE SET
+  caption = EXCLUDED.caption,
+  "altText" = EXCLUDED."altText",
+  "isCover" = EXCLUDED."isCover",
+  "updatedAt" = NOW();
 
 -- Stellarton facility photo (gated entrance)
 INSERT INTO "GalleryPhoto" (

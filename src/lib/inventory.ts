@@ -175,12 +175,18 @@ export async function getInventory(): Promise<LocationInventory[]> {
       const avail = snaps.find((s) => s.id === snapshotId(loc, "available"));
       const price = snaps.find((s) => s.id === snapshotId(loc, "pricelist"));
       const units = ((avail?.data as Unit[]) ?? []).filter(
-        (u) => !u.rented && u.rentable && !u.excludedFromWebsite && !u.waitingListReserved && !heldKey.has(`${loc}:${u.unitId}`),
+        (u): u is Unit =>
+          Boolean(u) &&
+          !u.rented &&
+          u.rentable &&
+          !u.excludedFromWebsite &&
+          !u.waitingListReserved &&
+          !heldKey.has(`${loc}:${u.unitId}`),
       );
       return {
         location: loc,
         units,
-        priceList: (price?.data as PriceListEntry[]) ?? [],
+        priceList: Array.isArray(price?.data) ? (price.data as PriceListEntry[]) : [],
         refreshedAt: avail && avail.refreshedAt.getTime() > 0 ? avail.refreshedAt.toISOString() : null,
         lastError: avail?.lastError ?? null,
       };

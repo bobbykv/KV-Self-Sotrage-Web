@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AmenityList } from "@/components/LocationCards";
@@ -33,9 +32,7 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
   const unitCount = inventory.find((l) => l.location === slug)?.units.length ?? 0;
   const address = fullAddress(loc);
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
-  const gallery = photos.length
-    ? photos
-    : [{ id: "stock", url: "/photos/hero.jpg", altText: `Storage at ${loc.shortName}`, caption: null as string | null, isCover: true }];
+  const gallery = photos.length ? photos : [{ id: "stock", url: "/photos/hero.jpg", altText: `Storage at ${loc.shortName}`, caption: null as string | null, isCover: true }];
 
   return (
     <div className="container-kv py-10 sm:py-16">
@@ -50,12 +47,13 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {gallery.map((p) => (
           <figure key={p.id} className="overflow-hidden rounded-3xl">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={p.url}
               alt={p.altText || `Storage at ${loc.shortName}`}
-              width={900}
-              height={600}
               className="aspect-[4/3] w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             {p.caption && <figcaption className="mt-2 text-sm text-kv-muted">{p.caption}</figcaption>}
           </figure>

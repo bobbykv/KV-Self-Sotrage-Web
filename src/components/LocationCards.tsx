@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LOCATIONS, formatOfficeHours, fullAddress, type Location } from "@/config/locations";
+import { staticFacilityCoverUrl } from "@/lib/photos";
 
 const UNIT_BUTTON: Record<string, string> = {
   haley: "See Haley Road units",
@@ -33,7 +34,17 @@ export function LocationCards({ counts }: { counts?: Record<string, number> }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {LOCATIONS.map((l) => (
-        <article key={l.key} id={l.key} className="card flex flex-col gap-4 p-6">
+        <article key={l.key} id={l.key} className="card flex flex-col gap-4 overflow-hidden p-6">
+          <div className="-mx-6 -mt-6 mb-2 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={staticFacilityCoverUrl(l.key)}
+              alt={`${l.shortName} facility`}
+              className="aspect-[16/10] w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
           <div>
             <h2 className="text-xl font-extrabold text-kv-navy">{l.cardTitle}</h2>
             <p className="text-sm text-kv-muted">{fullAddress(l)}</p>

@@ -42,17 +42,64 @@ export function listingUnitPhotoUrl(g: { widthFt: number; lengthFt: number; insi
   return stockPhotoForUnit({ inside: g.inside, vehicle: g.vehicle });
 }
 
+/** Facility photos in /public/photos — used when the gallery DB has no location rows yet. */
+const STATIC_FACILITY_PHOTOS: Record<
+  LocationKey,
+  { url: string; caption: string; altText: string }
+> = {
+  haley: {
+    url: "/photos/facility-haley-office.jpg",
+    caption: "KV Self Storage Haley Road office and facility",
+    altText: "KV Self Storage Haley Road location with office building and storage units",
+  },
+  stellarton: {
+    url: "/photos/facility-stellarton-gate.jpg",
+    caption: "Secure gated entrance at KV Self Storage Stellarton",
+    altText: "KV Self Storage Stellarton facility entrance with security gate and stone pillars",
+  },
+  hwy4: {
+    url: "/photos/facility-exit31-exterior.jpg",
+    caption: "KV Self Storage at Exit 31 - Highway 4",
+    altText: "Exterior view of KV Self Storage facility at Exit 31 with multiple storage units at sunset",
+  },
+};
+
+function staticLocationPhotoRecords(locationKey: LocationKey): PhotoRecord[] {
+  const s = STATIC_FACILITY_PHOTOS[locationKey];
+  if (!s) return [];
+  return [
+    {
+      id: `static-facility-${locationKey}`,
+      kind: "location",
+      locationKey,
+      unitTypeName: null,
+      widthFt: null,
+      lengthFt: null,
+      climate: null,
+      url: s.url,
+      caption: s.caption,
+      altText: s.altText,
+      sortOrder: 0,
+      isCover: true,
+    },
+  ];
+}
+
+export function staticFacilityCoverUrl(locationKey: LocationKey): string {
+  return STATIC_FACILITY_PHOTOS[locationKey]?.url ?? STOCK.hero;
+}
+
 export async function listLocationPhotos(locationKey: LocationKey): Promise<PhotoRecord[]> {
   try {
     const rows = await db.galleryPhoto.findMany({
       where: { kind: "location", locationKey },
       orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
-    return rows.map(mapRow);
+    if (rows.length) return rows.map(mapRow);
   } catch (err) {
     log.warn("listLocationPhotos failed", { locationKey, err: safeErrorMessage(err) });
-    return [];
   }
+  return staticLocationPhotoRecords(locationKey);
 }
 
 export async function locationCoverUrl(locationKey: LocationKey): Promise<string> {
@@ -63,11 +110,11 @@ export async function locationCoverUrl(locationKey: LocationKey): Promise<string
     });
     if (cover) return cover.url;
     const any = await db.galleryPhoto.findFirst({ where: { kind: "location", locationKey }, orderBy: { sortOrder: "asc" } });
-    return any?.url ?? STOCK.hero;
+    if (any) return any.url;
   } catch (err) {
     log.warn("locationCoverUrl failed", { locationKey, err: safeErrorMessage(err) });
-    return STOCK.hero;
   }
+  return staticFacilityCoverUrl(locationKey);
 }
 
 export async function unitTypePhotoUrl(opts: {
