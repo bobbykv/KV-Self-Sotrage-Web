@@ -10,7 +10,8 @@ Browser ──► Next.js server (route handlers / server actions)
               ├── src/lib/sitelink/*   SOAP client generated from the live WSDL
               ├── Postgres             inventory snapshots, holds, leads, CMS, queues, staff, audit
               ├── GoHighLevel          lead webhook or LeadConnector API
-              ├── LLM (optional)       website chat, tool-calling only
+              ├── LLM (optional)       built-in website chat when Retell is unset
+              ├── Retell widget        optional website chat (public key + chat agent ID)
               └── NOTIFY_WEBHOOK_URL   staff alerts
 Staff dashboard ► refresh cache · run reports   (same work as /api/cron/*, which is not scheduled)
 Retell ──────► /api/agent/brain · /api/agent/tools/*  (Bearer AGENT_TOOL_SECRET)
@@ -104,12 +105,15 @@ SiteLink reservations to capture interest.
 
 `agent-brain/brain.md` (prompt), `agent-brain/faq.md` (canonical FAQ, editable
 in `/admin/faq`) and `agent-brain/tools.json` (tool schema) are the single
-source for both channels. `/api/agent/brain?channel=retell` returns the filled
-prompt + tool URLs for Retell; the website chat uses the same loader with
-`channel = website_chat`. Tools: `search_units` (cached inventory, real prices
-only), `get_faq`, `capture_lead`, `handoff_to_human`. The chat never takes card
-numbers (anything that looks like a PAN is dropped before it reaches a model)
-and does not use any SiteLink AI features.
+source for every channel. `/api/agent/brain?channel=website_chat` is for the
+Retell website chat agent; `/api/agent/brain?channel=retell` (default) is for
+the phone agent. Tool URLs include `?channel=` so leads are tagged correctly.
+When `NEXT_PUBLIC_RETELL_PUBLIC_KEY` and `NEXT_PUBLIC_RETELL_CHAT_AGENT_ID` are
+set, the public site embeds Retell's widget; otherwise the built-in
+`ChatWidget` + `/api/chat` path is used. Tools: `search_units` (cached
+inventory, real prices only), `get_faq`, `capture_lead`, `handoff_to_human`.
+The chat never takes card numbers and does not use any SiteLink AI features.
+See [RETELL.md](RETELL.md).
 
 ## Staff console
 

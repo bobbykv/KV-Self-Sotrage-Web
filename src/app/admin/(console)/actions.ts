@@ -225,7 +225,7 @@ export async function saveFaqAction(_prev: State, form: FormData): Promise<State
   }
   await audit(admin.email, "faq.save");
   revalidatePath("/faq");
-  return { ok: true, message: "Saved. The FAQ page, website chat and Retell brain now use this version." };
+  return { ok: true, message: "Saved. The FAQ page, website chat and Retell agents now use this version." };
 }
 
 export async function resetFaqAction() {

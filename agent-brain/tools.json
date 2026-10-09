@@ -1,5 +1,5 @@
 {
-  "_note": "Shared tool policy for the web chat agent and the Retell voice agent. JSON-Schema parameters work for both OpenAI-style function calling and Retell custom functions. Retell should call the HTTP endpoints listed under `http` with header `Authorization: Bearer $AGENT_TOOL_SECRET`. Only these tools are allowed; SiteLink AI features are never used.",
+  "_note": "Shared tool policy for the built-in web chat, Retell website chat agent, and Retell phone agent. JSON-Schema parameters work for both OpenAI-style function calling and Retell custom functions. Retell should call the HTTP endpoints listed under `http` (append ?channel=website_chat or ?channel=retell) with header `Authorization: Bearer $AGENT_TOOL_SECRET`. Only these tools are allowed; SiteLink AI features are never used.",
   "tools": [
     {
       "name": "search_units",

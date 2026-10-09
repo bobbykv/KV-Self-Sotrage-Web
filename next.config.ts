@@ -6,11 +6,13 @@ const csp = [
   "frame-ancestors 'none'",
   "object-src 'none'",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' https://*.public.blob.vercel-storage.com https://api.smdservers.net https://services.leadconnectorhq.com https://api.openai.com`,
+  `connect-src 'self' https://*.public.blob.vercel-storage.com https://api.smdservers.net https://services.leadconnectorhq.com https://api.openai.com https://api.retellai.com wss://api.retellai.com https://www.google.com https://www.gstatic.com`,
   "font-src 'self' data: https://fonts.gstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "frame-src https://www.google.com https://maps.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://dashboard.retellai.com https://www.google.com https://www.gstatic.com",
+  "frame-src https://www.google.com https://maps.google.com https://www.gstatic.com",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
   "form-action 'self'",
   "upgrade-insecure-requests",
 ].join("; ");
@@ -20,7 +22,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  // microphone=(self) lets the optional Retell hybrid voice call request mic access.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=()" },
   { key: "Content-Security-Policy", value: csp },
 ];
 

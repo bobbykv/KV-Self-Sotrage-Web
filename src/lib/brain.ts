@@ -6,6 +6,12 @@ import { getFaqMarkdown, stripComments } from "./faq";
 
 export type AgentChannel = "website_chat" | "retell" | "voice";
 
+const AGENT_CHANNELS: readonly AgentChannel[] = ["website_chat", "retell", "voice"];
+
+export function parseAgentChannel(value: string | null | undefined, fallback: AgentChannel = "retell"): AgentChannel {
+  return AGENT_CHANNELS.includes(value as AgentChannel) ? (value as AgentChannel) : fallback;
+}
+
 export type ToolDef = {
   name: string;
   description: string;

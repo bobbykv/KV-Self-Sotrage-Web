@@ -29,7 +29,8 @@ export default async function AdminLeads({ searchParams }: { searchParams: Promi
           <option value="">All channels</option>
           <option value="website_form">Website form</option>
           <option value="website_chat">Website chat</option>
-          <option value="retell">Retell voice</option>
+          <option value="retell">Retell phone</option>
+          <option value="voice">Voice</option>
         </select>
         <select name="ghl" defaultValue={sp.ghl ?? ""} className="input min-h-10 w-auto">
           <option value="">Any GHL status</option>
