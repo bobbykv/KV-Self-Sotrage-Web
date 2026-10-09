@@ -92,6 +92,8 @@ model Lead {
   unitType    String?
   unitSize    String?
   notes       String?
+  /// e.g. retell:chat:chat_xxx — dedupes Retell webhook deliveries
+  externalId  String?   @unique
   ghlStatus   String    @default("pending") // pending | sent | failed | skipped
   ghlError    String?
   ghlSentAt   DateTime?

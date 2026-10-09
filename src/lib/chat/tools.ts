@@ -79,10 +79,11 @@ export async function runTool(name: ToolName, args: Args, channel: AgentChannel)
         unitType: args.unit_type ? String(args.unit_type) : undefined,
         unitSize: args.unit_size ? String(args.unit_size) : undefined,
         notes: args.notes ? String(args.notes) : undefined,
+        externalId: args.external_id ? String(args.external_id).slice(0, 200) : undefined,
       };
       try {
         const saved = await captureLead(lead);
-        return { ok: true, lead_id: saved.id, message: "Lead saved. Staff will follow up." };
+        return { ok: true, lead_id: saved.id, message: "Lead saved and sent to GoHighLevel. Staff will follow up." };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : "Please add your name and a phone number or email so we can follow up." };
       }

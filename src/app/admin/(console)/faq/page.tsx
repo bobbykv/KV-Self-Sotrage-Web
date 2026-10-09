@@ -20,7 +20,7 @@ export default async function AdminFaq() {
       </PageHeader>
       <div className="mb-4 grid gap-3 text-sm sm:grid-cols-2">
         <p className="card p-4">
-          This one FAQ powers the public <strong>/faq</strong> page, the <strong>website chat</strong> and the <strong>Retell phone agent</strong>. Edit it once and all three stay in sync.
+          This one FAQ powers the public <strong>/faq</strong> page, the <strong>website chat</strong> (built-in or Retell widget) and the <strong>Retell phone agent</strong>. Edit it once and all stay in sync.
         </p>
         <p className="card p-4">
           Source: <strong>{faq.source === "admin" ? "edited here" : "repo file agent-brain/faq.md"}</strong>
@@ -37,7 +37,7 @@ export default async function AdminFaq() {
         <textarea name="markdown" required rows={28} defaultValue={faq.markdown} className="input py-2 font-mono text-sm" aria-label="FAQ markdown" />
       </ActionForm>
       <details className="card mt-4 p-4">
-        <summary className="cursor-pointer font-semibold text-kv-navy">Preview the full prompt the Retell agent receives</summary>
+        <summary className="cursor-pointer font-semibold text-kv-navy">Preview the full prompt the Retell phone agent receives</summary>
         <pre className="mt-3 max-h-[32rem] overflow-auto whitespace-pre-wrap text-xs">{brain.prompt}</pre>
       </details>
       {faq.source === "admin" && (

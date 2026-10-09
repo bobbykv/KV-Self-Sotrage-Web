@@ -21,6 +21,8 @@ export const leadSchema = z.object({
   unitType: z.string().trim().max(120).optional(),
   unitSize: z.string().trim().max(60).optional(),
   notes: z.string().trim().max(2000).optional(),
+  /** Dedup key, e.g. retell:chat:chat_xxx from the Retell tool/webhook path. */
+  externalId: z.string().trim().max(200).optional(),
 });
 
 export type LeadInput = z.infer<typeof leadSchema>;
@@ -105,6 +107,27 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
 export async function captureLead(input: LeadInput) {
   const data = leadSchema.parse(input);
   if (!data.phone && !data.email) throw new Error("A phone number or email is required");
+
+  if (data.externalId) {
+    const existing = await db.lead.findFirst({ where: { externalId: data.externalId } });
+    if (existing) {
+      await db.lead.update({
+        where: { id: existing.id },
+        data: {
+          name: data.name,
+          phone: data.phone || existing.phone,
+          email: data.email || existing.email,
+          locationKey: data.locationKey ?? existing.locationKey,
+          unitType: data.unitType ?? existing.unitType,
+          unitSize: data.unitSize ?? existing.unitSize,
+          notes: data.notes ?? existing.notes,
+          reason: data.reason,
+        },
+      });
+      return sendLeadToGhl(existing.id);
+    }
+  }
+
   const lead = await db.lead.create({
     data: {
       channel: data.channel,
@@ -116,6 +139,7 @@ export async function captureLead(input: LeadInput) {
       unitType: data.unitType ?? null,
       unitSize: data.unitSize ?? null,
       notes: data.notes ?? null,
+      externalId: data.externalId ?? null,
     },
   });
   return sendLeadToGhl(lead.id);
@@ -142,6 +166,7 @@ export async function sendLeadToGhl(leadId: string) {
         unitType: lead.unitType ?? undefined,
         unitSize: lead.unitSize ?? undefined,
         notes: lead.notes ?? undefined,
+        externalId: lead.externalId ?? undefined,
       }),
     );
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "sent", ghlSentAt: new Date(), ghlError: null } });

@@ -1,5 +1,5 @@
 {
-  "_note": "Shared tool policy for the web chat agent and the Retell voice agent. JSON-Schema parameters work for both OpenAI-style function calling and Retell custom functions. Retell should call the HTTP endpoints listed under `http` with header `Authorization: Bearer $AGENT_TOOL_SECRET`. Only these tools are allowed; SiteLink AI features are never used.",
+  "_note": "Shared tool policy for the built-in web chat, Retell website chat agent, and Retell phone agent. JSON-Schema parameters work for both OpenAI-style function calling and Retell custom functions. Retell should call the HTTP endpoints listed under `http` (append ?channel=website_chat or ?channel=retell) with header `Authorization: Bearer $AGENT_TOOL_SECRET`. Only these tools are allowed; SiteLink AI features are never used.",
   "tools": [
     {
       "name": "search_units",
@@ -28,7 +28,7 @@
     },
     {
       "name": "capture_lead",
-      "description": "Send a lead to GoHighLevel. Use when the wanted unit is unavailable, for the waitlist, when the person asks to be contacted, or on human handoff. Requires a name and a phone or email. Confirm details with the person first.",
+      "description": "Send the person's details straight to GoHighLevel (and store them for staff). Call this as soon as you have a name plus a phone or email — waitlist, unavailable unit, callback, human handoff, or any visitor who shared contact info. Confirm details with the person first.",
       "http": { "method": "POST", "path": "/api/agent/tools/capture_lead" },
       "parameters": {
         "type": "object",

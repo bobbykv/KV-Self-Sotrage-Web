@@ -3,6 +3,7 @@ import { ActionForm } from "@/components/ActionForm";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
+import { retellChatConfigured } from "@/lib/retell";
 import { getSettings } from "@/lib/settings";
 import { changePasswordAction, createStaffAction, saveSettingsAction } from "../actions";
 
@@ -69,9 +70,19 @@ export default async function AdminSettings() {
             <dt className="font-semibold">HST rate</dt>
             <dd>{(env.HST_RATE * 100).toFixed(1)}% (used only if SiteLink doesn&apos;t return tax lines)</dd>
             <dt className="font-semibold">GoHighLevel</dt>
-            <dd>{env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID) ? "Configured" : "Not configured — leads are stored here only"}</dd>
+            <dd>
+              {env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID)
+                ? `${env.GHL_WEBHOOK_URL ? "Workflow webhook" : ""}${env.GHL_WEBHOOK_URL && env.GHL_API_KEY && env.GHL_LOCATION_ID ? " + " : ""}${env.GHL_API_KEY && env.GHL_LOCATION_ID ? "LeadConnector API" : ""}`
+                : "Not configured — leads are stored here only"}
+            </dd>
+            <dt className="font-semibold">Retell chat widget</dt>
+            <dd>{retellChatConfigured() ? "Configured — Retell FAB replaces built-in chat" : "Not configured — using built-in website chat"}</dd>
+            <dt className="font-semibold">Retell → GHL webhook</dt>
+            <dd>{env.RETELL_API_KEY ? "RETELL_API_KEY set — point agent webhook at /api/retell/webhook" : "Set RETELL_API_KEY so Retell can sign /api/retell/webhook"}</dd>
             <dt className="font-semibold">Chat LLM</dt>
-            <dd>{env.CHAT_LLM_API_KEY ? `Configured (${env.CHAT_LLM_MODEL})` : "Not configured — rules-based answers"}</dd>
+            <dd>{env.CHAT_LLM_API_KEY ? `Configured (${env.CHAT_LLM_MODEL})` : "Not configured — rules-based answers (built-in chat only)"}</dd>
+            <dt className="font-semibold">Agent tools secret</dt>
+            <dd>{env.AGENT_TOOL_SECRET ? "Configured (Retell Bearer token)" : "Not configured — /api/agent/* will reject Retell"}</dd>
             <dt className="font-semibold">Staff alerts</dt>
             <dd>{env.NOTIFY_WEBHOOK_URL ? "Webhook configured" : "Not configured"}</dd>
           </dl>

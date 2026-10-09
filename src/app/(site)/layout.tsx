@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ChatWidget } from "@/components/ChatWidget";
+import { RetellChatWidget } from "@/components/RetellChatWidget";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getSettings } from "@/lib/settings";
 import { env } from "@/lib/env";
+import { getRetellWidgetConfig } from "@/lib/retell";
 import { showDraftNotices } from "@/lib/site-env";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();
+  const retell = getRetellWidgetConfig(env.APP_URL);
   return (
     <>
       {settings.maintenanceMode && (
@@ -31,7 +34,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       )}
       <main>{children}</main>
       <Footer />
-      {settings.chatEnabled && <ChatWidget />}
+      {settings.chatEnabled && (retell ? <RetellChatWidget {...retell} /> : <ChatWidget />)}
     </>
   );
 }
