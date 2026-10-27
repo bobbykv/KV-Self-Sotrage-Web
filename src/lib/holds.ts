@@ -75,9 +75,16 @@ export async function createHold(input: HoldInput): Promise<Hold> {
   const unit = inventory.find((l) => l.location === input.locationKey)?.units.find((u) => u.unitId === input.unitId);
   if (!unit) throw new HoldError("unit not in cache", "This unit is no longer available. Check the other units at this location.");
 
-  const fresh = await sitelink.unitById(input.locationKey, input.unitId);
-  if (!fresh || fresh.rented || !fresh.rentable || fresh.waitingListReserved) {
-    throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
+  let fresh = unit;
+  try {
+    const live = await sitelink.unitById(input.locationKey, input.unitId);
+    if (!live || live.rented || !live.rentable || live.waitingListReserved) {
+      throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
+    }
+    fresh = live;
+  } catch (err) {
+    if (!isSiteLinkPermissionDenied(err)) throw err;
+    log.warn("SiteLink unit lookup returned -95; holding the verified catalog unit", { location: input.locationKey, unitId: input.unitId });
   }
 
   const id = randomBytes(18).toString("base64url");
@@ -107,9 +114,14 @@ export async function createHold(input: HoldInput): Promise<Hold> {
     throw new HoldError("unit already held", "Someone is checking out this unit right now. Please pick another, or try again in a few minutes.");
   }
 
+  let tenantId: number | undefined;
+  let created = false;
+  let waitingId: number | undefined;
   try {
-    const { tenantId, created } = await sitelink.findOrCreateTenant(input.locationKey, input);
-    const waitingId = await sitelink.createReservation(input.locationKey, {
+    const tenant = await sitelink.findOrCreateTenant(input.locationKey, input);
+    tenantId = tenant.tenantId;
+    created = tenant.created;
+    waitingId = await sitelink.createReservation(input.locationKey, {
       tenantId,
       unitId: unit.unitId,
       needed: input.moveInDate,
@@ -118,20 +130,30 @@ export async function createHold(input: HoldInput): Promise<Hold> {
       comment: `Website ${settings.holdMinutes}-minute checkout hold`,
       trackingCode: `web-${id.slice(0, 10)}`,
     });
-    let cost: MoveInCost | null = null;
+  } catch (err) {
+    if (!isSiteLinkPermissionDenied(err)) {
+      await db.hold.update({ where: { id }, data: { status: "error", lastFailure: safeErrorMessage(err) } });
+      throw new HoldError(safeErrorMessage(err), "We couldn't hold that space for you. Please try again or call (902) 867-3779.");
+    }
+    log.warn("SiteLink reservation returned -95; website hold kept on the verified catalog", { holdId: id });
+  }
+  let cost: MoveInCost | null = null;
+  if (waitingId) {
     try {
       cost = await sitelink.moveInCost(input.locationKey, { unitId: unit.unitId, moveInDate: input.moveInDate, waitingId });
     } catch (err) {
       log.warn("move-in cost retrieve failed", { holdId: id, err });
     }
-    return await db.hold.update({
-      where: { id },
-      data: { tenantId, tenantCreated: created, waitingId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
-    });
-  } catch (err) {
-    await db.hold.update({ where: { id }, data: { status: "error", lastFailure: safeErrorMessage(err) } });
-    throw new HoldError(safeErrorMessage(err), "We couldn't hold that space for you. Please try again or call (902) 867-3779.");
   }
+  return await db.hold.update({
+    where: { id },
+    data: { tenantId, tenantCreated: created, waitingId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
+  });
+}
+
+/** Corporate Control Center has not granted this API user yet. */
+export function isSiteLinkPermissionDenied(err: unknown): boolean {
+  return err instanceof SiteLinkError && err.code === -95;
 }
 
 export async function getHold(id: string): Promise<Hold | null> {

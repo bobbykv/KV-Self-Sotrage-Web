@@ -55,7 +55,7 @@ function resolveRegion(code: unknown, other: unknown, label: string): { ok: true
   return { ok: true, value: chosen };
 }
 
-function imageFromDataUrl(dataUrl: string): { ok: true; base64: string; mime: "image/jpeg" | "image/png" } | { ok: false; error: string } {
+export function decodeIdPhoto(dataUrl: string): { ok: true; base64: string; mime: "image/jpeg" | "image/png" } | { ok: false; error: string } {
   const match = /^data:(image\/(?:jpeg|png));base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl);
   if (!match) return { ok: false, error: "Add a photo of your driver's license or government ID (JPEG or PNG)." };
   const mime = match[1] as "image/jpeg" | "image/png";
@@ -87,7 +87,7 @@ export function parseTenantVerification(input: Record<string, unknown>): Verific
   const region = resolveRegion(input.region, input.regionOther, "mailing province or state");
   if (!region.ok) return region;
 
-  const photo = imageFromDataUrl(text(input.idPhoto));
+  const photo = decodeIdPhoto(text(input.idPhoto));
   if (!photo.ok) return photo;
 
   return {

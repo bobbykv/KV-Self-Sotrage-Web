@@ -8,6 +8,7 @@ import { withJobLock } from "./job-lock";
 import { log, safeErrorMessage } from "./log";
 import { getSettings } from "./settings";
 import { sitelink } from "./sitelink/client";
+import { mockPriceListFor, mockUnitsFor } from "./sitelink/mock";
 import type { PriceListEntry, Unit } from "./sitelink/types";
 import { blockingHoldWhere } from "./hold-status";
 
@@ -144,15 +145,49 @@ export type LocationInventory = {
   lastError: string | null;
 };
 
+type InventorySnap = { data: unknown; refreshedAt: Date; lastError?: string | null };
+
+function listedUnits(data: unknown, loc: LocationKey, heldKey: Set<string>): Unit[] {
+  return ((data as Unit[]) ?? []).filter(
+    (u): u is Unit =>
+      Boolean(u) &&
+      !u.rented &&
+      u.rentable &&
+      !u.excludedFromWebsite &&
+      !u.waitingListReserved &&
+      !heldKey.has(`${loc}:${u.unitId}`),
+  );
+}
+
+/**
+ * A snapshot that has never loaded (missing, epoch timestamp from saveError, or
+ * an empty list with a SiteLink error such as Ret_Code -95) uses the verified
+ * catalog. The first successful live snapshot replaces it automatically.
+ */
+export function locationInventoryFromSnapshots(
+  loc: LocationKey,
+  avail: InventorySnap | undefined,
+  price: InventorySnap | undefined,
+  heldKey: Set<string>,
+): LocationInventory {
+  const liveUnits = listedUnits(avail?.data, loc, heldKey);
+  const neverSucceeded = !avail || avail.refreshedAt.getTime() === 0;
+  const failedEmpty = liveUnits.length === 0 && Boolean(avail?.lastError);
+  const useFallback = neverSucceeded || failedEmpty;
+  return {
+    location: loc,
+    units: useFallback ? mockUnitsFor(loc).filter((u) => !heldKey.has(`${loc}:${u.unitId}`)) : liveUnits,
+    priceList: useFallback ? mockPriceListFor(loc) : Array.isArray(price?.data) ? (price.data as PriceListEntry[]) : [],
+    refreshedAt: !useFallback && avail && avail.refreshedAt.getTime() > 0 ? avail.refreshedAt.toISOString() : null,
+    lastError: useFallback ? null : (avail?.lastError ?? null),
+  };
+}
+
 /**
  * Read path for the public site and chat: DB snapshot only, zero SiteLink
  * calls. Units under an active website hold are hidden so two visitors can't
  * hold the same unit even before SiteLink's waiting list catches up.
  */
-function unavailableInventory(message: string): LocationInventory[] {
-  return LOCATION_KEYS.map((location) => ({ location, units: [], priceList: [], refreshedAt: null, lastError: message }));
-}
-
 export const getInventory = cache(async (): Promise<LocationInventory[]> => {
   try {
     const snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
@@ -180,26 +215,11 @@ export const getInventory = cache(async (): Promise<LocationInventory[]> => {
     return LOCATION_KEYS.map((loc) => {
       const avail = snaps.find((s) => s.id === snapshotId(loc, "available"));
       const price = snaps.find((s) => s.id === snapshotId(loc, "pricelist"));
-      const units = ((avail?.data as Unit[]) ?? []).filter(
-        (u): u is Unit =>
-          Boolean(u) &&
-          !u.rented &&
-          u.rentable &&
-          !u.excludedFromWebsite &&
-          !u.waitingListReserved &&
-          !heldKey.has(`${loc}:${u.unitId}`),
-      );
-      return {
-        location: loc,
-        units,
-        priceList: Array.isArray(price?.data) ? (price.data as PriceListEntry[]) : [],
-        refreshedAt: avail && avail.refreshedAt.getTime() > 0 ? avail.refreshedAt.toISOString() : null,
-        lastError: avail?.lastError ?? null,
-      };
+      return locationInventoryFromSnapshots(loc, avail, price, heldKey);
     });
   } catch (err) {
     log.error("inventory read failed", { err: safeErrorMessage(err) });
-    return unavailableInventory("Live availability isn't connected yet.");
+    return LOCATION_KEYS.map((loc) => locationInventoryFromSnapshots(loc, undefined, undefined, new Set()));
   }
 });
 

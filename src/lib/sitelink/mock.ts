@@ -19,6 +19,8 @@ import "server-only";
  * Simulator cards: 4242…4242 approve · 4000…0002 decline · 4000…0119 timeout
  */
 import type { LocationKey } from "@/config/locations";
+import type { PriceListEntry, Unit } from "./types";
+import { mapUnit } from "./mappers";
 import { loadMockPayload, saveMockPayload } from "./mock-store";
 import type { Args } from "./soap";
 import type { DataSet, Row } from "./dataset";
@@ -127,6 +129,39 @@ function isoDay(offsetDays: number): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + offsetDays);
   return d.toISOString().slice(0, 10) + "T00:00:00";
+}
+
+let catalogState: MockState | undefined;
+
+/** Verified published units for one location. Available units only (not already rented). */
+export function mockUnitsFor(loc: LocationKey): Unit[] {
+  catalogState ??= initMockState();
+  return catalogState.units[loc].map((row) => mapUnit(loc, row)).filter((u) => !u.rented && u.rentable && !u.excludedFromWebsite);
+}
+
+/** Verified price list for one location, including vacant counts. */
+export function mockPriceListFor(loc: LocationKey): PriceListEntry[] {
+  catalogState ??= initMockState();
+  const units = catalogState.units[loc].map((row) => mapUnit(loc, row));
+  const byType = new Map<number, PriceListEntry>();
+  for (const u of units) {
+    const entry = byType.get(u.unitTypeId) ?? {
+      locationKey: loc,
+      unitTypeId: u.unitTypeId,
+      typeName: u.typeName,
+      widthFt: u.widthFt,
+      lengthFt: u.lengthFt,
+      climate: u.climate,
+      standardRate: u.standardRate,
+      webRate: u.rate,
+      vacant: 0,
+      total: 0,
+    };
+    entry.total = (entry.total ?? 0) + 1;
+    if (!u.rented && u.rentable && !u.excludedFromWebsite) entry.vacant = (entry.vacant ?? 0) + 1;
+    byType.set(u.unitTypeId, entry);
+  }
+  return [...byType.values()];
 }
 
 export function initMockState(): MockState {
