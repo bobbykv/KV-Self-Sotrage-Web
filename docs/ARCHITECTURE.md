@@ -98,9 +98,10 @@ Noke instructions are shown for Highway 4 and Stellarton only.
 ## Leads (units that aren't available)
 
 Leads are written to Postgres first, then sent to GoHighLevel (webhook or
-LeadConnector `contacts/upsert` + note) with `source = website`. Failed sends
-stay visible in `/admin/leads` with a retry button. We never create fake
-SiteLink reservations to capture interest.
+LeadConnector `contacts/upsert` + note) with `source = website`. When the
+LeadConnector API is used, a best-effort `opportunities/upsert` also places the
+lead in Storage → New Inquiry. Failed sends stay visible in `/admin/leads`
+with a retry button. We never create fake SiteLink reservations to capture interest.
 
 ## Shared agent brain (website chat + Retell)
 

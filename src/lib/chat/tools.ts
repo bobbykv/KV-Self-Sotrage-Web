@@ -1,6 +1,6 @@
 import "server-only";
 import { BRAND, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
-import { filterGroups, formatSize, fullTypes, groupUnits, type SizeCategory } from "../catalog";
+import { filterGroups, formatSize, fullTypes, groupUnits, isWinterStoragePackage, type SizeCategory } from "../catalog";
 import { getFaq, searchFaq } from "../faq";
 import { getInventory } from "../inventory";
 import { captureLead, type LeadInput } from "../leads";
@@ -42,7 +42,11 @@ export async function searchUnits(args: Args) {
       type: g.typeName,
       size: `${g.widthFt}x${g.lengthFt}`,
       size_label: formatSize(g.widthFt, g.lengthFt),
-      monthly_price: g.fromRate,
+      monthly_price: isWinterStoragePackage(g.typeName) ? null : g.fromRate,
+      package_price: isWinterStoragePackage(g.typeName) ? g.fromRate : null,
+      pricing_note: isWinterStoragePackage(g.typeName)
+        ? `$${g.fromRate} winter storage package (seasonal, not a monthly rate). 14% Nova Scotia HST is itemized before payment.`
+        : null,
       available_count: g.available,
       climate_controlled: g.climate,
       vehicle: g.vehicle,

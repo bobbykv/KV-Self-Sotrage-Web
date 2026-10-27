@@ -51,6 +51,8 @@ async function main() {
     GHL_WEBHOOK_URL: "",
     GHL_API_KEY: "",
     GHL_LOCATION_ID: "",
+    GHL_STORAGE_PIPELINE_ID: "",
+    GHL_STORAGE_STAGE_ID: "",
     NOTIFY_WEBHOOK_URL: "",
     PAY_ONLINE_URL: "",
     CHAT_LLM_API_KEY: "",

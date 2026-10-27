@@ -3,6 +3,7 @@ import { z } from "zod";
 import { LOCATION_KEYS, getLocation, isLocationKey } from "@/config/locations";
 import { db } from "./db";
 import { env } from "./env";
+import { postGhlStorageOpportunity } from "./ghl";
 import { log, safeErrorMessage } from "./log";
 import { notifyStaff } from "./notify";
 
@@ -97,6 +98,7 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
         body: JSON.stringify({ body: note }),
         signal: AbortSignal.timeout(10000),
       }).catch(() => undefined);
+      await postGhlStorageOpportunity(contactId, payload).catch(() => undefined);
     }
     return;
   }

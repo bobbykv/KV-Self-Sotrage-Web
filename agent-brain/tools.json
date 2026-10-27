@@ -3,7 +3,7 @@
   "tools": [
     {
       "name": "search_units",
-      "description": "Search currently available storage units and parking from KV's cached SiteLink inventory (refreshed ~every 30 minutes). Returns sizes, monthly price, count available, features, a link to hold online, and an 'as of' time. Also returns unit types that are currently full so you can offer the waitlist.",
+      "description": "Search currently available storage units and parking from KV's cached SiteLink inventory (refreshed ~every 30 minutes). Returns sizes, monthly price, count available, features, a link to hold online, and an 'as of' time. Seasonal winter storage returns package_price and pricing_note instead of a monthly rate. Also returns unit types that are currently full so you can offer the waitlist.",
       "http": { "method": "POST", "path": "/api/agent/tools/search_units" },
       "parameters": {
         "type": "object",

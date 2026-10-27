@@ -6,7 +6,7 @@ export const STORAGE_NEEDS = [
   { id: "home2", label: "A two- or three-bedroom home", minArea: 150, maxArea: 200, sizes: "10 × 15 to 10 × 20", result: "Start with 10 × 15 to 10 × 20. Think about how much you're keeping, not just the number of rooms." },
   { id: "home4", label: "A larger household", minArea: 200, maxArea: 300, sizes: "10 × 20 to 10 × 30", result: "Start with 10 × 20 to 10 × 30. Call us if you need help checking the fit." },
   { id: "business", label: "Business stock, tools or equipment", minArea: 50, maxArea: 200, sizes: "50 to 200 sq. ft.", result: "Compare 50 to 200 sq. ft. Leave room to reach stock and equipment. Tell us what you're storing if you need help." },
-  { id: "vehicle", label: "A vehicle, RV or boat", minArea: 0, maxArea: 0, sizes: "Vehicle parking", result: "Check parking at Haley Road. Have your vehicle's length, width and height ready." },
+  { id: "vehicle", label: "A vehicle, RV or boat", minArea: 0, maxArea: 0, sizes: "Vehicle parking", result: "Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton has seasonal outdoor car storage (a $399 winter storage package). Have your vehicle's length, width and height ready." },
 ] as const;
 
 export type StorageNeed = (typeof STORAGE_NEEDS)[number]["id"];

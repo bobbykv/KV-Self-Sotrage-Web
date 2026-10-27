@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseDataSetResponse, SiteLinkSoapFault } from "@/lib/sitelink/dataset";
 import { mapMoveInCost } from "@/lib/sitelink/mappers";
-import { buildEnvelope, CONTRACT, retCode, toSiteLinkDateTime } from "@/lib/sitelink/soap";
+import { buildEnvelope, CONTRACT, invokeLive, retCode, SITELINK_USER_AGENT, siteLinkCorpUserName, toSiteLinkDateTime } from "@/lib/sitelink/soap";
 
 const AUTH = { sCorpCode: "CORP", sLocationCode: "L001", sCorpUserName: "user", sCorpPassword: "p@ss<word>" };
 
@@ -71,6 +71,74 @@ describe("SOAP envelope builder", () => {
   it("formats datetimes as Halifax wall-clock without an offset", () => {
     expect(toSiteLinkDateTime(new Date("2026-07-01T16:00:00Z"))).toBe("2026-07-01T13:00:00");
     expect(toSiteLinkDateTime(new Date("2026-01-15T16:00:00Z"))).toBe("2026-01-15T12:00:00");
+  });
+});
+
+describe("corporate username", () => {
+  it("appends the license key when the username has no separator", () => {
+    expect(siteLinkCorpUserName("corpuser", "LICENSE")).toBe("corpuser:::LICENSE");
+    expect(siteLinkCorpUserName("corpuser", "  LICENSE  ")).toBe("corpuser:::LICENSE");
+  });
+
+  it("keeps a username that already contains :::", () => {
+    expect(siteLinkCorpUserName("corpuser:::embedded", "OTHER")).toBe("corpuser:::embedded");
+  });
+
+  it("leaves the username unchanged when no license key is set", () => {
+    expect(siteLinkCorpUserName("corpuser")).toBe("corpuser");
+    expect(siteLinkCorpUserName("corpuser", "  ")).toBe("corpuser");
+  });
+});
+
+describe("live SOAP transport", () => {
+  const cfg = {
+    callCenterEndpoint: "https://api.smdservers.net/CCWs_3.5/CallCenterWs.asmx",
+    reportingEndpoint: "https://api.smdservers.net/CCWs_3.5/ReportingWs.asmx",
+    corpCode: "CORP",
+    username: "corpuser",
+    licenseKey: "LICENSE",
+    password: "secret",
+    timeoutMs: 1000,
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.APP_TEST_MODE;
+  });
+
+  it("sends User-Agent and the formatted username to Call Center and Reporting", async () => {
+    delete process.env.APP_TEST_MODE;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const method = String(input).includes("Reporting") ? "OccupancyStatistics" : "SiteInformation";
+      return new Response(diffgram(method, `<RT><Ret_Code>1</Ret_Code><Ret_Msg /></RT>`), { status: 200 });
+    });
+
+    await invokeLive(cfg, "SiteInformation", "L001", {});
+    await invokeLive(cfg, "OccupancyStatistics", "L001", {
+      dReportDateStart: new Date("2026-10-01T15:00:00Z"),
+      dReportDateEnd: new Date("2026-10-02T02:00:00Z"),
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(String(fetchSpy.mock.calls[0][0])).toContain("CallCenterWs.asmx");
+    expect(String(fetchSpy.mock.calls[1][0])).toContain("ReportingWs.asmx");
+    for (const call of fetchSpy.mock.calls) {
+      const init = call[1] as RequestInit;
+      const headers = init.headers as Record<string, string>;
+      expect(headers["User-Agent"]).toBe("Mozilla/5.0 (compatible; KVSelfStorage/1.0)");
+      expect(headers["User-Agent"]).toBe(SITELINK_USER_AGENT);
+      expect(String(init.body)).toContain("<sCorpUserName>corpuser:::LICENSE</sCorpUserName>");
+    }
+  });
+
+  it("does not overwrite a username that already includes :::", async () => {
+    delete process.env.APP_TEST_MODE;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(diffgram("SiteInformation", `<RT><Ret_Code>1</Ret_Code><Ret_Msg /></RT>`), { status: 200 }),
+    );
+    await invokeLive({ ...cfg, username: "corpuser:::embedded", licenseKey: "OTHER" }, "SiteInformation", "L001", {});
+    expect(String((fetchSpy.mock.calls[0][1] as RequestInit).body)).toContain("<sCorpUserName>corpuser:::embedded</sCorpUserName>");
+    expect(String((fetchSpy.mock.calls[0][1] as RequestInit).body)).not.toContain("OTHER");
   });
 });
 

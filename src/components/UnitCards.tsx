@@ -1,10 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getLocation } from "@/config/locations";
-import { formatSize, money, type UnitGroup } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money, type UnitGroup } from "@/lib/catalog";
 
-export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle"> }) {
-  const tags = [g.climate && "Climate-controlled", g.vehicle && "Vehicle, RV & boat parking", !g.vehicle && g.inside && !g.climate && "Indoor", !g.vehicle && !g.inside && "Drive-up", g.power && "Power"].filter(Boolean) as string[];
+export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle" | "typeName"> }) {
+  const tags = [
+    g.climate && "Climate-controlled",
+    g.vehicle && (isWinterStoragePackage(g.typeName) ? "Seasonal outdoor car storage" : "Vehicle, RV & boat parking"),
+    !g.vehicle && g.inside && !g.climate && "Indoor",
+    !g.vehicle && !g.inside && "Drive-up",
+    g.power && "Power",
+  ].filter(Boolean) as string[];
   return (
     <div className="flex flex-wrap gap-1.5">
       {tags.map((t) => (
@@ -46,7 +52,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">/month + HST</p>
+          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "winter package + HST" : "/month + HST"}</p>
         </div>
       </div>
       <FeatureTags g={g} />
