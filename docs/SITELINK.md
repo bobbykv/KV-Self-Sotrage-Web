@@ -50,6 +50,7 @@ them into `{ table: Row[] }`; `RT.Ret_Code < 0` is treated as an error.
 | --- | --- |
 | Inventory | `UnitsInformationAvailableUnitsOnly_v2`, `UnitsInformation_v3`, `UnitsInformationByUnitID`, `UnitTypePriceList_v2` |
 | Holds | `TenantSearchDetailed`, `TenantNewDetailed_v3`, `ReservationNewWithSource_v5`, `ReservationUpdate_v4`, `ReservationNoteInsert`, `ReservationList_v3`, `MoveInCostRetrieveWithDiscount_Reservation_v4` |
+| Checkout verification | `TenantInfoByTenantID`, `TenantUpdate_v3` (address, `sLicense`, `sLicRegion` before move-in), `TenantImageUpload` (ID photo; a failed upload is logged and does not block payment) |
 | Payment (passthrough only) | `PaymentTypesRetrieve`, `MoveInWithDiscount_v7` |
 | Portal | `TenantLogin`, `TenantLoginAndSecurityUpdate`, `TenantInfoByTenantID`, `LedgersByTenantID_v3`, `CustomerAccountsBalanceDetails_v2`, `TenantBillingInfoByTenantID_v3`, `TenantIDByUnitNameOrAccessCode`, `ScheduleMoveOut`, `SiteLinkeSignCreateLeaseURL_v2` |
 | Reporting (nightly / on demand) | `PastDueBalances`, `MoveInsAndMoveOuts`, `OccupancyStatistics` |

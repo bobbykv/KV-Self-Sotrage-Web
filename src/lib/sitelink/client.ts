@@ -2,6 +2,7 @@ import "server-only";
 import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { assertSiteLinkConfig, env } from "../env";
 import { log } from "../log";
+import { countryForRegion } from "../regions";
 import { recordCall } from "./budget";
 import { num, str, type DataSet, type Row } from "./dataset";
 import {
@@ -113,16 +114,37 @@ export const sitelink = {
     return rowsOf(data, "Table").map(mapTenant);
   },
 
-  async createTenant(loc: LocationKey, t: { firstName: string; lastName: string; email: string; phone: string }) {
+  async createTenant(
+    loc: LocationKey,
+    t: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      addr1?: string;
+      city?: string;
+      region?: string;
+      postalCode?: string;
+      license?: string;
+      licRegion?: string;
+    },
+  ) {
+    const region = t.region?.trim() || "NS";
+    const country = countryForRegion(region);
     const data = await call(loc, "TenantNewDetailed_v3", {
       sFName: t.firstName,
       sLName: t.lastName,
       sEmail: t.email,
       sPhone: t.phone,
       sMobile: t.phone,
-      sCountry: "Canada",
-      sRegion: "NS",
-      sCountryCode: "CA",
+      sAddr1: t.addr1 ?? "",
+      sCity: t.city ?? "",
+      sRegion: region,
+      sPostalCode: t.postalCode ?? "",
+      sCountry: country.country || "Canada",
+      sLicense: t.license ?? "",
+      sLicRegion: t.licRegion ?? "",
+      sCountryCode: country.countryCode || "CA",
       bSMSOptIn: false,
       dDOB: null,
     });
@@ -155,6 +177,97 @@ export const sitelink = {
     const data = await call(loc, "TenantInfoByTenantID", { iTenantID: tenantId });
     const row = rowsOf(data, "Table")[0];
     return row ? { tenant: mapTenant(row), raw: row } : null;
+  },
+
+  /**
+   * Writes the mailing address and driver's license onto an existing tenant
+   * before move-in, so SiteLinkeSignCreateLeaseURL_v2 can print them.
+   * TenantUpdate_v3 overwrites every field, so unchanged values are copied
+   * from TenantInfoByTenantID first.
+   */
+  async updateTenantForLease(
+    loc: LocationKey,
+    tenantId: number,
+    profile: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      addr1: string;
+      city: string;
+      region: string;
+      postalCode: string;
+      license: string;
+      licRegion: string;
+    },
+  ) {
+    const info = await this.tenantInfo(loc, tenantId);
+    if (!info) throw new SiteLinkError("TenantUpdate_v3", 0, "Tenant record was not found");
+    const raw = info.raw;
+    const keep = (key: string) => str(raw, key);
+    const flag = (key: string) => /^(true|1)$/i.test(str(raw, key));
+    const country = countryForRegion(profile.region);
+    await call(loc, "TenantUpdate_v3", {
+      iTenantID: tenantId,
+      sGateCode: keep("sGateCode") || keep("sAccessCode"),
+      sWebPassword: keep("sWebPassword"),
+      sMrMrs: keep("sMrMrs"),
+      sFName: profile.firstName,
+      sMI: keep("sMI"),
+      sLName: profile.lastName,
+      sCompany: keep("sCompany"),
+      sAddr1: profile.addr1,
+      sAddr2: keep("sAddr2"),
+      sCity: profile.city,
+      sRegion: profile.region,
+      sPostalCode: profile.postalCode,
+      sCountry: country.country || profile.region,
+      sPhone: profile.phone,
+      sMrMrsAlt: keep("sMrMrsAlt"),
+      sFNameAlt: keep("sFNameAlt"),
+      sMIAlt: keep("sMIAlt"),
+      sLNameAlt: keep("sLNameAlt"),
+      sAddr1Alt: keep("sAddr1Alt"),
+      sAddr2Alt: keep("sAddr2Alt"),
+      sCityAlt: keep("sCityAlt"),
+      sRegionAlt: keep("sRegionAlt"),
+      sPostalCodeAlt: keep("sPostalCodeAlt"),
+      sCountryAlt: keep("sCountryAlt"),
+      sPhoneAlt: keep("sPhoneAlt"),
+      sMrMrsBus: keep("sMrMrsBus"),
+      sFNameBus: keep("sFNameBus"),
+      sMIBus: keep("sMIBus"),
+      sLNameBus: keep("sLNameBus"),
+      sCompanyBus: keep("sCompanyBus"),
+      sAddr1Bus: keep("sAddr1Bus"),
+      sAddr2Bus: keep("sAddr2Bus"),
+      sCityBus: keep("sCityBus"),
+      sRegionBus: keep("sRegionBus"),
+      sPostalCodeBus: keep("sPostalCodeBus"),
+      sCountryBus: keep("sCountryBus"),
+      sPhoneBus: keep("sPhoneBus"),
+      sFax: keep("sFax"),
+      sEmail: profile.email,
+      sPager: keep("sPager"),
+      sMobile: profile.phone || keep("sMobile"),
+      bCommercial: flag("bCommercial"),
+      bCompanyIsTenant: flag("bCompanyIsTenant"),
+      dDOB: keep("dDOB"),
+      sTenNote: keep("sTenNote"),
+      sLicense: profile.license,
+      sLicRegion: profile.licRegion,
+      sSSN: keep("sSSN"),
+      sEmailAlt: keep("sEmailAlt"),
+      sRelationshipAlt: keep("sRelationshipAlt"),
+      sTaxID: keep("sTaxID"),
+      bSMSOptIn: flag("bSMSOptIn"),
+      sCountryCode: country.countryCode,
+    });
+  },
+
+  /** Attaches a driver's license / government ID image to the tenant. Bytes are not logged. */
+  async uploadTenantImage(loc: LocationKey, tenantId: number, imageBase64: string, fileName: string) {
+    await call(loc, "TenantImageUpload", { iTenantID: tenantId, aryImageBytes: imageBase64, sFileName: fileName });
   },
 
   async tenantIdByUnitName(loc: LocationKey, unitName: string): Promise<number | null> {

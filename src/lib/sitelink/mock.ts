@@ -24,7 +24,27 @@ import type { Args } from "./soap";
 import type { DataSet, Row } from "./dataset";
 
 type MockUnit = Row & { UnitID: string; bRented: string };
-type MockTenant = { TenantID: number; sFName: string; sLName: string; sEmail: string; sPhone: string; sAccessCode: string; password: string };
+type MockTenant = {
+  TenantID: number;
+  sFName: string;
+  sLName: string;
+  sEmail: string;
+  sPhone: string;
+  sAccessCode: string;
+  password: string;
+  sAddr1?: string;
+  sAddr2?: string;
+  sCity?: string;
+  sRegion?: string;
+  sPostalCode?: string;
+  sCountry?: string;
+  sCountryCode?: string;
+  sLicense?: string;
+  sLicRegion?: string;
+  sMobile?: string;
+  /** Filename only. Image bytes are not kept. */
+  idPhotoFileName?: string;
+};
 type MockReservation = Row;
 type MockLedger = {
   LedgerID: number;
@@ -235,6 +255,8 @@ function activeReservationUnitIds(st: MockState, loc: LocationKey): Set<string> 
 
 const MUTATING = new Set([
   "TenantNewDetailed_v3",
+  "TenantUpdate_v3",
+  "TenantImageUpload",
   "TenantLoginAndSecurityUpdate",
   "ReservationNewWithSource_v5",
   "ReservationUpdate_v4",
@@ -315,10 +337,61 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
         sLName: s(args.sLName),
         sEmail: s(args.sEmail),
         sPhone: s(args.sPhone),
+        sMobile: s(args.sMobile) || s(args.sPhone),
         sAccessCode: String(1000 + (id % 9000)),
         password: s(args.sWebPassword),
+        sAddr1: s(args.sAddr1),
+        sAddr2: s(args.sAddr2),
+        sCity: s(args.sCity),
+        sRegion: s(args.sRegion),
+        sPostalCode: s(args.sPostalCode),
+        sCountry: s(args.sCountry),
+        sCountryCode: s(args.sCountryCode),
+        sLicense: s(args.sLicense),
+        sLicRegion: s(args.sLicRegion),
       });
       result = { RT: [ok(id)] };
+      break;
+    }
+    case "TenantUpdate_v3": {
+      const t = st.tenants[loc].find((x) => x.TenantID === Number(args.iTenantID));
+      if (!t) {
+        result = fail("Tenant not found");
+        break;
+      }
+      const gate = s(args.sGateCode);
+      if (gate && !/^\d+$/.test(gate)) {
+        result = fail("Gate code must be numeric", -1);
+        break;
+      }
+      if (gate) t.sAccessCode = gate;
+      if (s(args.sWebPassword)) t.password = s(args.sWebPassword);
+      t.sFName = s(args.sFName) || t.sFName;
+      t.sLName = s(args.sLName) || t.sLName;
+      t.sEmail = s(args.sEmail) || t.sEmail;
+      t.sPhone = s(args.sPhone) || t.sPhone;
+      t.sMobile = s(args.sMobile) || t.sMobile;
+      t.sAddr1 = s(args.sAddr1);
+      t.sAddr2 = s(args.sAddr2);
+      t.sCity = s(args.sCity);
+      t.sRegion = s(args.sRegion);
+      t.sPostalCode = s(args.sPostalCode);
+      t.sCountry = s(args.sCountry);
+      t.sCountryCode = s(args.sCountryCode);
+      t.sLicense = s(args.sLicense);
+      t.sLicRegion = s(args.sLicRegion);
+      result = { RT: [ok()] };
+      break;
+    }
+    case "TenantImageUpload": {
+      const t = st.tenants[loc].find((x) => x.TenantID === Number(args.iTenantID));
+      const fileName = s(args.sFileName);
+      if (!t || !s(args.aryImageBytes) || !fileName) {
+        result = fail("Failed to retrieve data from the servers", -2);
+        break;
+      }
+      t.idPhotoFileName = fileName;
+      result = { Table: [{ iTenantID: String(t.TenantID), sFileName: fileName }], RT: [ok()] };
       break;
     }
     case "TenantLogin": {
@@ -544,7 +617,27 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
 }
 
 function tenantRow(t: MockTenant): Row {
-  return { TenantID: String(t.TenantID), sFName: t.sFName, sLName: t.sLName, sEmail: t.sEmail, sPhone: t.sPhone, sAccessCode: t.sAccessCode };
+  return {
+    TenantID: String(t.TenantID),
+    sFName: t.sFName,
+    sLName: t.sLName,
+    sEmail: t.sEmail,
+    sPhone: t.sPhone,
+    sMobile: t.sMobile || t.sPhone,
+    sAccessCode: t.sAccessCode,
+    sGateCode: t.sAccessCode,
+    sWebPassword: t.password,
+    sAddr1: t.sAddr1 ?? "",
+    sAddr2: t.sAddr2 ?? "",
+    sCity: t.sCity ?? "",
+    sRegion: t.sRegion ?? "",
+    sPostalCode: t.sPostalCode ?? "",
+    sCountry: t.sCountry ?? "",
+    sCountryCode: t.sCountryCode ?? "",
+    sLicense: t.sLicense ?? "",
+    sLicRegion: t.sLicRegion ?? "",
+    sIDPhotoFileName: t.idPhotoFileName ?? "",
+  };
 }
 
 function stringify(o: Record<string, unknown>): Row {

@@ -13,6 +13,9 @@ describe("redaction", () => {
     const out = redactString("<sCreditCardNumber>4242424242424242</sCreditCardNumber><sCreditCardCVV>123</sCreditCardCVV><sCorpPassword>pw</sCorpPassword><sUnitName>A01</sUnitName>");
     expect(out).not.toMatch(/4242|>123<|>pw</);
     expect(out).toContain("<sUnitName>A01</sUnitName>");
+    const id = redactString("<sLicense>NS123456</sLicense><aryImageBytes>abc+/=</aryImageBytes><sSSN>000</sSSN><sAddr1>12 Main</sAddr1>");
+    expect(id).not.toMatch(/NS123456|abc\+\/=|000/);
+    expect(id).toContain("<sAddr1>12 Main</sAddr1>");
   });
 
   it("redacts sensitive keys but keeps harmless ones", () => {

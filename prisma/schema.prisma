@@ -62,6 +62,15 @@ model Hold {
   lastName          String
   email             String
   phone             String
+  /// Lease identity collected at checkout. The ID image itself is never stored here.
+  licenseNumber     String?
+  licenseRegion     String?
+  addr1             String?
+  city              String?
+  region            String?
+  postalCode        String?
+  /// True only after SiteLink TenantImageUpload accepts the ID photo.
+  idPhotoUploaded   Boolean  @default(false)
   moveInDate        DateTime
   expiresAt         DateTime
   /// active | expired | released | confirmed_pay_separately | moved_in | payment_failed | error

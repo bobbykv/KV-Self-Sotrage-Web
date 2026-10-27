@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { HOLD_COOKIE, HoldError, payPassthrough } from "@/lib/holds";
+import { verificationBody } from "@/lib/tenant-verification";
 import { log } from "@/lib/log";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
@@ -27,10 +28,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const s = (k: string) => (typeof body[k] === "string" ? (body[k] as string) : "");
   try {
-    await payPassthrough(id, { number: s("number"), cvv: s("cvv"), expiry: s("expiry"), name: s("name"), street: s("street"), postal: s("postal") });
+    await payPassthrough(
+      id,
+      { number: s("number"), cvv: s("cvv"), expiry: s("expiry"), name: s("name"), street: s("street"), postal: s("postal") },
+      verificationBody(body),
+    );
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch (err) {
-    if (err instanceof HoldError) return NextResponse.json({ error: err.userMessage }, { status: 402, headers: noStore });
+    if (err instanceof HoldError) {
+      const status = err.message === "verification" ? 400 : 402;
+      return NextResponse.json({ error: err.userMessage }, { status, headers: noStore });
+    }
     log.error("pay route unexpected error", { holdId: id, name: err instanceof Error ? err.name : "unknown" });
     return NextResponse.json({ error: "We couldn't confirm your payment. Please call (902) 867-3779 before trying again so we can check it." }, { status: 500, headers: noStore });
   }

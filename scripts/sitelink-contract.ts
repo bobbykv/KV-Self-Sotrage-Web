@@ -27,6 +27,8 @@ const SERVICES = {
       "KeypadZonesRetrieve",
       "TenantSearchDetailed",
       "TenantNewDetailed_v3",
+      "TenantUpdate_v3",
+      "TenantImageUpload",
       "TenantLogin",
       "TenantInfoByTenantID",
       "TenantLoginAndSecurityUpdate",

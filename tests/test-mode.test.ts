@@ -187,4 +187,55 @@ describe("persistent mock payments and portal seed", () => {
   it("initMockState includes completedMoves for idempotency tracking", () => {
     expect(initMockState().completedMoves).toEqual([]);
   });
+
+  it("stores license and address on the tenant and the ID filename without image bytes", async () => {
+    resetMockMemory();
+    (store as { __resetStore?: () => void }).__resetStore?.();
+    const created = await invokeMock("TenantNewDetailed_v3", "hwy4", {
+      sFName: "Ada",
+      sLName: "Holder",
+      sEmail: "ada.holder@example.test",
+      sPhone: "9025550142",
+      sWebPassword: "demo1234",
+    });
+    const tenantId = retCode(created);
+    const payload = "NOTSTORED_IMAGE_BYTES_12345";
+    const updated = await invokeMock("TenantUpdate_v3", "hwy4", {
+      iTenantID: tenantId,
+      sFName: "Ada",
+      sLName: "Holder",
+      sEmail: "ada.holder@example.test",
+      sPhone: "9025550142",
+      sAddr1: "12 Main St",
+      sCity: "Antigonish",
+      sRegion: "NS",
+      sPostalCode: "B2G 1A1",
+      sCountry: "Canada",
+      sCountryCode: "CA",
+      sLicense: "NS123456",
+      sLicRegion: "NS",
+      sGateCode: "4821",
+    });
+    expect(retCode(updated)).toBeGreaterThan(0);
+    const uploaded = await invokeMock("TenantImageUpload", "hwy4", {
+      iTenantID: tenantId,
+      aryImageBytes: payload,
+      sFileName: "drivers-license.jpg",
+    });
+    expect(retCode(uploaded)).toBeGreaterThan(0);
+    expect(JSON.stringify(uploaded)).not.toContain(payload);
+    const info = await invokeMock("TenantInfoByTenantID", "hwy4", { iTenantID: tenantId });
+    expect(info.Table?.[0]).toMatchObject({
+      sAddr1: "12 Main St",
+      sCity: "Antigonish",
+      sRegion: "NS",
+      sPostalCode: "B2G 1A1",
+      sLicense: "NS123456",
+      sLicRegion: "NS",
+      sIDPhotoFileName: "drivers-license.jpg",
+    });
+    expect(JSON.stringify(info)).not.toContain(payload);
+    const login = await invokeMock("TenantLogin", "hwy4", { sTenantLogin: "ada.holder@example.test", sTenantPassword: "demo1234" });
+    expect(retCode(login)).toBe(tenantId);
+  });
 });

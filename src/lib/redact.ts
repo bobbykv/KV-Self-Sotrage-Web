@@ -5,7 +5,7 @@
  */
 
 const SENSITIVE_KEYS =
-  /(credit.?card|card.?num|^card$|^number$|^sCC|cvv|cvc|^pan$|expir|track2|routing|^sABA|account.?num|password|passwd|secret|token|authorization)/i;
+  /(credit.?card|card.?num|^card$|^number$|^sCC|cvv|cvc|^pan$|expir|track2|routing|^sABA|account.?num|password|passwd|secret|token|authorization|^sLicense$|^sSSN$|^aryImageBytes$|^idPhoto$|^licenseNumber$)/i;
 
 const SOAP_SENSITIVE_ELEMENTS = [
   "sCreditCardNumber",
@@ -20,6 +20,9 @@ const SOAP_SENSITIVE_ELEMENTS = [
   "sTenantPassword",
   "sWebPassword",
   "sUsagePassword",
+  "sLicense",
+  "sSSN",
+  "aryImageBytes",
 ];
 
 // 12–19 digit runs, optionally separated by spaces/dashes: treat as a PAN.
