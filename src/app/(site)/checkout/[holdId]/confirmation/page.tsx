@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { MoveInSteps } from "@/components/MoveInSteps";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
+import { isMultiPeriodPrepaid, recurringBillingNote } from "@/lib/sitelink/concessions";
 import { env } from "@/lib/env";
 import { getHold, HOLD_COOKIE } from "@/lib/holds";
 import { sitelink } from "@/lib/sitelink/client";
@@ -30,6 +31,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
   const loc = getLocation(hold.locationKey);
   const movedIn = hold.status === "moved_in";
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
+  const prepaid = Boolean(hold.concessionId) && isMultiPeriodPrepaid(cost?.startDate, cost?.endDate);
+  const recurringNote = recurringBillingNote(prepaid);
   const leaseUrl =
     movedIn && hold.tenantId && hold.ledgerId ? await sitelink.leaseUrl(hold.locationKey, hold.tenantId, hold.ledgerId, `${env.APP_URL}/portal`).catch(() => null) : null;
   const unitSize = formatSize(hold.widthFt, hold.lengthFt);
@@ -69,8 +72,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             <dd className="font-semibold">{moveInDate}</dd>
           </div>
           <div>
-            <dt className="text-kv-muted">Monthly rent</dt>
-            <dd className="font-semibold">{money(Number(hold.quotedRate))} + HST</dd>
+            <dt className="text-kv-muted">{prepaid ? "Prepaid package" : "28-day rent"}</dt>
+            <dd className="font-semibold">{prepaid ? "6 billing periods" : `${money(Number(hold.quotedRate))} + HST`}</dd>
           </div>
           {!movedIn && (
             <div>
@@ -91,6 +94,13 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             </div>
           )}
         </dl>
+        <p className="mt-4 rounded-xl bg-kv-navy-50 p-4 text-sm font-semibold text-kv-navy">
+          {movedIn && hold.autoBillEnabled
+            ? recurringNote.replace("will be saved", "is saved in SiteLink")
+            : movedIn
+              ? "Your first payment is complete. Call us if automatic 28-day billing is not on this card yet."
+              : recurringNote}
+        </p>
       </section>
 
       <div className="mt-8">

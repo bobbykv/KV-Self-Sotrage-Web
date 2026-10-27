@@ -105,7 +105,7 @@ Use the size finder. Compare your options. Call us if you're between sizes.
 See the full price
 
 **Body**
-Check the monthly rent. Review fees and HST before you pay. No surprise fees.
+Check the 28-day rent. Review fees and HST before you pay. No surprise fees.
 
 **H3**
 Get in when you need to
@@ -259,7 +259,7 @@ Compare storage sizes and monthly prices at KV Self Storage. Choose your locatio
 Storage units and prices in Antigonish and Stellarton
 
 **Intro**
-Pick your location. Compare sizes and monthly rent. Checkout shows fees and HST before you pay.
+Pick your location. Compare sizes and 28-day rent. Checkout shows fees and HST before you pay.
 
 **Help link**
 Not sure what size? Try the size finder.
@@ -292,7 +292,7 @@ Availability can change. We check your unit again when you start checkout.
 [location]
 [storage type]
 [area] sq. ft. approximately
-[monthly rent]/month + HST
+[28-day rent]/28 days + HST
 [available count] available
 
 **Card button**
@@ -340,7 +340,7 @@ We couldn't add you to the waitlist. Try again or call (902) 867-3779.
 [size] self storage at [location]
 
 **Subhead**
-[monthly rent]/month + HST
+[28-day rent]/28 days + HST
 
 **Body**
 Check the size and features below. Choose your move-in date to start checkout. We'll hold this unit for 20 minutes while you review the total.
@@ -745,7 +745,7 @@ Check another size or location. You can also join the free waitlist. We'll conta
 ### Prices and payments
 
 **How much does storage cost?**
-See the monthly rent on Units & prices. Checkout shows fees, any deposit and 14% Nova Scotia HST as its own line before you pay. No surprise fees.
+See the 28-day rent on Units & prices. Checkout shows fees, any deposit and 14% Nova Scotia HST as its own line before you pay. No surprise fees.
 
 **What are the Exit 31 unit sizes and starting rates?**
 Exit 31 is Addington Forks at 2784 NS-4. Starting monthly rates there are $98 for a 5 × 10 (5x10), $140 for a 10 × 10 (10x10), and $177 for a 10 × 15 (10x15). These are starting rates before tax. Checkout shows 14% Nova Scotia HST on its own line before you pay.
@@ -935,7 +935,7 @@ Find us at 2784 NS-4 in Addington Forks. Outdoor storage for vehicles, RVs and b
 Know what you're paying
 
 **Body**
-Compare monthly rent. Checkout shows fees and HST up front. Both locations have gated coded entry, cameras and 24/7 access.
+Compare 28-day rent. Checkout shows fees and HST up front. Both locations have gated coded entry, cameras and 24/7 access.
 
 **H2**
 Compare Antigonish units
@@ -979,7 +979,7 @@ Stellarton units use the Nokē app. Finish your rental and follow your setup ins
 Choose the size you need
 
 **Body**
-Use the size finder for a starting estimate. Compare monthly rent. Checkout shows fees and HST before you pay.
+Use the size finder for a starting estimate. Compare 28-day rent. Checkout shows fees and HST before you pay.
 
 **H2**
 Compare Stellarton units
@@ -1023,7 +1023,7 @@ The location has gated coded entry and cameras. Unlock your unit with the Nokē 
 Check the full cost
 
 **Body**
-Compare monthly rent online. Checkout shows fees and HST before you pay. Ask us if you need help picking a size.
+Compare 28-day rent online. Checkout shows fees and HST before you pay. Ask us if you need help picking a size.
 
 **H2**
 Compare units near New Glasgow

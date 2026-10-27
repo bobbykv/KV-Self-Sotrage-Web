@@ -4,13 +4,13 @@ import "server-only";
  * Returns DataSets shaped like the real API so the mappers and every flow
  * above them run unchanged.
  *
- * Exit 31 (hwy4) availability and monthly rates are the verified fallback
+ * Exit 31 (hwy4) availability and 28-day rates are the verified fallback
  * while the Corporate Control Center permission toggle is still off:
  * 5×10 at $98 (4 available), 10×10 at $140 (9 available), 10×15 at $177 (4 available).
  * Haley includes climate-controlled units and no vehicle parking. Stellarton
  * is drive-up units with Nokē smart entry only. Outdoor vehicle, RV and boat
- * storage, including the $399 winter outdoor storage package, is only at Exit 31.
- * Other monthly rates remain representative until live SiteLink inventory is on.
+ * storage, including the $399 6-month winter outdoor storage package, is only at Exit 31.
+ * Other 28-day rates remain representative until live SiteLink inventory is on.
  *
  * State is persisted in Postgres (MockSiteLinkState) so fake rentals and the
  * demo portal login survive serverless restarts on Vercel.
@@ -19,6 +19,7 @@ import "server-only";
  * Simulator cards: 4242…4242 approve · 4000…0002 decline · 4000…0119 timeout
  */
 import type { LocationKey } from "@/config/locations";
+import { addBillingDays, BILLING_PERIOD_DAYS, MOCK_WINTER_CONCESSION_ID, WINTER_PLAN_DESCRIPTION, WINTER_PLAN_NAME } from "./concessions";
 import type { PriceListEntry, Unit } from "./types";
 import { mapUnit } from "./mappers";
 import { loadMockPayload, saveMockPayload } from "./mock-store";
@@ -107,7 +108,7 @@ const SPECS: Record<LocationKey, Spec[]> = {
       rate: 399,
       count: 4,
       rented: 0,
-      desc: "$399 winter outdoor storage package for vehicles, RVs and boats at Exit 31 (2784 NS-4). This is a seasonal package, not a monthly rate. 14% Nova Scotia HST is itemized before payment.",
+      desc: "$399 winter outdoor storage package for vehicles, RVs and boats at Exit 31 (2784 NS-4). Prepaid for 6 billing periods of 28 days, not one period. 14% Nova Scotia HST is itemized before payment.",
     },
   ],
   stellarton: [
@@ -279,6 +280,102 @@ const ok = (code = 1, msg = ""): Row => ({ Ret_Code: String(code), Ret_Msg: msg 
 const fail = (msg: string, code = -1): DataSet => ({ RT: [ok(code, msg)] });
 const s = (v: unknown) => (v === undefined || v === null ? "" : v instanceof Date ? v.toISOString() : String(v));
 
+function discountPlansFor(st: MockState, loc: LocationKey): DataSet {
+  if (loc !== "hwy4") return { ConcessionPlans: [], ConcessionUnitTypes: [], RT: [ok()] };
+  const unit = st.units.hwy4.find((u) => /winter storage/i.test(u.sTypeName));
+  return {
+    ConcessionPlans: [
+      {
+        ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
+        SiteID: "1",
+        QTTouchDiscPlanID: "0",
+        iConcessionGlobalNum: "1",
+        sPlanName: WINTER_PLAN_NAME,
+        sDescription: WINTER_PLAN_DESCRIPTION,
+        sComment: "Exit 31 outdoor parking only",
+        iShowOn: "1",
+        bNeverExpires: "false",
+        iExpirMonths: "6",
+        bPrepay: "true",
+        bOnPmt: "false",
+        bManualCredit: "false",
+        iPrePaidMonths: "6",
+        iInMonth: "0",
+        iAmtType: "2",
+        dcChgAmt: "399.00",
+        dcFixedDiscount: "0",
+        dcPCDiscount: "0",
+        bRound: "false",
+        dcRoundTo: "0",
+        bForAllUnits: "false",
+        dDisabled: "",
+        bApplyAtMoveIn: "true",
+        bProrateAtMoveIn: "false",
+        dcPrice: "399.00",
+      },
+    ],
+    ConcessionUnitTypes: [
+      {
+        ConcessionUnitTypeID: "1",
+        ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
+        UnitTypeID: unit?.UnitTypeID ?? "0",
+        dcWidth: "12",
+        dcLength: "40",
+        sTypeName: unit?.sTypeName ?? "Outdoor Vehicle, RV & Boat Winter Storage",
+      },
+    ],
+    RT: [ok()],
+  };
+}
+
+function moveInCostResult(st: MockState, loc: LocationKey, args: Args): DataSet {
+  const unit = st.units[loc].find((u) => u.UnitID === s(args.iUnitID));
+  if (!unit) return fail("Invalid unit ID", -25);
+  const start = s(args.dMoveInDate) || new Date().toISOString();
+  const concession = Number(args.ConcessionPlanID);
+  const none = !concession || concession === -999;
+  if (!none && concession !== MOCK_WINTER_CONCESSION_ID) return fail("Invalid concession plan", -2);
+  if (!none) {
+    if (loc !== "hwy4" || !/winter storage/i.test(unit.sTypeName)) return fail("Invalid concession plan", -2);
+    const rent = 399;
+    const tax = (rent * 0.14).toFixed(2);
+    return {
+      Table: [
+        {
+          Ret_Code: "1",
+          ChargeDescription: "6-month winter outdoor storage package",
+          ChargeAmount: rent.toFixed(2),
+          dcTax1: tax,
+          dcTax2: "0",
+          dcDiscount: "0",
+          dcTotal: (rent * 1.14).toFixed(2),
+          StartDate: start,
+          EndDate: addBillingDays(start, 6 * BILLING_PERIOD_DAYS),
+          ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
+        },
+      ],
+      RT: [ok()],
+    };
+  }
+  const rent = Number(unit.dcWebRate);
+  return {
+    Table: [
+      {
+        ChargeDescription: "Rent (28-day period)",
+        ChargeAmount: rent.toFixed(2),
+        dcTax1: (rent * 0.14).toFixed(2),
+        dcTax2: "0",
+        dcDiscount: "0",
+        StartDate: start,
+        EndDate: addBillingDays(start, BILLING_PERIOD_DAYS),
+        ConcessionID: "-999",
+      },
+      { ChargeDescription: "Administrative fee", ChargeAmount: "20.00", dcTax1: "2.80", dcTax2: "0", dcDiscount: "0" },
+    ],
+    RT: [ok()],
+  };
+}
+
 function activeReservationUnitIds(st: MockState, loc: LocationKey): Set<string> {
   const now = Date.now();
   return new Set(
@@ -296,6 +393,7 @@ const MUTATING = new Set([
   "ReservationNewWithSource_v5",
   "ReservationUpdate_v4",
   "MoveInWithDiscount_v7",
+  "TenantBillingInfoUpdate_v2",
   "ScheduleMoveOut",
 ]);
 
@@ -348,6 +446,8 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
       };
       break;
     case "DiscountPlansRetrieve":
+      result = discountPlansFor(st, loc);
+      break;
     case "KeypadZonesRetrieve":
       result = { RT: [ok()] };
       break;
@@ -518,6 +618,7 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
         QTRentalTypeID: s(args.QTRentalTypeID),
         iSource: s(args.iSource),
         sSource: s(args.sSource),
+        ConcessionID: s(args.ConcessionID),
       });
       result = { RT: [ok(id)] };
       break;
@@ -530,6 +631,7 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
       }
       r.dExpires = s(args.dExpires);
       r.iStatus = s(args.iStatus ?? 0);
+      if (args.ConcessionID !== undefined) r.ConcessionID = s(args.ConcessionID);
       result = { RT: [ok()] };
       break;
     }
@@ -542,30 +644,10 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
     case "ReservationNoteInsert":
       result = { RT: [ok()] };
       break;
-    case "MoveInCostRetrieveWithDiscount_Reservation_v4": {
-      const unit = st.units[loc].find((u) => u.UnitID === s(args.iUnitID));
-      if (!unit) {
-        result = fail("Unit not found");
-        break;
-      }
-      const rent = Number(unit.dcWebRate);
-      result = {
-        Table: [
-          {
-            ChargeDescription: "Rent (first month)",
-            ChargeAmount: rent.toFixed(2),
-            dcTax1: (rent * 0.14).toFixed(2),
-            dcTax2: "0",
-            dcDiscount: "0",
-            StartDate: s(args.dMoveInDate),
-            EndDate: "",
-          },
-          { ChargeDescription: "Administrative fee", ChargeAmount: "20.00", dcTax1: "2.80", dcTax2: "0", dcDiscount: "0" },
-        ],
-        RT: [ok()],
-      };
+    case "MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4":
+    case "MoveInCostRetrieveWithDiscount_Reservation_v4":
+      result = moveInCostResult(st, loc, args);
       break;
-    }
     case "MoveInWithDiscount_v7": {
       const pan = s(args.sCreditCardNumber).replace(/\D/g, "");
       const waitingId = s(args.WaitingID);
@@ -600,7 +682,7 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
         UnitID: Number(unit.UnitID),
         sUnitName: unit.sUnitName,
         dcRent: Number(unit.dcWebRate),
-        dPaidThru: isoDay(30),
+        dPaidThru: s(args.dEndDate) || isoDay(BILLING_PERIOD_DAYS),
         dcChargeBalance: 0,
         dcPastDue: 0,
         iDaysPastDue: 0,
@@ -608,6 +690,21 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
         autopay: false,
       });
       result = { Table: [{ LedgerID: String(id), iLeaseNum: String(id), lngReceiptID: String(id + 500000) }], RT: [ok(id)] };
+      break;
+    }
+    case "TenantBillingInfoUpdate_v2": {
+      const ledger = st.ledgers[loc].find((x) => x.LedgerID === Number(args.iLedgerID));
+      if (!ledger) {
+        result = fail("Ledger with specified Ledger ID could not be found", -1);
+        break;
+      }
+      const autoBillType = Number(args.iAutoBillType);
+      if (autoBillType === 1 && !s(args.sCreditCardNum).replace(/\D/g, "")) {
+        result = fail("Invalid credit card type ID", -95);
+        break;
+      }
+      ledger.autopay = autoBillType === 1 || autoBillType === 2;
+      result = { RT: [ok(ledger.LedgerID)] };
       break;
     }
     case "ScheduleMoveOut": {

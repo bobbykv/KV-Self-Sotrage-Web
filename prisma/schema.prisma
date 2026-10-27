@@ -71,6 +71,10 @@ model Hold {
   postalCode        String?
   /// True only after SiteLink TenantImageUpload accepts the ID photo.
   idPhotoUploaded   Boolean  @default(false)
+  /// SiteLink ConcessionPlanID when the customer chose a discount / prepaid plan. Null is standard 28-day billing.
+  concessionId      Int?
+  /// True after TenantBillingInfoUpdate_v2 accepts the card for 28-day auto bill.
+  autoBillEnabled   Boolean  @default(false)
   moveInDate        DateTime
   expiresAt         DateTime
   /// active | expired | released | confirmed_pay_separately | moved_in | payment_failed | error

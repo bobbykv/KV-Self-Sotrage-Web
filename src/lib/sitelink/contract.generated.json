@@ -1550,5 +1550,129 @@
         "type": "string"
       }
     ]
+  },
+  "TenantBillingInfoUpdate_v2": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iLedgerID",
+        "type": "int"
+      },
+      {
+        "name": "iCreditCardTypeID",
+        "type": "int"
+      },
+      {
+        "name": "sCreditCardNum",
+        "type": "string"
+      },
+      {
+        "name": "dCredtiCardExpir",
+        "type": "dateTime"
+      },
+      {
+        "name": "sCreditCardHolderName",
+        "type": "string"
+      },
+      {
+        "name": "sCreditCardStreet",
+        "type": "string"
+      },
+      {
+        "name": "sCreditCardZip",
+        "type": "string"
+      },
+      {
+        "name": "iAutoBillType",
+        "type": "int"
+      },
+      {
+        "name": "sACH_CheckWriterAcctNum",
+        "type": "string"
+      },
+      {
+        "name": "sACH_ABA_RoutingNum",
+        "type": "string"
+      },
+      {
+        "name": "sACH_Check_SavingsCode",
+        "type": "string"
+      },
+      {
+        "name": "iAutoBillOnDayPastDue",
+        "type": "int"
+      }
+    ]
+  },
+  "MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iUnitID",
+        "type": "int"
+      },
+      {
+        "name": "dMoveInDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "InsuranceCoverageID",
+        "type": "int"
+      },
+      {
+        "name": "ConcessionPlanID",
+        "type": "int"
+      },
+      {
+        "name": "WaitingID",
+        "type": "int"
+      },
+      {
+        "name": "bApplyInsuranceCredit",
+        "type": "boolean"
+      },
+      {
+        "name": "iPromoGlobalNum",
+        "type": "int"
+      },
+      {
+        "name": "sCreditCardNum",
+        "type": "string"
+      }
+    ]
   }
 }

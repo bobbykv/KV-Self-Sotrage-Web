@@ -32,7 +32,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         heading: "Know what you're paying",
-        body: "Compare monthly rent. Checkout shows fees and HST up front. Both locations have gated coded entry, cameras and 24/7 access.",
+        body: "Compare 28-day rent. Checkout shows fees and HST up front. Both locations have gated coded entry, cameras and 24/7 access.",
       },
     ],
     locations: ["haley", "hwy4"],
@@ -57,7 +57,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         heading: "Check the full cost",
-        body: "Compare monthly rent online. Checkout shows fees and HST before you pay. Ask us if you need help picking a size.",
+        body: "Compare 28-day rent online. Checkout shows fees and HST before you pay. Ask us if you need help picking a size.",
       },
     ],
     locations: ["stellarton"],
@@ -82,7 +82,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         heading: "Choose the size you need",
-        body: "Use the size finder for a starting estimate. Compare monthly rent. Checkout shows fees and HST before you pay.",
+        body: "Use the size finder for a starting estimate. Compare 28-day rent. Checkout shows fees and HST before you pay.",
       },
     ],
     locations: ["stellarton"],

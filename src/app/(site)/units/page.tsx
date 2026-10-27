@@ -11,7 +11,7 @@ import { listingUnitPhotoUrl } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Storage Units & Prices in Antigonish and Stellarton",
-  description: "Compare storage sizes and monthly prices at KV Self Storage. Choose your location and check the full total, including HST, at checkout.",
+  description: "Compare storage sizes and 28-day prices at KV Self Storage. Choose your location and check the full total, including HST, at checkout.",
 };
 
 const CATS = Object.keys(SIZE_LABELS) as SizeCategory[];
@@ -69,7 +69,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
     <div className="container-kv py-8 sm:py-12">
       <h1 className="h1">{location ? `Storage units at ${getLocation(location).shortName}` : "Storage units and prices in Antigonish and Stellarton"}</h1>
       <p className="mt-3 max-w-2xl text-kv-muted">
-        Pick your location. Compare sizes and monthly rent. Checkout shows fees and HST before you pay.{" "}
+        Pick your location. Compare sizes and 28-day rent. Checkout shows fees and HST before you pay.{" "}
         <Link href="/size-finder" className="font-semibold text-kv-red underline">
           Not sure what size? Try the size finder.
         </Link>

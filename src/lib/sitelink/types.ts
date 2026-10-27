@@ -41,6 +41,42 @@ export type PriceListEntry = {
 export type CostLineKind = "rent" | "fee" | "deposit" | "insurance" | "discount" | "tax" | "other";
 export type CostLine = { label: string; amount: number; kind: CostLineKind };
 
+export type ConcessionUnitType = {
+  unitTypeId: number;
+  widthFt: number;
+  lengthFt: number;
+  typeName: string;
+};
+
+/** A SiteLink discount / concession plan from DiscountPlansRetrieve. */
+export type ConcessionPlan = {
+  concessionId: number;
+  name: string;
+  description: string;
+  comment: string;
+  /** 0 all screens, 1 move-ins only, 2 payments only. */
+  showOn: number;
+  prepay: boolean;
+  prepaidMonths: number;
+  /** 0 amount off, 1 percent off, 2 fixed rate. */
+  amountType: number;
+  chargeAmount: number;
+  fixedDiscount: number;
+  percentDiscount: number;
+  forAllUnits: boolean;
+  disabled: boolean;
+  applyAtMoveIn: boolean;
+  unitTypes: ConcessionUnitType[];
+};
+
+export type DiscountPlansReport = {
+  plans: ConcessionPlan[];
+  source: "sitelink" | "unavailable";
+  error: string | null;
+  /** ConcessionID of the Exit 31 6-month winter package when SiteLink has one. */
+  winterPlanId: number | null;
+};
+
 export type MoveInCost = {
   lines: CostLine[];
   preTax: number;

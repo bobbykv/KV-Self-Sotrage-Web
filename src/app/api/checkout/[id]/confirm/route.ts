@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { confirmPaySeparately, HOLD_COOKIE, HoldError } from "@/lib/holds";
 import { log } from "@/lib/log";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { parseConcessionId } from "@/lib/sitelink/concessions";
 import { verificationBody } from "@/lib/tenant-verification";
 
 export const runtime = "nodejs";
@@ -29,8 +30,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Invalid request" }, { status: 400, headers: noStore });
   }
 
+  let concessionId: number | null | undefined;
+  if ("concessionId" in body) {
+    const parsed = parseConcessionId(body.concessionId);
+    if (!parsed.ok) return NextResponse.json({ error: "Choose a billing plan to continue." }, { status: 400, headers: noStore });
+    concessionId = parsed.id;
+  }
+
   try {
-    await confirmPaySeparately(id, verificationBody(body));
+    await confirmPaySeparately(id, verificationBody(body), concessionId);
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch (err) {
     if (err instanceof HoldError) return NextResponse.json({ error: err.userMessage }, { status: 400, headers: noStore });

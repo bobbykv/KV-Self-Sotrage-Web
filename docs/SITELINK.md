@@ -49,9 +49,9 @@ them into `{ table: Row[] }`; `RT.Ret_Code < 0` is treated as an error.
 | Area | Methods |
 | --- | --- |
 | Inventory | `UnitsInformationAvailableUnitsOnly_v2`, `UnitsInformation_v3`, `UnitsInformationByUnitID`, `UnitTypePriceList_v2` |
-| Holds | `TenantSearchDetailed`, `TenantNewDetailed_v3`, `ReservationNewWithSource_v5`, `ReservationUpdate_v4`, `ReservationNoteInsert`, `ReservationList_v3`, `MoveInCostRetrieveWithDiscount_Reservation_v4` |
+| Holds | `TenantSearchDetailed`, `TenantNewDetailed_v3`, `ReservationNewWithSource_v5`, `ReservationUpdate_v4`, `ReservationNoteInsert`, `ReservationList_v3`, `DiscountPlansRetrieve`, `MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4` (falls back to `MoveInCostRetrieveWithDiscount_Reservation_v4` if that method is unavailable) |
 | Checkout verification | `TenantInfoByTenantID`, `TenantUpdate_v3` (address, `sLicense`, `sLicRegion` before move-in), `TenantImageUpload` (ID photo; a failed upload is logged and does not block payment) |
-| Payment (passthrough only) | `PaymentTypesRetrieve`, `MoveInWithDiscount_v7` |
+| Payment (passthrough only) | `PaymentTypesRetrieve`, `MoveInWithDiscount_v7` (`iBillingFrequency` 7, concession and the cost call's start/end dates), `TenantBillingInfoUpdate_v2` (saves the card with `iAutoBillType` 1 so SiteLink bills it every 28 days; a failure is logged and does not undo the move-in) |
 | Portal | `TenantLogin`, `TenantLoginAndSecurityUpdate`, `TenantInfoByTenantID`, `LedgersByTenantID_v3`, `CustomerAccountsBalanceDetails_v2`, `TenantBillingInfoByTenantID_v3`, `TenantIDByUnitNameOrAccessCode`, `ScheduleMoveOut`, `SiteLinkeSignCreateLeaseURL_v2` |
 | Reporting (nightly / on demand) | `PastDueBalances`, `MoveInsAndMoveOuts`, `OccupancyStatistics` |
 
@@ -73,7 +73,7 @@ override (see `.env.example`):
 | Reservation “cancelled” status | *unset* — we let `dExpires` lapse rather than guess | `SITELINK_RESERVATION_STATUS_CANCELLED` |
 | `iPayMethod` for credit card on `MoveInWithDiscount_v7` | `0` | `SITELINK_PAY_METHOD_CC` |
 | `ChannelType` for website | `0` | `SITELINK_CHANNEL_TYPE` |
-| `iBillingFrequency` default | `0` | `SITELINK_BILLING_FREQUENCY` |
+| `iBillingFrequency` | `7` (28-day billing; verified §10.62). `3` is calendar monthly. | `SITELINK_BILLING_FREQUENCY` |
 | Timezone of `dExpires` / `dNeeded` | facility wall-clock, Atlantic, no offset | `SITELINK_TIMEZONE` |
 | Column names in DataSet rows | mapped from several likely names per field (`mappers.ts`) | — |
 | `lngLastTimePolled` return value | .NET ticks of the poll time | — |
@@ -89,7 +89,7 @@ override (see `.env.example`):
    move-ins, so the website never handles raw card data? If yes, it should
    replace `PAYMENT_MODE=passthrough`. (We have not assumed one exists.)
 5. Is eSign (`SiteLinkeSignCreateLeaseURL_v2`) enabled at all three sites?
-6. Does `MoveInCostRetrieveWithDiscount_Reservation_v4` return HST in its tax
+6. Does `MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4` return HST in its tax
    columns for Nova Scotia sites?
 7. Confirm the API-call allowance (we budget 10,000 calls/location/month).
 

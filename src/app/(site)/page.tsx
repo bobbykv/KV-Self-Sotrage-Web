@@ -69,7 +69,7 @@ export default async function Home() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
             ["Find the right fit", "Use the size finder. Compare your options. Call us if you're between sizes."],
-            ["See the full price", "Check the monthly rent. Review fees and HST before you pay. No surprise fees."],
+            ["See the full price", "Check the 28-day rent. Review fees and HST before you pay. No surprise fees."],
             ["Get in when you need to", "All three locations have 24/7 access, gated coded entry and cameras. Finish your rental and access setup before you move in."],
           ].map(([title, body]) => (
             <div key={title} className="card p-6">

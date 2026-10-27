@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: `${sizeLabel} ${noun} at ${loc.shortName}`,
     description: unit
-      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}${isWinterStoragePackage(unit.typeName) ? " winter storage package" : "/month"} + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
+      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}${isWinterStoragePackage(unit.typeName) ? " 6-month winter storage package" : " per 28 days"} + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
       : `Storage at ${loc.shortName}.`,
     robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
   };
@@ -72,7 +72,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
           <p className="mt-2 text-2xl font-extrabold text-kv-red">
             {money(unit.rate)}
             <span className="text-base font-semibold text-kv-muted">
-              {isWinterStoragePackage(unit.typeName) ? " winter package + HST" : "/month + HST"}
+              {isWinterStoragePackage(unit.typeName) ? " 6-month package + HST" : "/28 days + HST"}
             </span>
           </p>
           {unit.standardRate > unit.rate && <p className="text-sm text-kv-muted line-through">{money(unit.standardRate)} standard rate</p>}
@@ -104,10 +104,10 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
                 <dd className="font-semibold">{loc.shortName}</dd>
               </div>
               <div>
-                <dt className="text-kv-muted">{isWinterStoragePackage(unit.typeName) ? "Winter storage package" : "Monthly rent"}</dt>
+                <dt className="text-kv-muted">{isWinterStoragePackage(unit.typeName) ? "Winter storage package" : "28-day rent"}</dt>
                 <dd className="font-semibold">
                   {money(unit.rate)}
-                  {isWinterStoragePackage(unit.typeName) ? " winter package + HST" : "/month + HST"}
+                  {isWinterStoragePackage(unit.typeName) ? " 6-month package + HST" : "/28 days + HST"}
                 </dd>
               </div>
             </dl>

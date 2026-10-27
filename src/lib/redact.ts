@@ -13,6 +13,7 @@ const SOAP_SENSITIVE_ELEMENTS = [
   "sCreditCardCVV",
   "sCCTrack2",
   "dExpirationDate",
+  "dCredtiCardExpir",
   "sABARoutingNum",
   "sAccountNum",
   "sCorpPassword",

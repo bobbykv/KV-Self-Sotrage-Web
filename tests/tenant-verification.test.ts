@@ -81,7 +81,8 @@ describe("tenant verification", () => {
 describe("move-in steps", () => {
   it("explains verify, SiteLink eSign, and Nokē or Haley access", () => {
     const text = MOVE_IN_STEPS.map((s) => `${s.title} ${s.detail}`).join(" ");
-    expect(text).toMatch(/Verify ID & address \+ pay 1st month/i);
+    expect(text).toMatch(/Verify ID & address \+ pay/i);
+    expect(text).toMatch(/28-day charge or prepaid package/i);
     expect(text).toMatch(/SiteLink eSign lease/i);
     expect(text).toMatch(/emailed to you/i);
     expect(text).toMatch(/Nokē Smart Entry/);

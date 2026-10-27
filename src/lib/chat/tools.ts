@@ -43,9 +43,10 @@ export async function searchUnits(args: Args) {
       size: `${g.widthFt}x${g.lengthFt}`,
       size_label: formatSize(g.widthFt, g.lengthFt),
       monthly_price: isWinterStoragePackage(g.typeName) ? null : g.fromRate,
+      billing_cycle: isWinterStoragePackage(g.typeName) ? "6-month prepaid package" : "28-day",
       package_price: isWinterStoragePackage(g.typeName) ? g.fromRate : null,
       pricing_note: isWinterStoragePackage(g.typeName)
-        ? `$${g.fromRate} winter outdoor storage package for vehicles, RVs and boats (seasonal, not a monthly rate; Exit 31 only). 14% Nova Scotia HST is itemized before payment.`
+        ? `$${g.fromRate} prepaid 6-month winter outdoor storage package for vehicles, RVs and boats at Exit 31 only (6 billing periods of 28 days, not one period). 14% Nova Scotia HST is itemized before payment. After the prepaid period the card on file is billed every 28 days.`
         : null,
       available_count: g.available,
       climate_controlled: g.climate,
