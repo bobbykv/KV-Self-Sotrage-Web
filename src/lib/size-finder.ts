@@ -6,7 +6,7 @@ export const STORAGE_NEEDS = [
   { id: "home2", label: "A two- or three-bedroom home", minArea: 150, maxArea: 200, sizes: "10 × 15 to 10 × 20", result: "Start with 10 × 15 to 10 × 20. Think about how much you're keeping, not just the number of rooms." },
   { id: "home4", label: "A larger household", minArea: 200, maxArea: 300, sizes: "10 × 20 to 10 × 30", result: "Start with 10 × 20 to 10 × 30. Call us if you need help checking the fit." },
   { id: "business", label: "Business stock, tools or equipment", minArea: 50, maxArea: 200, sizes: "50 to 200 sq. ft.", result: "Compare 50 to 200 sq. ft. Leave room to reach stock and equipment. Tell us what you're storing if you need help." },
-  { id: "vehicle", label: "A vehicle, RV or boat", minArea: 0, maxArea: 0, sizes: "Vehicle parking", result: "Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton has seasonal outdoor car storage (a $399 winter storage package). Have your vehicle's length, width and height ready." },
+  { id: "vehicle", label: "A vehicle, RV or boat", minArea: 0, maxArea: 0, sizes: "Vehicle parking", result: "Outdoor vehicle, RV and boat storage is only at Exit 31 (2784 NS-4, Addington Forks), including a $399 winter outdoor storage package. Haley Road and Stellarton do not offer it. Have your vehicle's length, width and height ready." },
 ] as const;
 
 export type StorageNeed = (typeof STORAGE_NEEDS)[number]["id"];
@@ -18,8 +18,11 @@ export function sizeFinderHref(answer: SizeFinderAnswer): string {
   if (!choice) return "/units";
   const params = new URLSearchParams();
   const climate = choice.id !== "vehicle" && answer.sensitive === true;
-  if (choice.id === "vehicle") params.set("type", "parking");
-  else {
+  if (choice.id === "vehicle") {
+    params.set("type", "parking");
+    // Outdoor vehicle, RV and boat storage is only at Exit 31.
+    params.set("location", "hwy4");
+  } else {
     params.set("minArea", String(choice.minArea));
     params.set("maxArea", String(choice.maxArea));
   }
@@ -27,6 +30,6 @@ export function sizeFinderHref(answer: SizeFinderAnswer): string {
   if (climate) {
     params.set("location", "haley");
     params.set("climate", "1");
-  } else if (answer.location) params.set("location", answer.location);
+  } else if (choice.id !== "vehicle" && answer.location) params.set("location", answer.location);
   return `/units?${params}`;
 }

@@ -95,10 +95,11 @@ override (see `.env.example`):
 ## Testing with the mock
 
 With no SiteLink credentials the app uses `src/lib/sitelink/mock.ts`. Exit 31
-fallback inventory matches the verified availability: 5×10 at $98 (4 open),
-10×10 at $140 (9 open) and 10×15 at $177 (4 open). Haley includes climate
-control plus indoor and outdoor RV, boat and car parking. Stellarton includes
-Nokē drive-up units and outdoor car winter storage ($399 winter package).
+fallback inventory matches the verified drive-up availability: 5×10 at $98
+(4 open), 10×10 at $140 (9 open) and 10×15 at $177 (4 open), plus outdoor
+vehicle, RV and boat storage ($399 winter outdoor storage package). Haley
+includes climate control and no vehicle parking. Stellarton is Nokē drive-up
+units only (5×10, 10×10, 10×15, 10×20).
 
 * Portal login: `demo@kvselfstorage.ca` / `demo1234`
 * Pass-through payments: `4242 4242 4242 4242` approves, any other valid card

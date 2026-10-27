@@ -45,7 +45,7 @@ export async function searchUnits(args: Args) {
       monthly_price: isWinterStoragePackage(g.typeName) ? null : g.fromRate,
       package_price: isWinterStoragePackage(g.typeName) ? g.fromRate : null,
       pricing_note: isWinterStoragePackage(g.typeName)
-        ? `$${g.fromRate} winter storage package (seasonal, not a monthly rate). 14% Nova Scotia HST is itemized before payment.`
+        ? `$${g.fromRate} winter outdoor storage package for vehicles, RVs and boats (seasonal, not a monthly rate; Exit 31 only). 14% Nova Scotia HST is itemized before payment.`
         : null,
       available_count: g.available,
       climate_controlled: g.climate,

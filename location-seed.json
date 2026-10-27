@@ -17,12 +17,12 @@
       "city": "Antigonish",
       "region": "NS",
       "country": "CA",
-      "blurb": "Close to StFX and downtown Antigonish. Choose climate-controlled storage here. We also have RV, boat and vehicle parking.",
+      "blurb": "Close to StFX and downtown Antigonish. Choose climate-controlled storage here.",
       "access": "24/7",
       "officeHours": [{ "days": "Monday to Friday", "open": "08:30", "close": "16:30" }],
       "amenities": {
         "climateControlled": true,
-        "vehicleParking": true,
+        "vehicleParking": false,
         "nokeRemoteUnlock": false,
         "gatedAccess": true,
         "surveillance": true
@@ -39,12 +39,12 @@
       "region": "NS",
       "country": "CA",
       "landmark": "Highway 4 at Exit 31",
-      "blurb": "On Highway 4 at Exit 31. A storage option for Lower West River, Salt Springs and nearby communities. Unlock your unit with the Nokē app.",
+      "blurb": "On Highway 4 at Exit 31. Outdoor storage for vehicles, RVs and boats, including a $399 winter outdoor storage package. Unlock your unit with the Nokē app.",
       "access": "24/7",
       "officeHours": [{ "days": "Monday to Friday", "open": "08:00", "close": "16:30" }],
       "amenities": {
         "climateControlled": false,
-        "vehicleParking": null,
+        "vehicleParking": true,
         "nokeRemoteUnlock": true,
         "gatedAccess": true,
         "surveillance": true
@@ -60,12 +60,12 @@
       "city": "Stellarton",
       "region": "NS",
       "country": "CA",
-      "blurb": "Store near home or work in Stellarton, New Glasgow, Westville or Trenton. Drive-up units unlock with the Nokē app. Seasonal outdoor car winter storage is also available.",
+      "blurb": "Store near home or work in Stellarton, New Glasgow, Westville or Trenton. Drive-up units unlock with the Nokē app.",
       "access": "24/7",
       "officeHours": [{ "days": "Monday to Friday", "open": "08:00", "close": "16:30" }],
       "amenities": {
         "climateControlled": null,
-        "vehicleParking": null,
+        "vehicleParking": false,
         "nokeRemoteUnlock": true,
         "gatedAccess": true,
         "surveillance": true

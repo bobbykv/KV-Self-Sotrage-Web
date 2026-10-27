@@ -6,7 +6,7 @@ import { formatSize, isWinterStoragePackage, money, type UnitGroup } from "@/lib
 export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle" | "typeName"> }) {
   const tags = [
     g.climate && "Climate-controlled",
-    g.vehicle && (isWinterStoragePackage(g.typeName) ? "Seasonal outdoor car storage" : "Vehicle, RV & boat parking"),
+    g.vehicle && (isWinterStoragePackage(g.typeName) ? "Outdoor vehicle, RV and boat storage" : "Vehicle, RV & boat parking"),
     !g.vehicle && g.inside && !g.climate && "Indoor",
     !g.vehicle && !g.inside && "Drive-up",
     g.power && "Power",

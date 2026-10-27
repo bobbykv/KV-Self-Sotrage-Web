@@ -68,12 +68,12 @@ describe("GoHighLevel storage opportunity", () => {
     ghlEnv.GHL_STORAGE_PIPELINE_ID = "pipe-explicit";
     ghlEnv.GHL_STORAGE_STAGE_ID = "stage-explicit";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 201 }));
-    await postGhlStorageOpportunity("contact_2", { name: "Sam", unitType: "Outdoor Car Winter Storage", preferredLocation: "Stellarton" });
+    await postGhlStorageOpportunity("contact_2", { name: "Sam", unitType: "Outdoor Vehicle, RV & Boat Winter Storage", preferredLocation: "Addington Forks" });
     expect(JSON.parse(String((fetchSpy.mock.calls[0][1] as RequestInit).body))).toMatchObject({
       locationId: "other-location",
       pipelineId: "pipe-explicit",
       pipelineStageId: "stage-explicit",
-      name: "Sam — Outdoor Car Winter Storage (Stellarton)",
+      name: "Sam — Outdoor Vehicle, RV & Boat Winter Storage (Addington Forks)",
       status: "open",
     });
   });

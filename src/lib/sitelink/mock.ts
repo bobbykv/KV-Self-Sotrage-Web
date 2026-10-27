@@ -7,9 +7,9 @@ import "server-only";
  * Exit 31 (hwy4) availability and monthly rates are the verified fallback
  * while the Corporate Control Center permission toggle is still off:
  * 5×10 at $98 (4 available), 10×10 at $140 (9 available), 10×15 at $177 (4 available).
- * Haley includes climate-controlled units plus indoor and outdoor RV, boat
- * and car parking. Stellarton includes Nokē drive-up units plus outdoor car
- * winter storage ($399 winter storage package in the unit description).
+ * Haley includes climate-controlled units and no vehicle parking. Stellarton
+ * is drive-up units with Nokē smart entry only. Outdoor vehicle, RV and boat
+ * storage, including the $399 winter outdoor storage package, is only at Exit 31.
  * Other monthly rates remain representative until live SiteLink inventory is on.
  *
  * State is persisted in Postgres (MockSiteLinkState) so fake rentals and the
@@ -73,45 +73,26 @@ const SPECS: Record<LocationKey, Spec[]> = {
     { type: "Drive-up", w: 10, l: 20, rate: 210, count: 4, rented: 4 },
     { type: "Climate Controlled", w: 5, l: 10, rate: 120, climate: true, inside: true, power: true, count: 4, rented: 2 },
     { type: "Climate Controlled", w: 10, l: 10, rate: 175, climate: true, inside: true, power: true, count: 4, rented: 3 },
-    {
-      type: "Outdoor RV, Boat & Car Parking",
-      w: 10,
-      l: 30,
-      rate: 75,
-      count: 6,
-      rented: 3,
-      desc: "Outdoor parking for RVs, boats and cars.",
-    },
-    {
-      type: "Indoor RV, Boat & Vehicle Storage",
-      w: 12,
-      l: 35,
-      rate: 190,
-      inside: true,
-      count: 2,
-      rented: 1,
-      desc: "Indoor parking for RVs, boats and vehicles.",
-    },
   ],
   hwy4: [
     { type: "Drive-up", w: 5, l: 10, rate: 98, count: 4, rented: 0 },
     { type: "Drive-up", w: 10, l: 10, rate: 140, count: 9, rented: 0 },
     { type: "Drive-up", w: 10, l: 15, rate: 177, count: 4, rented: 0 },
+    {
+      type: "Outdoor Vehicle, RV & Boat Winter Storage",
+      w: 12,
+      l: 40,
+      rate: 399,
+      count: 4,
+      rented: 0,
+      desc: "$399 winter outdoor storage package for vehicles, RVs and boats at Exit 31 (2784 NS-4). This is a seasonal package, not a monthly rate. 14% Nova Scotia HST is itemized before payment.",
+    },
   ],
   stellarton: [
     { type: "Drive-up", w: 5, l: 10, rate: 95, count: 6, rented: 2, desc: "Standard drive-up unit with Nokē smart entry." },
     { type: "Drive-up", w: 10, l: 10, rate: 140, count: 8, rented: 4, desc: "Standard drive-up unit with Nokē smart entry." },
     { type: "Drive-up", w: 10, l: 15, rate: 175, count: 4, rented: 4, desc: "Standard drive-up unit with Nokē smart entry." },
     { type: "Drive-up", w: 10, l: 20, rate: 210, count: 6, rented: 3, desc: "Standard drive-up unit with Nokē smart entry." },
-    {
-      type: "Outdoor Car Winter Storage",
-      w: 10,
-      l: 20,
-      rate: 399,
-      count: 4,
-      rented: 1,
-      desc: "Seasonal outdoor car storage. $399 winter storage package. This is a seasonal package, not a monthly rate. 14% Nova Scotia HST is itemized before payment.",
-    },
   ],
 };
 

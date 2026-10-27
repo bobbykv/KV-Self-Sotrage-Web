@@ -18,17 +18,17 @@ export const SEO_PAGES: SeoPage[] = [
   {
     slug: "self-storage-antigonish",
     title: "Self Storage in Antigonish | Haley Road & Addington Forks | KV",
-    description: "Compare self storage in Antigonish at Haley Road and Addington Forks. Climate-controlled units and vehicle parking at Haley Road. 24/7 access.",
+    description: "Compare self storage in Antigonish at Haley Road and Addington Forks. Climate-controlled units at Haley Road. Outdoor vehicle, RV and boat storage at Exit 31. 24/7 access.",
     h1: "Self storage in Antigonish",
     intro: "Moving, downsizing or storing between terms at StFX? Compare units at Haley Road and Addington Forks. See the price before you book.",
     sections: [
       {
         heading: "Close to StFX",
-        body: "20 Haley Road is close to StFX and downtown Antigonish. Choose climate-controlled units or check RV, boat and vehicle parking.",
+        body: "20 Haley Road is close to StFX and downtown Antigonish. Choose climate-controlled units here.",
       },
       {
         heading: "Storage at Exit 31",
-        body: "Find us at 2784 NS-4 in Addington Forks. This location serves Lower West River, Salt Springs and nearby communities. Units use Nokē app unlock.",
+        body: "Find us at 2784 NS-4 in Addington Forks. Outdoor storage for vehicles, RVs and boats is only here, including a $399 winter outdoor storage package. Units use Nokē app unlock.",
       },
       {
         heading: "Know what you're paying",
@@ -99,11 +99,11 @@ export const SEO_PAGES: SeoPage[] = [
     sections: [
       {
         heading: "Antigonish: Haley Road",
-        body: "20 Haley Road. Close to StFX. Climate-controlled units and RV, boat and vehicle parking.",
+        body: "20 Haley Road. Close to StFX. Climate-controlled units.",
       },
       {
         heading: "Addington Forks: Exit 31",
-        body: "2784 NS-4. Convenient for Lower West River and Salt Springs. Nokē app unlock.",
+        body: "2784 NS-4. Outdoor vehicle, RV and boat storage, including a $399 winter outdoor storage package. Nokē app unlock.",
       },
       {
         heading: "Stellarton: Heritage Avenue",
