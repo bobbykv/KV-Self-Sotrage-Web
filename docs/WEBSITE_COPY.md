@@ -177,11 +177,10 @@ Antigonish: Haley Road
 20 Haley Road, Antigonish
 
 **Body**
-Close to StFX and downtown Antigonish. Choose climate-controlled storage here. We also have RV, boat and vehicle parking.
+Close to StFX and downtown Antigonish. Choose climate-controlled storage here.
 
 **Features**
 Climate-controlled units
-RV, boat and vehicle parking
 Gated coded entry
 Camera surveillance
 24/7 access
@@ -202,9 +201,10 @@ Addington Forks: Exit 31
 2784 NS-4, Addington Forks
 
 **Body**
-On Highway 4 at Exit 31. A storage option for Lower West River, Salt Springs and nearby communities. Unlock your unit with the Nokē app.
+On Highway 4 at Exit 31. Outdoor storage for vehicles, RVs and boats, including a $399 winter outdoor storage package. Unlock your unit with the Nokē app.
 
 **Features**
+Outdoor vehicle, RV and boat storage
 Nokē app unlock
 Gated coded entry
 Camera surveillance
@@ -226,7 +226,7 @@ Stellarton: Heritage Avenue
 30 Heritage Ave, Stellarton
 
 **Body**
-Store near home or work in Stellarton, New Glasgow, Westville or Trenton. Drive-up units unlock with the Nokē app. Seasonal outdoor car winter storage is also available.
+Store near home or work in Stellarton, New Glasgow, Westville or Trenton. Drive-up units unlock with the Nokē app.
 
 **Features**
 Nokē app unlock
@@ -478,7 +478,7 @@ Start with 10 × 20 to 10 × 30. Call us if you need help checking the fit.
 Compare 50 to 200 sq. ft. Leave room to reach stock and equipment. Tell us what you're storing if you need help.
 
 **Result: vehicle**
-Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton has seasonal outdoor car storage (a $399 winter storage package). Have your vehicle's length, width and height ready.
+Outdoor vehicle, RV and boat storage is only at Exit 31 (2784 NS-4, Addington Forks), including a $399 winter outdoor storage package. Haley Road and Stellarton do not offer it. Have your vehicle's length, width and height ready.
 
 **Climate result**
 For climate control, compare units at Haley Road in Antigonish.
@@ -734,10 +734,10 @@ Yes. Haley Road is close to StFX. Store your belongings between terms. Start wit
 Yes. Choose a unit with room for your items and space to reach them. Ask us before booking if you're unsure whether an item can be stored.
 
 **Do you have RV, boat or vehicle parking?**
-Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Check availability and have your vehicle's length, width and height ready.
+Outdoor vehicle, RV and boat storage is only at Exit 31 (2784 NS-4, Addington Forks). That includes a $399 winter outdoor storage package. It is a seasonal package, not a monthly rate. Haley Road and Stellarton do not offer vehicle, RV or boat storage. Have your vehicle's length, width and height ready. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 **Do you offer winter storage for cars, RVs and boats?**
-Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton also offers seasonal outdoor car storage. The Stellarton option is a $399 winter storage package, not a monthly rate. Checkout itemizes 14% Nova Scotia HST before you pay.
+Yes, only at Exit 31 (2784 NS-4, Addington Forks). The winter outdoor storage package is $399 for vehicles, RVs and boats. It is a seasonal package, not a monthly rate. 20 Haley Road and 30 Heritage Ave in Stellarton do not offer winter outdoor storage. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 **What if the size I need is full?**
 Check another size or location. You can also join the free waitlist. We'll contact you when a matching space opens.
@@ -907,7 +907,7 @@ We couldn't send your message. Try again, call (902) 867-3779 or email info@kvse
 Self Storage in Antigonish | Haley Road & Addington Forks | KV
 
 **SEO description**
-Compare self storage in Antigonish at Haley Road and Addington Forks. Climate-controlled units and vehicle parking at Haley Road. 24/7 access.
+Compare self storage in Antigonish at Haley Road and Addington Forks. Climate-controlled units at Haley Road. Outdoor vehicle, RV and boat storage at Exit 31. 24/7 access.
 
 **H1**
 Self storage in Antigonish
@@ -923,13 +923,13 @@ Call (902) 867-3779
 Close to StFX
 
 **Body**
-20 Haley Road is close to StFX and downtown Antigonish. Choose climate-controlled units or check RV, boat and vehicle parking.
+20 Haley Road is close to StFX and downtown Antigonish. Choose climate-controlled units here.
 
 **H2**
 Storage at Exit 31
 
 **Body**
-Find us at 2784 NS-4 in Addington Forks. This location serves Lower West River, Salt Springs and nearby communities. Units use Nokē app unlock.
+Find us at 2784 NS-4 in Addington Forks. Outdoor storage for vehicles, RVs and boats is only here, including a $399 winter outdoor storage package. Units use Nokē app unlock.
 
 **H2**
 Know what you're paying
@@ -1055,13 +1055,13 @@ Find a location
 Antigonish: Haley Road
 
 **Body**
-20 Haley Road. Close to StFX. Climate-controlled units and RV, boat and vehicle parking.
+20 Haley Road. Close to StFX. Climate-controlled units.
 
 **H2**
 Addington Forks: Exit 31
 
 **Body**
-2784 NS-4. Convenient for Lower West River and Salt Springs. Nokē app unlock.
+2784 NS-4. Outdoor vehicle, RV and boat storage, including a $399 winter outdoor storage package. Nokē app unlock.
 
 **H2**
 Stellarton: Heritage Avenue

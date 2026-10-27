@@ -35,7 +35,8 @@ describe("size finder to listing journey", () => {
   });
 
   it("does not apply climate control or household area bounds to vehicle searches", () => {
-    expect(sizeFinderHref({ what: "vehicle", sensitive: true, location: "haley" })).toBe("/units?type=parking&location=haley");
+    expect(sizeFinderHref({ what: "vehicle", sensitive: true, location: "haley" })).toBe("/units?type=parking&location=hwy4");
+    expect(sizeFinderHref({ what: "vehicle", location: "stellarton" })).toBe("/units?type=parking&location=hwy4");
   });
 
   it("shows sold-out types that match the same size and location filters", () => {

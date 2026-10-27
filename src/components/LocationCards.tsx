@@ -13,7 +13,7 @@ export function AmenityList({ l, showStorageTypes = true }: { l: Location; showS
   const a = l.amenities;
   const items = [
     showStorageTypes && a.climateControlled === true && "Climate-controlled units",
-    showStorageTypes && a.vehicleParking === true && "RV, boat and vehicle parking",
+    showStorageTypes && a.vehicleParking === true && "Outdoor vehicle, RV and boat storage",
     a.nokeRemoteUnlock && "Nokē app unlock",
     a.gatedAccess && "Gated coded entry",
     a.surveillance && "Camera surveillance",

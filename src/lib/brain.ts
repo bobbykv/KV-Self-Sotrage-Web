@@ -25,7 +25,8 @@ function locationsBlock(): string {
     const features = [
       a.climateControlled === true && "climate-controlled units",
       a.climateControlled === false && "no climate-controlled units",
-      a.vehicleParking === true && "RV/boat/vehicle parking",
+      a.vehicleParking === true && "outdoor vehicle, RV and boat storage, including the $399 winter outdoor storage package",
+      a.vehicleParking === false && "no vehicle, RV or boat storage",
       a.nokeRemoteUnlock ? "Noke smart-lock remote unlock" : "standard access code (no Noke)",
       `${l.access} access`,
     ].filter(Boolean);

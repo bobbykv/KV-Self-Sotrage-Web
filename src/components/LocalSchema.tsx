@@ -20,7 +20,7 @@ function storageSchema(l: Location, siteUrl: string) {
     amenityFeature: [
       { "@type": "LocationFeatureSpecification", name: "24/7 access", value: true },
       ...(l.amenities.climateControlled ? [{ "@type": "LocationFeatureSpecification", name: "Climate-controlled units", value: true }] : []),
-      ...(l.amenities.vehicleParking ? [{ "@type": "LocationFeatureSpecification", name: "RV, boat and vehicle parking", value: true }] : []),
+      ...(l.amenities.vehicleParking ? [{ "@type": "LocationFeatureSpecification", name: "Outdoor vehicle, RV and boat storage", value: true }] : []),
       ...(l.amenities.nokeRemoteUnlock ? [{ "@type": "LocationFeatureSpecification", name: "Nokē app access", value: true }] : []),
     ],
   };

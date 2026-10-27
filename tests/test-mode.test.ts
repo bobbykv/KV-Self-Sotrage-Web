@@ -70,21 +70,22 @@ describe("fallback inventory", () => {
     expect(sized(5, 10)).toHaveLength(4);
     expect(sized(10, 10)).toHaveLength(9);
     expect(sized(10, 15)).toHaveLength(4);
-    expect(hwy).toHaveLength(17);
     expect(new Set(sized(5, 10).map((u) => u.rate))).toEqual(new Set([98]));
     expect(new Set(sized(10, 10).map((u) => u.rate))).toEqual(new Set([140]));
     expect(new Set(sized(10, 15).map((u) => u.rate))).toEqual(new Set([177]));
+    const winter = hwy.filter((u) => /winter storage/i.test(u.typeName));
+    expect(winter.length).toBeGreaterThan(0);
+    expect(winter.every((u) => u.vehicle && !u.inside && u.rate === 399 && /\$399 winter outdoor storage package/i.test(u.description))).toBe(true);
 
-    const haley = open("haley");
+    const haley = st.units.haley.map((u) => mapUnit("haley", u));
     expect(haley.some((u) => u.climate)).toBe(true);
-    expect(haley.some((u) => u.vehicle && u.inside)).toBe(true);
-    expect(haley.some((u) => u.vehicle && !u.inside)).toBe(true);
+    expect(haley.some((u) => u.vehicle)).toBe(false);
 
     const stel = st.units.stellarton.map((u) => mapUnit("stellarton", u));
-    expect(stel.some((u) => !u.vehicle && /nokē smart entry/i.test(u.description))).toBe(true);
-    const winter = stel.filter((u) => /winter storage/i.test(u.typeName) && !u.rented);
-    expect(winter.length).toBeGreaterThan(0);
-    expect(winter.every((u) => u.vehicle && u.rate === 399 && /\$399 winter storage package/i.test(u.description))).toBe(true);
+    expect(stel.some((u) => u.vehicle || /winter|\$399/i.test(u.description))).toBe(false);
+    expect(stel.every((u) => /nokē smart entry/i.test(u.description))).toBe(true);
+    const stelSizes = stel.map((u) => `${u.widthFt}x${u.lengthFt}`);
+    expect(new Set(stelSizes)).toEqual(new Set(["5x10", "10x10", "10x15", "10x20"]));
   });
 });
 

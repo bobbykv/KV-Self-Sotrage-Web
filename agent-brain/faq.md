@@ -25,10 +25,10 @@ Yes. Haley Road is close to StFX. Store your belongings between terms. Start wit
 Yes. Choose a unit with room for your items and space to reach them. Ask us before booking if you're unsure whether an item can be stored.
 
 ## Do you have RV, boat or vehicle parking?
-Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Check availability and have your vehicle's length, width and height ready.
+Outdoor vehicle, RV and boat storage is only at Exit 31 (2784 NS-4, Addington Forks). That includes a $399 winter outdoor storage package. It is a seasonal package, not a monthly rate. Haley Road and Stellarton do not offer vehicle, RV or boat storage. Have your vehicle's length, width and height ready. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 ## Do you offer winter storage for cars, RVs and boats?
-Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton also offers seasonal outdoor car storage. The Stellarton option is a $399 winter storage package, not a monthly rate. Checkout itemizes 14% Nova Scotia HST before you pay.
+Yes, only at Exit 31 (2784 NS-4, Addington Forks). The winter outdoor storage package is $399 for vehicles, RVs and boats. It is a seasonal package, not a monthly rate. 20 Haley Road and 30 Heritage Ave in Stellarton do not offer winter outdoor storage. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 ## What if the size I need is full?
 Check another size or location. You can also join the free waitlist. We'll contact you when a matching space opens.
