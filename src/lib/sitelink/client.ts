@@ -12,6 +12,7 @@ import {
   CHANNEL_TYPE_WEBSITE,
   INQUIRY_TYPE,
   PAY_METHOD_CREDIT_CARD,
+  PAYMENT_SOURCE_WEBSITE,
   QT_RENTAL_TYPE_RESERVATION,
   RESERVATION_STATUS_OPEN,
   SITELINK_NONE_ID,
@@ -444,6 +445,8 @@ export const sitelink = {
       endDate?: Date | string | null;
       prepaidPeriods?: number;
       concessionId?: number | null;
+      /** 0 card, 1 check, 2 cash. Cash and check send empty card fields. */
+      payMethod?: number;
       amount: number;
       card: { typeId: number; number: string; cvv: string; expires: Date; name: string; street: string; postal: string };
     },
@@ -468,7 +471,7 @@ export const sitelink = {
       iSource: SOURCE_WEBSITE,
       sSource: SOURCE_WEBSITE_LABEL,
       bUsePushRate: false,
-      iPayMethod: PAY_METHOD_CREDIT_CARD,
+      iPayMethod: m.payMethod ?? PAY_METHOD_CREDIT_CARD,
       sABARoutingNum: "",
       sAccountNum: "",
       iAccountType: 0,
@@ -497,15 +500,36 @@ export const sitelink = {
     loc: LocationKey,
     m: { ledgerId: number; cardTypeId: number; cardNumber: string; expires: Date; name: string; street: string; postal: string },
   ) {
+    await this.updateTenantBilling(loc, {
+      ledgerId: m.ledgerId,
+      autoBill: true,
+      card: { typeId: m.cardTypeId, number: m.cardNumber, expires: m.expires, name: m.name, street: m.street, postal: m.postal },
+    });
+  },
+
+  /**
+   * Saves or clears the card on a ledger (§10.136). iAutoBillType 1 with
+   * iAutoBillOnDayPastDue 0 bills that card every 28 days. Card values are not logged.
+   * The WSDL spells the expiration field dCredtiCardExpir.
+   */
+  async updateTenantBilling(
+    loc: LocationKey,
+    m: {
+      ledgerId: number;
+      autoBill: boolean;
+      card?: { typeId: number; number: string; expires: Date; name: string; street: string; postal: string };
+    },
+  ) {
+    const card = m.card;
     await call(loc, "TenantBillingInfoUpdate_v2", {
       iLedgerID: m.ledgerId,
-      iCreditCardTypeID: m.cardTypeId,
-      sCreditCardNum: m.cardNumber,
-      dCredtiCardExpir: m.expires,
-      sCreditCardHolderName: m.name,
-      sCreditCardStreet: m.street,
-      sCreditCardZip: m.postal,
-      iAutoBillType: AUTO_BILL_CREDIT_CARD,
+      iCreditCardTypeID: card?.typeId ?? 0,
+      sCreditCardNum: card?.number ?? "",
+      dCredtiCardExpir: card?.expires ?? new Date("2099-12-31T00:00:00"),
+      sCreditCardHolderName: card?.name ?? "",
+      sCreditCardStreet: card?.street ?? "",
+      sCreditCardZip: card?.postal ?? "",
+      iAutoBillType: m.autoBill ? AUTO_BILL_CREDIT_CARD : 0,
       sACH_CheckWriterAcctNum: "",
       sACH_ABA_RoutingNum: "",
       sACH_Check_SavingsCode: "",
@@ -515,6 +539,69 @@ export const sitelink = {
 
   async scheduleMoveOut(loc: LocationKey, ledgerId: number, date: Date | null) {
     await call(loc, "ScheduleMoveOut", { iLedgerID: ledgerId, dScheduledOut: date ?? "" });
+  },
+
+  /**
+   * Immediate move-out (§10.64). WSDL names are TenantID and UnitID.
+   * Refuses to call SiteLink until SITELINK_USAGE_PASSWORD is set.
+   */
+  async moveOut(loc: LocationKey, tenantId: number, unitId: number) {
+    const password = env.SITELINK_USAGE_PASSWORD;
+    if (!password) throw new SiteLinkError("MoveOut", -1, "Set SITELINK_USAGE_PASSWORD to move a tenant out from the website.");
+    const data = await call(loc, "MoveOut", { sUsagePassword: password, TenantID: tenantId, UnitID: unitId });
+    const row = rowsOf(data, "RT")[0];
+    return { ledgerId: retCode(data), refund: num(row, "dcRefund"), balance: num(row, "dcAcctBalance") };
+  },
+
+  /** Staff payment on an active ledger (§10.82). Pass the base amount; SiteLink adds surcharge. */
+  async paymentSimpleCard(
+    loc: LocationKey,
+    m: {
+      tenantId: number;
+      unitId: number;
+      amount: number;
+      card: { typeId: number; number: string; cvv: string; expires: Date; name: string; street: string; postal: string };
+    },
+  ) {
+    const data = await call(loc, "PaymentSimpleWithSource_v3", {
+      iTenantID: m.tenantId,
+      iUnitID: m.unitId,
+      dcPaymentAmount: m.amount,
+      iCreditCardType: m.card.typeId,
+      sCreditCardNumber: m.card.number,
+      sCreditCardCVV: m.card.cvv,
+      sCCTrack2: "",
+      dExpirationDate: m.card.expires,
+      sBillingName: m.card.name,
+      sBillingAddress: m.card.street,
+      sBillingZipCode: m.card.postal,
+      bTestMode: env.sitelinkTestMode,
+      iSource: PAYMENT_SOURCE_WEBSITE,
+    });
+    return { receiptId: receiptIdOf(data) };
+  },
+
+  /** Cash payment (§10.77). */
+  async paymentSimpleCash(loc: LocationKey, m: { tenantId: number; unitId: number; amount: number }) {
+    const data = await call(loc, "PaymentSimpleCashWithSource", {
+      iTenantID: m.tenantId,
+      iUnitID: m.unitId,
+      dcPaymentAmount: m.amount,
+      iSource: PAYMENT_SOURCE_WEBSITE,
+    });
+    return { receiptId: receiptIdOf(data) };
+  },
+
+  /** Check or e-transfer. The reference goes in sCheckNumber (§10.79). */
+  async paymentSimpleCheck(loc: LocationKey, m: { tenantId: number; unitId: number; amount: number; checkNumber: string }) {
+    const data = await call(loc, "PaymentSimpleCheckWithSource", {
+      iTenantID: m.tenantId,
+      iUnitID: m.unitId,
+      dcPaymentAmount: m.amount,
+      sCheckNumber: m.checkNumber,
+      iSource: PAYMENT_SOURCE_WEBSITE,
+    });
+    return { receiptId: receiptIdOf(data) };
   },
 
   /** Simulator only: zero a ledger balance after a portal card payment. */
@@ -538,17 +625,30 @@ export const sitelink = {
     }
   },
 
-  /** Reporting API — after-hours / dashboard jobs only, never the public hot path. */
+  /**
+   * Reporting API — the nightly job and the dashboard "Run reports now" button only.
+   * Move-ins and move-outs are requested from the first of the month through `day`
+   * so the snapshot can show both today and month-to-date. Never call this per page view.
+   */
   async dailyReports(loc: LocationKey, day: Date) {
     const start = new Date(day);
     start.setHours(0, 0, 0, 0);
     const end = new Date(day);
     end.setHours(23, 59, 59, 0);
+    const monthStart = new Date(start);
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
     const [pastDue, moves, occupancy] = await Promise.all([
       call(loc, "PastDueBalances", { dReportDateStart: start, dReportDateEnd: end }),
-      call(loc, "MoveInsAndMoveOuts", { dReportDateStart: start, dReportDateEnd: end }),
+      call(loc, "MoveInsAndMoveOuts", { dReportDateStart: monthStart, dReportDateEnd: end }),
       call(loc, "OccupancyStatistics", { dReportDateStart: start, dReportDateEnd: end }),
     ]);
     return mapReports(rowsOf(pastDue, "Table"), rowsOf(moves, "Table"), rowsOf(occupancy, "Table"), day.toISOString().slice(0, 10));
   },
 };
+
+function receiptIdOf(data: DataSet): string | null {
+  const row = data.Receipts?.[0] ?? rowsOf(data, "Receipts", "Table")[0];
+  const id = str(row, "ReceiptID", "lngReceiptID", "iReceiptID");
+  return id || (retCode(data) ? String(retCode(data)) : null);
+}

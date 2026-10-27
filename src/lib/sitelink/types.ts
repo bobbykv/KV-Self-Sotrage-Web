@@ -144,5 +144,8 @@ export type ReportSummary = {
   pastDueAmount: number | null;
   moveInsToday: number | null;
   moveOutsToday: number | null;
+  /** Move-ins from the first of the month through the report day. */
+  moveInsMonth: number | null;
+  moveOutsMonth: number | null;
   occupancyPct: number | null;
 };

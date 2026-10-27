@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LocationSwitcher, PageHeader } from "@/components/admin/LocationSwitcher";
 import { getLocation, isLocationKey, LOCATION_KEYS } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
@@ -86,7 +87,12 @@ export default async function AdminUnits({ searchParams }: { searchParams: Promi
                     ) : u.waitingListReserved ? (
                       <span className="badge bg-blue-100 text-blue-800">reserved</span>
                     ) : (
-                      <span className="badge bg-green-100 text-green-800">vacant</span>
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        <span className="badge bg-green-100 text-green-800">vacant</span>
+                        <Link href={`/admin/holds?location=${u.locationKey}&unit=${u.unitId}#book`} className="text-xs font-semibold text-kv-red underline">
+                          Book / move-in
+                        </Link>
+                      </span>
                     )}
                   </td>
                 </tr>

@@ -1674,5 +1674,193 @@
         "type": "string"
       }
     ]
+  },
+  "MoveOut": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "sUsagePassword",
+        "type": "string"
+      },
+      {
+        "name": "TenantID",
+        "type": "int"
+      },
+      {
+        "name": "UnitID",
+        "type": "int"
+      }
+    ]
+  },
+  "PaymentSimpleWithSource_v3": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      },
+      {
+        "name": "iUnitID",
+        "type": "int"
+      },
+      {
+        "name": "dcPaymentAmount",
+        "type": "decimal"
+      },
+      {
+        "name": "iCreditCardType",
+        "type": "int"
+      },
+      {
+        "name": "sCreditCardNumber",
+        "type": "string"
+      },
+      {
+        "name": "sCreditCardCVV",
+        "type": "string"
+      },
+      {
+        "name": "sCCTrack2",
+        "type": "string"
+      },
+      {
+        "name": "dExpirationDate",
+        "type": "dateTime"
+      },
+      {
+        "name": "sBillingName",
+        "type": "string"
+      },
+      {
+        "name": "sBillingAddress",
+        "type": "string"
+      },
+      {
+        "name": "sBillingZipCode",
+        "type": "string"
+      },
+      {
+        "name": "bTestMode",
+        "type": "boolean"
+      },
+      {
+        "name": "iSource",
+        "type": "int"
+      }
+    ]
+  },
+  "PaymentSimpleCashWithSource": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      },
+      {
+        "name": "iUnitID",
+        "type": "int"
+      },
+      {
+        "name": "dcPaymentAmount",
+        "type": "decimal"
+      },
+      {
+        "name": "iSource",
+        "type": "int"
+      }
+    ]
+  },
+  "PaymentSimpleCheckWithSource": {
+    "service": "callcenter",
+    "namespace": "http://tempuri.org/CallCenterWs/CallCenterWs",
+    "params": [
+      {
+        "name": "sCorpCode",
+        "type": "string"
+      },
+      {
+        "name": "sLocationCode",
+        "type": "string"
+      },
+      {
+        "name": "sCorpUserName",
+        "type": "string"
+      },
+      {
+        "name": "sCorpPassword",
+        "type": "string"
+      },
+      {
+        "name": "iTenantID",
+        "type": "int"
+      },
+      {
+        "name": "iUnitID",
+        "type": "int"
+      },
+      {
+        "name": "dcPaymentAmount",
+        "type": "decimal"
+      },
+      {
+        "name": "sCheckNumber",
+        "type": "string"
+      },
+      {
+        "name": "iSource",
+        "type": "int"
+      }
+    ]
   }
 }

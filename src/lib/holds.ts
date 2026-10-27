@@ -4,7 +4,8 @@ import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
 import { formatSize, isWinterStoragePackage } from "./catalog";
-import { matchingWinterPrepaidPlan, plansForUnit } from "./sitelink/concessions";
+import { getDiscountToggles } from "./discount-visibility";
+import { discountToggleKey, matchingWinterPrepaidPlan, planMatchesUnit, planShownOnWebsite, publicPlansForUnit } from "./sitelink/concessions";
 import { db } from "./db";
 import { cookieNames, env } from "./env";
 import { getInventory, refreshInventory } from "./inventory";
@@ -38,6 +39,14 @@ export type HoldInput = {
   email: string;
   phone: string;
   moveInDate: Date;
+  /**
+   * undefined keeps the public default (auto winter package when that plan is shown).
+   * null is standard 28-day billing. A number is used only when that plan is shown for the unit.
+   */
+  concessionId?: number | null;
+  /** Staff checkout link. Lasts holdMs (default 72 hours) and carries a claim token. */
+  staffIssued?: boolean;
+  holdMs?: number;
 };
 
 /** Marks lapsed holds expired and (only if SiteLink confirmed the status enum) cancels them there too. */
@@ -90,12 +99,12 @@ export async function createHold(input: HoldInput): Promise<Hold> {
   }
 
   const planReport = await sitelink.discountPlans(input.locationKey);
-  const concessionId = isWinterStoragePackage(fresh.typeName)
-    ? (matchingWinterPrepaidPlan(plansForUnit(planReport.plans, fresh))?.concessionId ?? null)
-    : null;
+  const toggles = await getDiscountToggles();
+  const concessionId = await chooseHoldConcession(input, fresh, planReport.plans, planReport.source, toggles);
 
   const id = randomBytes(18).toString("base64url");
-  const expiresAt = new Date(Date.now() + settings.holdMinutes * 60_000);
+  const expiresAt = new Date(Date.now() + (input.holdMs ?? settings.holdMinutes * 60_000));
+  const claimToken = input.staffIssued ? randomBytes(18).toString("base64url") : null;
   let hold: Hold;
   try {
     // The partial unique index (one active hold per unit) makes this the claim.
@@ -116,6 +125,8 @@ export async function createHold(input: HoldInput): Promise<Hold> {
         moveInDate: input.moveInDate,
         expiresAt,
         concessionId,
+        staffIssued: Boolean(input.staffIssued),
+        claimToken,
       },
     });
   } catch {
@@ -135,9 +146,13 @@ export async function createHold(input: HoldInput): Promise<Hold> {
       needed: input.moveInDate,
       expires: expiresAt,
       quotedRate: Number(hold.quotedRate),
-      comment: concessionId
-        ? `Website ${settings.holdMinutes}-minute checkout hold · concession ${concessionId}`
-        : `Website ${settings.holdMinutes}-minute checkout hold`,
+      comment: input.staffIssued
+        ? concessionId
+          ? `Staff checkout link · concession ${concessionId}`
+          : "Staff checkout link · standard 28-day billing"
+        : concessionId
+          ? `Website ${settings.holdMinutes}-minute checkout hold · concession ${concessionId}`
+          : `Website ${settings.holdMinutes}-minute checkout hold`,
       trackingCode: `web-${id.slice(0, 10)}`,
       concessionId,
     });
@@ -202,15 +217,58 @@ export async function retryCost(hold: Hold): Promise<Hold> {
   }
 }
 
+type HoldUnit = { unitTypeId?: number; typeName: string; widthFt: number; lengthFt: number };
+
+/** Picks the concession stored on a new hold. An explicit Off toggle is never charged. */
+export async function chooseHoldConcession(
+  input: Pick<HoldInput, "locationKey" | "concessionId">,
+  unit: HoldUnit,
+  plans: Awaited<ReturnType<typeof sitelink.discountPlans>>["plans"],
+  source: "sitelink" | "unavailable",
+  toggles: Record<string, boolean>,
+): Promise<number | null> {
+  if (input.concessionId === null) return null;
+  if (input.concessionId === undefined) {
+    if (!isWinterStoragePackage(unit.typeName)) return null;
+    return matchingWinterPrepaidPlan(publicPlansForUnit(plans, unit, input.locationKey, toggles))?.concessionId ?? null;
+  }
+  const id = input.concessionId;
+  if (toggles[discountToggleKey(input.locationKey, id)] === false) {
+    throw new HoldError("concession", "That discount is turned off on the website. Standard 28-day billing is still available.");
+  }
+  if (source !== "sitelink") return id;
+  const eligible = publicPlansForUnit(plans, unit, input.locationKey, toggles);
+  if (!eligible.some((p) => p.concessionId === id)) {
+    throw new HoldError("concession", "That discount plan doesn't apply to this unit. Standard 28-day billing is still available.");
+  }
+  return id;
+}
+
+/** Blocks payment and confirmation when the stored plan was turned Off or no longer matches the unit. */
+export async function assertChargeableConcession(hold: Hold): Promise<void> {
+  if (hold.concessionId == null) return;
+  const loc = hold.locationKey as LocationKey;
+  const toggles = await getDiscountToggles();
+  if (toggles[discountToggleKey(loc, hold.concessionId)] === false) {
+    throw new HoldError("concession", "That discount is turned off on the website. Choose standard 28-day billing.");
+  }
+  const report = await sitelink.discountPlans(loc);
+  if (report.source !== "sitelink") return;
+  const plan = report.plans.find((p) => p.concessionId === hold.concessionId);
+  const unit = { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt };
+  if (!plan || !planShownOnWebsite(plan, loc, toggles) || !planMatchesUnit(plan, unit)) {
+    throw new HoldError("concession", "That discount plan doesn't apply to this unit. Standard 28-day billing is still available.");
+  }
+}
+
 /** Saves a concession (or clears it) and refreshes the 28-day move-in quote. */
 export async function quoteHold(hold: Hold, concessionId: number | null): Promise<Hold> {
   const loc = hold.locationKey as LocationKey;
   if (concessionId !== null) {
     const report = await sitelink.discountPlans(loc);
-    const eligible = plansForUnit(report.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt });
-    const known = report.source === "sitelink" && eligible.some((p) => p.concessionId === concessionId);
-    const kept = report.source !== "sitelink" && hold.concessionId === concessionId;
-    if (!known && !kept) {
+    const toggles = await getDiscountToggles();
+    await chooseHoldConcession({ locationKey: loc, concessionId }, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }, report.plans, report.source, toggles);
+    if (report.source !== "sitelink" && hold.concessionId !== concessionId && toggles[discountToggleKey(loc, concessionId)] !== true) {
       throw new HoldError("concession", "That discount plan doesn't apply to this unit. Standard 28-day billing is still available.");
     }
   }
@@ -348,6 +406,7 @@ export async function confirmPaySeparately(id: string, verification: Record<stri
   let h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
   if (concessionId !== undefined && concessionId !== h.concessionId) h = await quoteHold(h, concessionId);
+  await assertChargeableConcession(h);
   await syncTenantVerification(h, verification);
   const settings = await getSettings();
   const newExpiry = new Date(Date.now() + settings.confirmedReservationHours * 3_600_000);
@@ -391,6 +450,7 @@ export async function payPassthrough(id: string, card: CardInput, verification: 
   let h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
   if (concessionId !== undefined && concessionId !== h.concessionId) h = await quoteHold(h, concessionId);
+  await assertChargeableConcession(h);
   const cost = h.costBreakdown as unknown as MoveInCost | null;
   if (!cost) throw new HoldError("no cost breakdown", "We couldn't load your exact total yet, so we can't take payment. Please refresh, or call us.");
 

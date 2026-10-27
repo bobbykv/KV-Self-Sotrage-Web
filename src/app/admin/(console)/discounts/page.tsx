@@ -1,9 +1,11 @@
 import { PageHeader } from "@/components/admin/LocationSwitcher";
 import { getLocation, LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { money } from "@/lib/catalog";
-import { isWinterPrepaidPlan, matchingWinterPrepaidPlan } from "@/lib/sitelink/concessions";
+import { getDiscountToggles } from "@/lib/discount-visibility";
+import { isWinterPrepaidPlan, matchingWinterPrepaidPlan, planShownOnWebsite } from "@/lib/sitelink/concessions";
 import { sitelink } from "@/lib/sitelink/client";
 import type { ConcessionPlan } from "@/lib/sitelink/types";
+import { setDiscountVisibleAction } from "./actions";
 
 export const metadata = { title: "Discount plans" };
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ function restrictions(plan: ConcessionPlan): string {
 }
 
 export default async function AdminDiscounts() {
+  const toggles = await getDiscountToggles();
   const reports = await Promise.all(
     LOCATION_KEYS.map(async (key) => ({ key, report: await sitelink.discountPlans(key) })),
   );
@@ -36,18 +39,22 @@ export default async function AdminDiscounts() {
     <>
       <PageHeader title="SiteLink discount plans" />
       <p className="mt-4 max-w-3xl text-sm text-kv-muted">
-        These are the concession plans SiteLink returned from DiscountPlansRetrieve. Checkout uses a plan&apos;s ConcessionID only when it is in this list and applies to the unit. The $399 6-month winter outdoor package is attached automatically when a matching prepaid plan exists at Exit 31.
+        Show on Website controls what customers can choose at checkout. A new web-enabled plan stays On until you turn it Off. Payments-only and disabled plans stay Off until you turn them On. The toggle is stored here, so you do not have to change the plan in SiteLink.
       </p>
       {winter.length > 0 ? (
         <div className="mt-4 rounded-xl bg-kv-navy-50 p-4 text-sm text-kv-navy">
           <p className="font-extrabold">Winter 6-month package found</p>
           <ul className="mt-2 space-y-1">
-            {winter.map(({ key, plan }) => (
-              <li key={`${key}-${plan.concessionId}`}>
-                {getLocation(key).shortName}: ConcessionID {plan.concessionId} · {plan.name}
-                {plan.prepay ? ` · prepaid ${plan.prepaidMonths} periods` : ""}
-              </li>
-            ))}
+            {winter.map(({ key, plan }) => {
+              const shown = planShownOnWebsite(plan, key, toggles);
+              return (
+                <li key={`${key}-${plan.concessionId}`}>
+                  {getLocation(key).shortName}: ConcessionID {plan.concessionId} · {plan.name}
+                  {plan.prepay ? ` · prepaid ${plan.prepaidMonths} periods` : ""}
+                  {shown ? "" : " · hidden on the website until you turn it On"}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : (
@@ -77,7 +84,8 @@ export default async function AdminDiscounts() {
                       <th className="p-3">Amount</th>
                       <th className="p-3">Prepay</th>
                       <th className="p-3">Units</th>
-                      <th className="p-3">Checkout</th>
+                      <th className="p-3">SiteLink</th>
+                      <th className="p-3">Show on website</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -92,7 +100,10 @@ export default async function AdminDiscounts() {
                         <td className="p-3">{plan.prepay ? `${plan.prepaidMonths} periods` : "No"}</td>
                         <td className="p-3 text-xs">{restrictions(plan)}</td>
                         <td className="p-3 text-xs">
-                          {plan.disabled ? "Disabled" : plan.showOn === 2 ? "Payments only" : isWinterPrepaidPlan(plan) ? "Winter package match" : "Available"}
+                          {plan.disabled ? "Disabled" : plan.showOn === 2 ? "Payments only" : isWinterPrepaidPlan(plan) ? "Winter package match" : "Web-enabled"}
+                        </td>
+                        <td className="p-3">
+                          <WebsiteToggle locationKey={key} plan={plan} shown={planShownOnWebsite(plan, key, toggles)} />
                         </td>
                       </tr>
                     ))}
@@ -104,5 +115,19 @@ export default async function AdminDiscounts() {
         ))}
       </div>
     </>
+  );
+}
+
+function WebsiteToggle({ locationKey, plan, shown }: { locationKey: LocationKey; plan: ConcessionPlan; shown: boolean }) {
+  return (
+    <form action={setDiscountVisibleAction.bind(null, locationKey, plan.concessionId, !shown)}>
+      <button
+        type="submit"
+        aria-pressed={shown}
+        className={shown ? "btn-navy btn-sm" : "btn-ghost btn-sm"}
+      >
+        {shown ? "On" : "Off"}
+      </button>
+    </form>
   );
 }

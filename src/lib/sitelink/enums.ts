@@ -14,9 +14,15 @@ const envInt = (name: string, fallback: number) => {
 /** VERIFIED: QTRentalTypeID 2 = Order (Reservation). */
 export const QT_RENTAL_TYPE_RESERVATION = 2;
 
-/** VERIFIED: iSource 5 = Website. */
+/** VERIFIED: iSource 5 = Website on reservation methods. */
 export const SOURCE_WEBSITE = 5;
 export const SOURCE_WEBSITE_LABEL = "Website";
+
+/**
+ * VERIFIED (§10.77, §10.79, §10.82): PaymentSimple* iSource.
+ * 3 = Call Center, 10 = Website. Staff payments taken on this site use 10.
+ */
+export const PAYMENT_SOURCE_WEBSITE = 10;
 
 /** UNVERIFIED: ReservationNewWithSource_v5 iInquiryType. */
 export const INQUIRY_TYPE = envInt("SITELINK_INQUIRY_TYPE", 0);
@@ -34,6 +40,10 @@ export const RESERVATION_CANCEL_TYPE = envInt("SITELINK_RESERVATION_CANCEL_TYPE"
 
 /** UNVERIFIED: MoveInWithDiscount_v7 iPayMethod (0 = credit card). */
 export const PAY_METHOD_CREDIT_CARD = envInt("SITELINK_PAY_METHOD_CC", 0);
+
+/** VERIFIED (§10.62): iPayMethod 1 = check, 2 = cash. */
+export const PAY_METHOD_CHECK = 1;
+export const PAY_METHOD_CASH = 2;
 
 /** UNVERIFIED: MoveInWithDiscount_v7 ChannelType. */
 export const CHANNEL_TYPE_WEBSITE = envInt("SITELINK_CHANNEL_TYPE", 0);

@@ -13,6 +13,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Staff on/off for showing a SiteLink concession on the public website. No row means the web-enabled default.
+model DiscountPlanToggle {
+  locationKey  String
+  concessionId Int
+  enabled      Boolean
+  updatedAt    DateTime @updatedAt
+
+  @@id([locationKey, concessionId])
+}
+
 model Setting {
   key       String   @id
   value     Json
@@ -75,6 +85,10 @@ model Hold {
   concessionId      Int?
   /// True after TenantBillingInfoUpdate_v2 accepts the card for 28-day auto bill.
   autoBillEnabled   Boolean  @default(false)
+  /// Staff created this hold and sent the customer a checkout link.
+  staffIssued       Boolean  @default(false)
+  /// Secret that lets the customer's phone claim the checkout cookie. Not a card or ID image.
+  claimToken        String?
   moveInDate        DateTime
   expiresAt         DateTime
   /// active | expired | released | confirmed_pay_separately | moved_in | payment_failed | error

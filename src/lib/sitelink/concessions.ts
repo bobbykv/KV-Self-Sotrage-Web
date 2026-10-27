@@ -82,9 +82,27 @@ export function matchingWinterPrepaidPlan(plans: ConcessionPlan[]): ConcessionPl
 
 type PlanUnit = { unitTypeId?: number; typeName: string; widthFt: number; lengthFt: number };
 
-/** ConcessionUnitTypes empty, or bForAllUnits, means the plan applies to every unit. */
-export function planAppliesTo(plan: ConcessionPlan, unit: PlanUnit): boolean {
-  if (plan.disabled || plan.showOn === 2) return false;
+export function discountToggleKey(locationKey: string, concessionId: number) {
+  return `${locationKey}:${concessionId}`;
+}
+
+/** SiteLink would show this plan on a website move-in before any staff override. */
+export function isWebEnabledPlan(plan: ConcessionPlan) {
+  return !plan.disabled && plan.showOn !== 2;
+}
+
+/**
+ * Staff On/Off wins when a row exists. With no row, web-enabled plans stay On
+ * and payments-only or disabled plans stay Off.
+ */
+export function planShownOnWebsite(plan: ConcessionPlan, locationKey: string, toggles: Record<string, boolean>) {
+  const key = discountToggleKey(locationKey, plan.concessionId);
+  if (Object.prototype.hasOwnProperty.call(toggles, key)) return toggles[key] === true;
+  return isWebEnabledPlan(plan);
+}
+
+/** Unit match only. Disabled and payments-only plans can still match when staff turns them On. */
+export function planMatchesUnit(plan: ConcessionPlan, unit: PlanUnit): boolean {
   if (plan.forAllUnits || plan.unitTypes.length === 0) return true;
   const sized = plan.unitTypes.some((t) => t.widthFt > 0 && t.lengthFt > 0);
   const direct = plan.unitTypes.some((t) => {
@@ -94,12 +112,22 @@ export function planAppliesTo(plan: ConcessionPlan, unit: PlanUnit): boolean {
     return false;
   });
   if (direct) return true;
-  // Type-id-only restrictions still apply to the winter outdoor unit when this is the winter package.
   return !sized && isWinterPrepaidPlan(plan) && isWinterStoragePackage(unit.typeName);
+}
+
+/** ConcessionUnitTypes empty, or bForAllUnits, means the plan applies to every unit. */
+export function planAppliesTo(plan: ConcessionPlan, unit: PlanUnit): boolean {
+  if (plan.disabled || plan.showOn === 2) return false;
+  return planMatchesUnit(plan, unit);
 }
 
 export function plansForUnit(plans: ConcessionPlan[], unit: PlanUnit): ConcessionPlan[] {
   return plans.filter((p) => planAppliesTo(p, unit));
+}
+
+/** Plans the public checkout and staff booking form may charge. */
+export function publicPlansForUnit(plans: ConcessionPlan[], unit: PlanUnit, locationKey: string, toggles: Record<string, boolean>): ConcessionPlan[] {
+  return plans.filter((p) => planShownOnWebsite(p, locationKey, toggles) && planMatchesUnit(p, unit));
 }
 
 /** Blank, 0, and -999 mean standard 28-day billing (no concession). */

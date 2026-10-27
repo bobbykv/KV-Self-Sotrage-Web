@@ -1,21 +1,24 @@
 import { LocationSwitcher, PageHeader, StatusBadge } from "@/components/admin/LocationSwitcher";
-import { getLocation, isLocationKey, LOCATION_KEYS } from "@/config/locations";
+import { getLocation, isLocationKey, LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { getDiscountToggles } from "@/lib/discount-visibility";
 import { env } from "@/lib/env";
 import { expireHolds } from "@/lib/holds";
 import { safeErrorMessage } from "@/lib/log";
 import { sitelink } from "@/lib/sitelink/client";
-import type { MoveInCost } from "@/lib/sitelink/types";
+import type { MoveInCost, Unit } from "@/lib/sitelink/types";
 import { releaseHoldAction } from "../actions";
+import { StaffBooking, type BookUnit } from "./StaffBooking";
 
 export const metadata = { title: "Holds & payments" };
 
 const STATUSES = ["active", "confirmed_pay_separately", "payment_failed", "moved_in", "expired", "released", "error"];
 
-export default async function AdminHolds({ searchParams }: { searchParams: Promise<{ location?: string; status?: string; sitelink?: string }> }) {
+export default async function AdminHolds({ searchParams }: { searchParams: Promise<{ location?: string; status?: string; sitelink?: string; unit?: string }> }) {
   const sp = await searchParams;
   const location = isLocationKey(sp.location) ? sp.location : undefined;
+  const unitParam = Number(sp.unit);
   const status = STATUSES.includes(sp.status ?? "") ? sp.status : undefined;
   await expireHolds();
   const holds = await db.hold.findMany({
@@ -35,7 +38,32 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
         }),
       )
     : null;
-  const extra = [status ? `status=${status}` : "", showSiteLink ? "sitelink=1" : ""].filter(Boolean).join("&");
+  const extra = [status ? `status=${status}` : "", showSiteLink ? "sitelink=1" : "", unitParam ? `unit=${unitParam}` : ""].filter(Boolean).join("&");
+  const [toggles, planReports, snaps] = await Promise.all([
+    getDiscountToggles(),
+    Promise.all(LOCATION_KEYS.map(async (key) => ({ key, report: await sitelink.discountPlans(key) }))),
+    db.siteLinkSnapshot.findMany({ where: { kind: { in: ["all", "available"] } } }),
+  ]);
+  const bookUnits: BookUnit[] = [];
+  for (const key of LOCATION_KEYS) {
+    const all = snaps.find((s) => s.id === `${key}:all` && s.refreshedAt.getTime() > 0);
+    const avail = snaps.find((s) => s.id === `${key}:available`);
+    const rows = ((all?.data ?? avail?.data) as Unit[] | undefined) ?? [];
+    for (const unit of rows) {
+      if (unit.rented || !unit.rentable) continue;
+      bookUnits.push({
+        locationKey: key,
+        unitId: unit.unitId,
+        unitName: unit.unitName,
+        typeName: unit.typeName,
+        widthFt: unit.widthFt,
+        lengthFt: unit.lengthFt,
+        rate: unit.rate,
+        unitTypeId: unit.unitTypeId,
+      });
+    }
+  }
+  const bookPlans = planReports.flatMap(({ key, report }) => report.plans.map((plan) => ({ ...plan, locationKey: key as LocationKey })));
 
   return (
     <>
@@ -43,6 +71,15 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
         <span className="badge bg-kv-navy-50 text-kv-navy">PAYMENT_MODE = {env.PAYMENT_MODE}</span>
       </PageHeader>
       <LocationSwitcher current={location} basePath="/admin/holds" extra={extra} />
+      <div className="mt-6">
+        <StaffBooking
+          units={bookUnits}
+          plans={bookPlans}
+          toggles={toggles}
+          initialLocation={location}
+          initialUnitId={Number.isInteger(unitParam) ? unitParam : undefined}
+        />
+      </div>
       <form method="get" className="mt-4 flex flex-wrap gap-2">
         {location && <input type="hidden" name="location" value={location} />}
         <select name="status" defaultValue={status ?? ""} className="input min-h-10 w-auto">
@@ -70,7 +107,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
                   {h.firstName} {h.lastName} <StatusBadge status={h.status} />
                 </p>
                 <p className="text-sm">
-                  {getLocation(h.locationKey as "haley").shortName} · unit {h.unitName} · {formatSize(h.widthFt, h.lengthFt)} {h.unitTypeName} · {money(Number(h.quotedRate))}/mo
+                  {getLocation(h.locationKey as LocationKey).shortName} · unit {h.unitName} · {formatSize(h.widthFt, h.lengthFt)} {h.unitTypeName} · {money(Number(h.quotedRate))}/28 days
                 </p>
                 <p className="text-sm text-kv-muted">
                   <a href={`tel:${h.phone}`} className="underline">
