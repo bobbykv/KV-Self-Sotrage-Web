@@ -28,7 +28,7 @@ Yes. Choose a unit with room for your items and space to reach them. Ask us befo
 Outdoor vehicle, RV and boat storage is only at Exit 31 (2784 NS-4, Addington Forks). That includes a $399 winter outdoor storage package. It is a seasonal package, not a monthly rate. Haley Road and Stellarton do not offer vehicle, RV or boat storage. Have your vehicle's length, width and height ready. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 ## Do you offer winter storage for cars, RVs and boats?
-Yes, only at Exit 31 (2784 NS-4, Addington Forks). The winter outdoor storage package is $399 for vehicles, RVs and boats. It is a seasonal package, not a monthly rate. 20 Haley Road and 30 Heritage Ave in Stellarton do not offer winter outdoor storage. Checkout itemizes 14% Nova Scotia HST before you pay.
+Yes, only at Exit 31 (2784 NS-4, Addington Forks). The winter outdoor storage package is $399 prepaid for 6 billing periods (28 days each) for vehicles, RVs and boats. It is not one 28-day charge. After that prepaid period, the card on file is billed every 28 days. 20 Haley Road and 30 Heritage Ave in Stellarton do not offer winter outdoor storage. Checkout itemizes 14% Nova Scotia HST before you pay. The package appears at checkout when that discount plan is set up in SiteLink.
 
 ## What if the size I need is full?
 Check another size or location. You can also join the free waitlist. We'll contact you when a matching space opens.
@@ -36,10 +36,10 @@ Check another size or location. You can also join the free waitlist. We'll conta
 # Prices and payments
 
 ## How much does storage cost?
-See the monthly rent on Units & prices. Checkout shows fees, any deposit and 14% Nova Scotia HST as its own line before you pay. No surprise fees.
+See the 28-day rent on Units & prices. KV bills every 28 days, and the card used at move-in is saved in SiteLink for automatic payment on that cycle. Checkout shows fees, any deposit and 14% Nova Scotia HST as its own line before you pay. No surprise fees.
 
 ## What are the Exit 31 unit sizes and starting rates?
-Exit 31 is Addington Forks at 2784 NS-4. Starting monthly rates there are $98 for a 5 × 10 (5x10), $140 for a 10 × 10 (10x10), and $177 for a 10 × 15 (10x15). These are starting rates before tax. Checkout shows 14% Nova Scotia HST on its own line before you pay.
+Exit 31 is Addington Forks at 2784 NS-4. Starting 28-day rates there are $98 for a 5 × 10 (5x10), $140 for a 10 × 10 (10x10), and $177 for a 10 × 15 (10x15). These are starting rates before tax for one 28-day period. Checkout shows 14% Nova Scotia HST on its own line before you pay.
 
 ## Are the prices and availability live?
 When the site is live, check the last-update time on Units & prices. We check availability again when you start checkout. When the demonstration banner is shown, the listings and prices are examples.

@@ -38,5 +38,20 @@ export const PAY_METHOD_CREDIT_CARD = envInt("SITELINK_PAY_METHOD_CC", 0);
 /** UNVERIFIED: MoveInWithDiscount_v7 ChannelType. */
 export const CHANNEL_TYPE_WEBSITE = envInt("SITELINK_CHANNEL_TYPE", 0);
 
-/** UNVERIFIED: iBillingFrequency (0 = site default / monthly). */
-export const BILLING_FREQUENCY_DEFAULT = envInt("SITELINK_BILLING_FREQUENCY", 0);
+/**
+ * VERIFIED (Transaction API §10.62): iBillingFrequency 7 = 28-Day Billing, 3 = calendar monthly.
+ * KV bills every 28 days. Override with SITELINK_BILLING_FREQUENCY only if SiteLink says otherwise.
+ */
+export const BILLING_FREQUENCY_DEFAULT = envInt("SITELINK_BILLING_FREQUENCY", 7);
+
+/**
+ * VERIFIED: -999 means "none" for concession, insurance, promotion, and waiting-id
+ * parameters on reservation, move-in cost, and MoveInWithDiscount_v7.
+ */
+export const SITELINK_NONE_ID = -999;
+
+/** VERIFIED (§10.136): iAutoBillType 1 = credit card. */
+export const AUTO_BILL_CREDIT_CARD = 1;
+
+/** VERIFIED (§10.136): 0 days after the amount is due. */
+export const AUTO_BILL_ON_DAY_PAST_DUE = 0;

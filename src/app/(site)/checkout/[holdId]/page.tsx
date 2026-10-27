@@ -7,13 +7,16 @@ import { HoldCountdown } from "@/components/HoldCountdown";
 import { MoveInSteps } from "@/components/MoveInSteps";
 import { PromoBanner } from "@/components/PromoBanner";
 import { BRAND, getLocation, isLocationKey } from "@/config/locations";
-import { formatSize, money } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { env } from "@/lib/env";
 import { getHold, HOLD_COOKIE, retryCost } from "@/lib/holds";
 import { getSettings } from "@/lib/settings";
+import { isMultiPeriodPrepaid, plansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
+import { sitelink } from "@/lib/sitelink/client";
 import type { MoveInCost } from "@/lib/sitelink/types";
 import { cancelHold } from "./actions";
+import { ConcessionPicker } from "./ConcessionPicker";
 import { CardPaymentForm, CHECKOUT_FORM_ID, PaySeparatelyPanel } from "./PaymentPanels";
 import { VerificationFields } from "./VerificationFields";
 
@@ -60,9 +63,23 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
 
   const locationKey = hold.locationKey;
   hold = await retryCost(hold);
-  const [settings, promos] = await Promise.all([getSettings(), getLivePromotions({ placement: "checkout", location: locationKey })]);
+  const [settings, promos, planReport] = await Promise.all([
+    getSettings(),
+    getLivePromotions({ placement: "checkout", location: locationKey }),
+    sitelink.discountPlans(locationKey),
+  ]);
   const loc = getLocation(locationKey);
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
+  const eligiblePlans = plansForUnit(planReport.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }).map((p) => ({
+    concessionId: p.concessionId,
+    name: p.name,
+    description: p.description,
+    prepay: p.prepay,
+    prepaidMonths: p.prepaidMonths,
+  }));
+  const selectedPlan = eligiblePlans.find((p) => p.concessionId === hold.concessionId) ?? null;
+  const prepaid = Boolean(selectedPlan?.prepay && selectedPlan.prepaidMonths > 1) || isMultiPeriodPrepaid(cost?.startDate, cost?.endDate);
+  const recurringNote = recurringBillingNote(prepaid);
   const verification = {
     licenseNumber: hold.licenseNumber,
     licenseRegion: hold.licenseRegion,
@@ -103,8 +120,10 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
               <dd className="font-semibold">{hold.moveInDate.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}</dd>
             </div>
             <div>
-              <dt className="text-kv-muted">Monthly rent</dt>
-              <dd className="font-semibold">{money(Number(hold.quotedRate))} + HST</dd>
+              <dt className="text-kv-muted">{selectedPlan?.prepay ? "Prepaid package" : "28-day rent"}</dt>
+              <dd className="font-semibold">
+                {selectedPlan?.prepay ? selectedPlan.name : `${money(Number(hold.quotedRate))} + HST`}
+              </dd>
             </div>
             <div>
               <dt className="text-kv-muted">Name</dt>
@@ -125,6 +144,16 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
           <div className="mt-8 border-t border-kv-line pt-6">
             <VerificationFields defaults={verification} form={CHECKOUT_FORM_ID} />
           </div>
+
+          {eligiblePlans.length > 0 ? (
+            <ConcessionPicker holdId={hold.id} formId={CHECKOUT_FORM_ID} plans={eligiblePlans} selectedId={hold.concessionId} />
+          ) : (
+            isWinterStoragePackage(hold.unitTypeName) && (
+              <p className="mt-6 rounded-xl bg-kv-yellow-light p-4 text-sm text-kv-navy">
+                The $399 6-month winter outdoor package shows up here once that discount plan is set up in SiteLink. This checkout is using standard 28-day billing until then.
+              </p>
+            )
+          )}
 
           <h2 className="mt-8 font-extrabold text-kv-navy">Your move-in total</h2>
           <div className="mt-3">
@@ -156,9 +185,9 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
             {!cost ? (
               <p className="text-sm text-kv-muted">Waiting for your total…</p>
             ) : env.PAYMENT_MODE === "passthrough" ? (
-              <CardPaymentForm holdId={hold.id} total={money(cost.total)} />
+              <CardPaymentForm holdId={hold.id} total={money(cost.total)} recurringNote={recurringNote} />
             ) : (
-              <PaySeparatelyPanel holdId={hold.id} hours={settings.confirmedReservationHours} payOnlineUrl={env.PAY_ONLINE_URL} />
+              <PaySeparatelyPanel holdId={hold.id} hours={settings.confirmedReservationHours} payOnlineUrl={env.PAY_ONLINE_URL} recurringNote={recurringNote} />
             )}
           </div>
           <form action={cancelHold.bind(null, hold.id)} className="mt-4 text-center">

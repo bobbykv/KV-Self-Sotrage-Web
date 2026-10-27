@@ -6,7 +6,7 @@
  */
 import type { LocationKey } from "@/config/locations";
 import { bool, date, num, optNum, str, type DataSet, type Row } from "./dataset";
-import type { Balance, BillingInfo, CostLine, CostLineKind, Ledger, MoveInCost, PriceListEntry, Reservation, ReportSummary, Tenant, Unit } from "./types";
+import type { Balance, BillingInfo, ConcessionPlan, ConcessionUnitType, CostLine, CostLineKind, Ledger, MoveInCost, PriceListEntry, Reservation, ReportSummary, Tenant, Unit } from "./types";
 
 const VEHICLE_RE = /(parking|rv|boat|vehicle|trailer|car\b|outdoor)/i;
 
@@ -96,8 +96,9 @@ export function mapMoveInCost(rows: Row[], hstRate: number, taxLabel = "HST (Nov
         tax += num(r, k);
       }
     }
-    startDate ??= date(r, "StartDate", "dStartDate");
-    endDate ??= date(r, "EndDate", "dEndDate");
+    // Keep SiteLink's original datetime so MoveInWithDiscount gets the same paid-through value.
+    startDate ??= str(r, "StartDate", "dStartDate") || null;
+    endDate ??= str(r, "EndDate", "dEndDate") || null;
   }
   const preTax = round(lines.reduce((s, l) => s + l.amount, 0));
   const taxSource = sawTaxColumn ? "sitelink" : "computed";
@@ -154,6 +155,53 @@ export function mapBillingInfo(rows: Row[]): BillingInfo {
     last4: lastFour.length === 4 ? lastFour : null,
     expires: date(r, "dCreditCardExpir", "dExpirationDate"),
   };
+}
+
+function planDisabled(r: Row): boolean {
+  const raw = str(r, "dDisabled");
+  if (!raw) return false;
+  const t = Date.parse(raw);
+  if (!Number.isFinite(t)) return true;
+  return t > Date.parse("1900-01-02");
+}
+
+/** DiscountPlansRetrieve → ConcessionPlans joined to ConcessionUnitTypes. */
+export function mapDiscountPlans(plans: Row[], unitTypes: Row[]): ConcessionPlan[] {
+  const restrictions = new Map<number, ConcessionUnitType[]>();
+  for (const r of unitTypes) {
+    const id = num(r, "ConcessionID");
+    if (!id) continue;
+    const list = restrictions.get(id) ?? [];
+    list.push({
+      unitTypeId: num(r, "UnitTypeID"),
+      widthFt: num(r, "dcWidth"),
+      lengthFt: num(r, "dcLength"),
+      typeName: str(r, "sTypeName", "sUnitTypeName"),
+    });
+    restrictions.set(id, list);
+  }
+  return plans
+    .map((r) => {
+      const concessionId = num(r, "ConcessionID");
+      return {
+        concessionId,
+        name: str(r, "sPlanName", "sName") || `Concession ${concessionId}`,
+        description: str(r, "sDescription", "sDefChgDesc"),
+        comment: str(r, "sComment"),
+        showOn: num(r, "iShowOn"),
+        prepay: bool(r, "bPrepay"),
+        prepaidMonths: num(r, "iPrePaidMonths"),
+        amountType: num(r, "iAmtType"),
+        chargeAmount: num(r, "dcChgAmt", "dcPrice"),
+        fixedDiscount: num(r, "dcFixedDiscount"),
+        percentDiscount: num(r, "dcPCDiscount"),
+        forAllUnits: bool(r, "bForAllUnits"),
+        disabled: planDisabled(r),
+        applyAtMoveIn: r.bApplyAtMoveIn === undefined ? true : bool(r, "bApplyAtMoveIn"),
+        unitTypes: restrictions.get(concessionId) ?? [],
+      };
+    })
+    .filter((p) => p.concessionId > 0);
 }
 
 export function mapReservation(r: Row): Reservation {

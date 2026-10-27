@@ -193,7 +193,7 @@ export async function rulesChat(text: string): Promise<ChatReply> {
     const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : area ? `our ${area[0]} locations` : "our locations";
     if (available.length) {
       const lines = available.slice(0, 4).map((u) => {
-        const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/month + HST`;
+        const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/28 days + HST`;
         return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price} (${u.available_count} listed)`;
       });
       return {

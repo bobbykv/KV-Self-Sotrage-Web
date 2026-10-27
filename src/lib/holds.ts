@@ -3,7 +3,8 @@ import { randomBytes } from "node:crypto";
 import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
-import { formatSize } from "./catalog";
+import { formatSize, isWinterStoragePackage } from "./catalog";
+import { matchingWinterPrepaidPlan, plansForUnit } from "./sitelink/concessions";
 import { db } from "./db";
 import { cookieNames, env } from "./env";
 import { getInventory, refreshInventory } from "./inventory";
@@ -55,6 +56,7 @@ export async function expireHolds(): Promise<number> {
           quotedRate: Number(h.quotedRate),
           comment: "Website hold expired",
           status: RESERVATION_STATUS_CANCELLED,
+          concessionId: h.concessionId,
           cancellationTypeId: RESERVATION_CANCEL_TYPE,
           cancellationReason: "Website 20-minute hold expired",
         });
@@ -87,6 +89,11 @@ export async function createHold(input: HoldInput): Promise<Hold> {
     log.warn("SiteLink unit lookup returned -95; holding the verified catalog unit", { location: input.locationKey, unitId: input.unitId });
   }
 
+  const planReport = await sitelink.discountPlans(input.locationKey);
+  const concessionId = isWinterStoragePackage(fresh.typeName)
+    ? (matchingWinterPrepaidPlan(plansForUnit(planReport.plans, fresh))?.concessionId ?? null)
+    : null;
+
   const id = randomBytes(18).toString("base64url");
   const expiresAt = new Date(Date.now() + settings.holdMinutes * 60_000);
   let hold: Hold;
@@ -108,6 +115,7 @@ export async function createHold(input: HoldInput): Promise<Hold> {
         phone: input.phone,
         moveInDate: input.moveInDate,
         expiresAt,
+        concessionId,
       },
     });
   } catch {
@@ -127,8 +135,11 @@ export async function createHold(input: HoldInput): Promise<Hold> {
       needed: input.moveInDate,
       expires: expiresAt,
       quotedRate: Number(hold.quotedRate),
-      comment: `Website ${settings.holdMinutes}-minute checkout hold`,
+      comment: concessionId
+        ? `Website ${settings.holdMinutes}-minute checkout hold · concession ${concessionId}`
+        : `Website ${settings.holdMinutes}-minute checkout hold`,
       trackingCode: `web-${id.slice(0, 10)}`,
+      concessionId,
     });
   } catch (err) {
     if (!isSiteLinkPermissionDenied(err)) {
@@ -140,14 +151,25 @@ export async function createHold(input: HoldInput): Promise<Hold> {
   let cost: MoveInCost | null = null;
   if (waitingId) {
     try {
-      cost = await sitelink.moveInCost(input.locationKey, { unitId: unit.unitId, moveInDate: input.moveInDate, waitingId });
+      cost = await sitelink.moveInCost(input.locationKey, {
+        unitId: unit.unitId,
+        moveInDate: input.moveInDate,
+        waitingId,
+        concessionId,
+      });
     } catch (err) {
       log.warn("move-in cost retrieve failed", { holdId: id, err });
     }
   }
   return await db.hold.update({
     where: { id },
-    data: { tenantId, tenantCreated: created, waitingId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
+    data: {
+      tenantId,
+      tenantCreated: created,
+      waitingId,
+      concessionId,
+      costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined,
+    },
   });
 }
 
@@ -168,11 +190,73 @@ export async function getHold(id: string): Promise<Hold | null> {
 export async function retryCost(hold: Hold): Promise<Hold> {
   if (hold.costBreakdown || !hold.waitingId) return hold;
   try {
-    const cost = await sitelink.moveInCost(hold.locationKey as LocationKey, { unitId: hold.unitId, moveInDate: hold.moveInDate, waitingId: hold.waitingId });
+    const cost = await sitelink.moveInCost(hold.locationKey as LocationKey, {
+      unitId: hold.unitId,
+      moveInDate: hold.moveInDate,
+      waitingId: hold.waitingId,
+      concessionId: hold.concessionId,
+    });
     return db.hold.update({ where: { id: hold.id }, data: { costBreakdown: cost as unknown as Prisma.InputJsonValue } });
   } catch {
     return hold;
   }
+}
+
+/** Saves a concession (or clears it) and refreshes the 28-day move-in quote. */
+export async function quoteHold(hold: Hold, concessionId: number | null): Promise<Hold> {
+  const loc = hold.locationKey as LocationKey;
+  if (concessionId !== null) {
+    const report = await sitelink.discountPlans(loc);
+    const eligible = plansForUnit(report.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt });
+    const known = report.source === "sitelink" && eligible.some((p) => p.concessionId === concessionId);
+    const kept = report.source !== "sitelink" && hold.concessionId === concessionId;
+    if (!known && !kept) {
+      throw new HoldError("concession", "That discount plan doesn't apply to this unit. Standard 28-day billing is still available.");
+    }
+  }
+  if (hold.waitingId && hold.tenantId) {
+    try {
+      await sitelink.updateReservation(loc, {
+        waitingId: hold.waitingId,
+        tenantId: hold.tenantId,
+        unitId: hold.unitId,
+        needed: hold.moveInDate,
+        expires: hold.expiresAt,
+        quotedRate: Number(hold.quotedRate),
+        comment: concessionId ? `Website checkout · concession ${concessionId}` : "Website checkout · standard 28-day billing",
+        concessionId,
+      });
+    } catch (err) {
+      if (!isSiteLinkPermissionDenied(err)) {
+        throw new HoldError(safeErrorMessage(err), "We couldn't apply that billing plan. Please try again or call (902) 867-3779.");
+      }
+      log.warn("reservation concession update returned -95", { holdId: hold.id });
+    }
+  }
+  let cost = (hold.costBreakdown as unknown as MoveInCost | null) ?? null;
+  if (hold.waitingId) {
+    try {
+      cost = await sitelink.moveInCost(loc, {
+        unitId: hold.unitId,
+        moveInDate: hold.moveInDate,
+        waitingId: hold.waitingId,
+        concessionId,
+      });
+    } catch (err) {
+      if (!isSiteLinkPermissionDenied(err)) {
+        throw new HoldError(safeErrorMessage(err), "We couldn't update your move-in total. Please try again or call (902) 867-3779.");
+      }
+      log.warn("move-in cost with concession returned -95", { holdId: hold.id });
+    }
+  }
+  return db.hold.update({
+    where: { id: hold.id },
+    data: { concessionId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
+  });
+}
+
+export async function recordAutoBillEnabled(id: string): Promise<void> {
+  await db.hold.update({ where: { id }, data: { autoBillEnabled: true } });
 }
 
 export async function releaseHold(id: string) {
@@ -260,9 +344,10 @@ export async function syncTenantVerification(h: Hold, body: Record<string, unkno
 }
 
 /** PAYMENT_MODE=pay_separately: keep the SiteLink reservation open longer and hand payment to the office / pay-online page. */
-export async function confirmPaySeparately(id: string, verification: Record<string, unknown>): Promise<Hold> {
-  const h = await db.hold.findUnique({ where: { id } });
+export async function confirmPaySeparately(id: string, verification: Record<string, unknown>, concessionId?: number | null): Promise<Hold> {
+  let h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
+  if (concessionId !== undefined && concessionId !== h.concessionId) h = await quoteHold(h, concessionId);
   await syncTenantVerification(h, verification);
   const settings = await getSettings();
   const newExpiry = new Date(Date.now() + settings.confirmedReservationHours * 3_600_000);
@@ -275,7 +360,10 @@ export async function confirmPaySeparately(id: string, verification: Record<stri
       needed: h.moveInDate,
       expires: newExpiry,
       quotedRate: Number(h.quotedRate),
-      comment: "Website reservation confirmed — payment to be taken by office / pay-online page",
+      comment: h.concessionId
+        ? `Website reservation confirmed — concession ${h.concessionId}. Payment to be taken by office / pay-online page`
+        : "Website reservation confirmed — standard 28-day billing. Payment to be taken by office / pay-online page",
+      concessionId: h.concessionId,
     });
     await sitelink.reservationNote(loc, h.waitingId!, `Website: customer confirmed reservation. Pay separately (PAYMENT_MODE=pay_separately). Phone ${h.phone}, email ${h.email}.`).catch(() => undefined);
   } catch (err) {
@@ -298,10 +386,11 @@ export type CardInput = { number: string; cvv: string; expiry: string; name: str
  * outbound SOAP request. Do not add logging, persistence or error reporting
  * that could capture it.
  */
-export async function payPassthrough(id: string, card: CardInput, verification: Record<string, unknown>): Promise<Hold> {
+export async function payPassthrough(id: string, card: CardInput, verification: Record<string, unknown>, concessionId?: number | null): Promise<Hold> {
   if (env.PAYMENT_MODE !== "passthrough") throw new HoldError("passthrough disabled", "Online card payment isn't enabled.");
-  const h = await db.hold.findUnique({ where: { id } });
+  let h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
+  if (concessionId !== undefined && concessionId !== h.concessionId) h = await quoteHold(h, concessionId);
   const cost = h.costBreakdown as unknown as MoveInCost | null;
   if (!cost) throw new HoldError("no cost breakdown", "We couldn't load your exact total yet, so we can't take payment. Please refresh, or call us.");
 
@@ -320,11 +409,14 @@ export async function payPassthrough(id: string, card: CardInput, verification: 
   await syncTenantVerification(h, verification);
 
   try {
+    const start = cost.startDate ? new Date(cost.startDate) : h.moveInDate;
     const result = await sitelink.moveInWithCard(loc, {
       tenantId: h.tenantId!,
       unitId: h.unitId,
       waitingId: h.waitingId!,
-      startDate: h.moveInDate,
+      startDate: Number.isNaN(start.getTime()) ? h.moveInDate : start,
+      endDate: cost.endDate,
+      concessionId: h.concessionId,
       amount: cost.total,
       card: { typeId, number, cvv, expires, name: card.name.trim(), street: card.street.trim(), postal: card.postal.trim() },
     });

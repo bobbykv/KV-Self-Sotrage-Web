@@ -4,18 +4,23 @@ import { assertSiteLinkConfig, env } from "../env";
 import { log } from "../log";
 import { countryForRegion } from "../regions";
 import { recordCall } from "./budget";
-import { num, str, type DataSet, type Row } from "./dataset";
+import { SiteLinkSoapFault, num, str, type DataSet, type Row } from "./dataset";
 import {
+  AUTO_BILL_CREDIT_CARD,
+  AUTO_BILL_ON_DAY_PAST_DUE,
   BILLING_FREQUENCY_DEFAULT,
   CHANNEL_TYPE_WEBSITE,
   INQUIRY_TYPE,
   PAY_METHOD_CREDIT_CARD,
   QT_RENTAL_TYPE_RESERVATION,
   RESERVATION_STATUS_OPEN,
+  SITELINK_NONE_ID,
   SOURCE_WEBSITE,
   SOURCE_WEBSITE_LABEL,
 } from "./enums";
-import { mapBalance, mapBillingInfo, mapLedger, mapMoveInCost, mapPriceList, mapReports, mapReservation, mapTenant, mapUnit, rowsOf } from "./mappers";
+import { matchingWinterPrepaidPlan, paidThroughDate } from "./concessions";
+import { mapBalance, mapBillingInfo, mapDiscountPlans, mapLedger, mapMoveInCost, mapPriceList, mapReports, mapReservation, mapTenant, mapUnit, rowsOf } from "./mappers";
+import type { DiscountPlansReport } from "./types";
 import { invokeMock } from "./mock";
 import { assertOk, invokeLive, retCode, SiteLinkError, type Args, type SiteLinkMethod } from "./soap";
 
@@ -67,6 +72,10 @@ function findPollTicks(data: DataSet): string | null {
     for (const r of rows) if (r.lngLastTimePolled) return r.lngLastTimePolled;
   }
   return null;
+}
+
+function concessionOrNone(id: number | null | undefined): number {
+  return id && id > 0 ? id : SITELINK_NONE_ID;
 }
 
 export const sitelink = {
@@ -298,7 +307,7 @@ export const sitelink = {
 
   async createReservation(
     loc: LocationKey,
-    r: { tenantId: number; unitId: number; needed: Date; expires: Date; quotedRate: number; comment: string; trackingCode: string },
+    r: { tenantId: number; unitId: number; needed: Date; expires: Date; quotedRate: number; comment: string; trackingCode: string; concessionId?: number | null },
   ): Promise<number> {
     const data = await call(loc, "ReservationNewWithSource_v5", {
       sTenantID: String(r.tenantId),
@@ -314,7 +323,7 @@ export const sitelink = {
       dFollowUp: r.expires,
       sTrackingCode: r.trackingCode,
       sCallerID: "",
-      ConcessionID: 0,
+      ConcessionID: concessionOrNone(r.concessionId),
     });
     const waitingId = retCode(data) || num(rowsOf(data, "Table")[0], "WaitingID");
     if (!waitingId) throw new SiteLinkError("ReservationNewWithSource_v5", 0, "No WaitingID returned");
@@ -334,7 +343,19 @@ export const sitelink = {
 
   async updateReservation(
     loc: LocationKey,
-    r: { waitingId: number; tenantId: number; unitId: number; needed: Date; expires: Date; quotedRate: number; comment: string; status?: number; cancellationTypeId?: number; cancellationReason?: string },
+    r: {
+      waitingId: number;
+      tenantId: number;
+      unitId: number;
+      needed: Date;
+      expires: Date;
+      quotedRate: number;
+      comment: string;
+      status?: number;
+      cancellationTypeId?: number;
+      cancellationReason?: string;
+      concessionId?: number | null;
+    },
   ) {
     await call(loc, "ReservationUpdate_v4", {
       WaitingID: r.waitingId,
@@ -352,7 +373,7 @@ export const sitelink = {
       QTRentalTypeID: QT_RENTAL_TYPE_RESERVATION,
       QTCancellationTypeID: r.cancellationTypeId ?? 0,
       sCancellationReason: r.cancellationReason ?? "",
-      ConcessionID: 0,
+      ConcessionID: concessionOrNone(r.concessionId),
     });
   },
 
@@ -360,18 +381,51 @@ export const sitelink = {
     await call(loc, "ReservationNoteInsert", { WaitingID: waitingId, sNote: note });
   },
 
-  async moveInCost(loc: LocationKey, q: { unitId: number; moveInDate: Date; waitingId: number }) {
-    const data = await call(loc, "MoveInCostRetrieveWithDiscount_Reservation_v4", {
+  /**
+   * 28-day move-in quote (§10.47). Concession, insurance, promo, and a missing
+   * waiting id are -999. Falls back to the calendar reservation quote only when
+   * the 28-day method itself is unavailable.
+   */
+  async moveInCost(loc: LocationKey, q: { unitId: number; moveInDate: Date; waitingId?: number | null; concessionId?: number | null }) {
+    const args = {
       iUnitID: q.unitId,
       dMoveInDate: q.moveInDate,
-      InsuranceCoverageID: 0,
-      ConcessionPlanID: 0,
-      WaitingID: q.waitingId,
+      InsuranceCoverageID: SITELINK_NONE_ID,
+      ConcessionPlanID: concessionOrNone(q.concessionId),
+      WaitingID: q.waitingId && q.waitingId > 0 ? q.waitingId : SITELINK_NONE_ID,
       bApplyInsuranceCredit: false,
-      iPromoGlobalNum: 0,
+      iPromoGlobalNum: SITELINK_NONE_ID,
       sCreditCardNum: "",
-    });
+    };
+    let data: DataSet;
+    try {
+      data = await call(loc, "MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4", args);
+    } catch (err) {
+      if (err instanceof SiteLinkError) throw err;
+      log.warn("28-day move-in cost method unavailable; using the calendar reservation quote", {
+        location: loc,
+        err: err instanceof SiteLinkSoapFault || err instanceof Error ? err.message : "unknown",
+      });
+      data = await call(loc, "MoveInCostRetrieveWithDiscount_Reservation_v4", args);
+    }
     return mapMoveInCost(rowsOf(data, "Table"), env.HST_RATE);
+  },
+
+  /**
+   * Live SiteLink discount plans. A failed call (including permission -95) returns
+   * an empty list so checkout can continue on standard 28-day billing.
+   * winterPlanId is set only when a returned plan matches the 6-month winter package.
+   */
+  async discountPlans(loc: LocationKey): Promise<DiscountPlansReport> {
+    try {
+      const data = await call(loc, "DiscountPlansRetrieve");
+      const plans = mapDiscountPlans(data.ConcessionPlans ?? [], data.ConcessionUnitTypes ?? []);
+      const winter = matchingWinterPrepaidPlan(plans.filter((p) => !p.disabled));
+      return { plans, source: "sitelink", error: null, winterPlanId: winter?.concessionId ?? null };
+    } catch (err) {
+      log.warn("DiscountPlansRetrieve failed", { location: loc, err });
+      return { plans: [], source: "unavailable", error: err instanceof Error ? err.message : "Discount plans unavailable", winterPlanId: null };
+    }
   },
 
   /**
@@ -386,6 +440,10 @@ export const sitelink = {
       unitId: number;
       waitingId: number;
       startDate: Date;
+      /** Paid-through date from MoveInCostRetrieve. Required for multi-period prepaid plans. */
+      endDate?: Date | string | null;
+      prepaidPeriods?: number;
+      concessionId?: number | null;
       amount: number;
       card: { typeId: number; number: string; cvv: string; expires: Date; name: string; street: string; postal: string };
     },
@@ -395,7 +453,7 @@ export const sitelink = {
       sAccessCode: "",
       UnitID: m.unitId,
       dStartDate: m.startDate,
-      dEndDate: null,
+      dEndDate: m.endDate instanceof Date || typeof m.endDate === "string" ? m.endDate : paidThroughDate(m.startDate, null, m.prepaidPeriods ?? 1),
       dcPaymentAmount: m.amount,
       iCreditCardType: m.card.typeId,
       sCreditCardNumber: m.card.number,
@@ -405,8 +463,8 @@ export const sitelink = {
       sBillingName: m.card.name,
       sBillingAddress: m.card.street,
       sBillingZipCode: m.card.postal,
-      InsuranceCoverageID: 0,
-      ConcessionPlanID: 0,
+      InsuranceCoverageID: SITELINK_NONE_ID,
+      ConcessionPlanID: concessionOrNone(m.concessionId),
       iSource: SOURCE_WEBSITE,
       sSource: SOURCE_WEBSITE_LABEL,
       bUsePushRate: false,
@@ -417,7 +475,7 @@ export const sitelink = {
       iKeypadZoneID: 0,
       iTimeZoneID: 0,
       iBillingFrequency: BILLING_FREQUENCY_DEFAULT,
-      WaitingID: m.waitingId,
+      WaitingID: m.waitingId > 0 ? m.waitingId : SITELINK_NONE_ID,
       ChannelType: CHANNEL_TYPE_WEBSITE,
       bTestMode: env.sitelinkTestMode,
       bApplyInsuranceCredit: false,
@@ -427,6 +485,32 @@ export const sitelink = {
       ledgerId: num(row, "LedgerID", "iLedgerID") || retCode(data),
       receiptRef: str(row, "lngReceiptID", "iReceiptID", "ReceiptID") || null,
     };
+  },
+
+  /**
+   * Stores the move-in card on the ledger and turns on credit-card auto bill
+   * (§10.136). iAutoBillType 1 and iAutoBillOnDayPastDue 0 make SiteLink charge
+   * that card every 28 days. The WSDL spells the expiration field dCredtiCardExpir.
+   * Card values are not logged.
+   */
+  async enableAutoBillCard(
+    loc: LocationKey,
+    m: { ledgerId: number; cardTypeId: number; cardNumber: string; expires: Date; name: string; street: string; postal: string },
+  ) {
+    await call(loc, "TenantBillingInfoUpdate_v2", {
+      iLedgerID: m.ledgerId,
+      iCreditCardTypeID: m.cardTypeId,
+      sCreditCardNum: m.cardNumber,
+      dCredtiCardExpir: m.expires,
+      sCreditCardHolderName: m.name,
+      sCreditCardStreet: m.street,
+      sCreditCardZip: m.postal,
+      iAutoBillType: AUTO_BILL_CREDIT_CARD,
+      sACH_CheckWriterAcctNum: "",
+      sACH_ABA_RoutingNum: "",
+      sACH_Check_SavingsCode: "",
+      iAutoBillOnDayPastDue: AUTO_BILL_ON_DAY_PAST_DUE,
+    });
   },
 
   async scheduleMoveOut(loc: LocationKey, ledgerId: number, date: Date | null) {

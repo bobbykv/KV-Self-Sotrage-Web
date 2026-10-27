@@ -5,7 +5,17 @@ import { useState } from "react";
 
 export const CHECKOUT_FORM_ID = "checkout-form";
 
-export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: string; hours: number; payOnlineUrl?: string }) {
+export function PaySeparatelyPanel({
+  holdId,
+  hours,
+  payOnlineUrl,
+  recurringNote,
+}: {
+  holdId: string;
+  hours: number;
+  payOnlineUrl?: string;
+  recurringNote: string;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -39,6 +49,7 @@ export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: st
         <p>
           Reserve this unit for {hours} hours while you finish payment and your rental. Confirming the reservation does not take a payment. Your confirmation tells you what to do next.
         </p>
+        <p className="mt-2 font-semibold">{recurringNote}</p>
       </div>
       {error && (
         <p className="rounded-xl bg-kv-red-50 p-3 text-sm font-semibold text-kv-red" role="alert">
@@ -63,7 +74,7 @@ export function PaySeparatelyPanel({ holdId, hours, payOnlineUrl }: { holdId: st
  * browser storage, and the card fields are cleared after every attempt.
  * The ID photo is a data URL in the same request and is not stored here.
  */
-export function CardPaymentForm({ holdId, total }: { holdId: string; total: string }) {
+export function CardPaymentForm({ holdId, total, recurringNote }: { holdId: string; total: string; recurringNote: string }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -93,6 +104,7 @@ export function CardPaymentForm({ holdId, total }: { holdId: string; total: stri
   return (
     <form id={CHECKOUT_FORM_ID} onSubmit={onSubmit} className="space-y-3" autoComplete="on">
       <h3 className="font-extrabold text-kv-navy">Card payment</h3>
+      <p className="rounded-xl bg-kv-navy-50 p-3 text-sm font-semibold text-kv-navy">{recurringNote}</p>
       <label className="block">
         <span className="label">Name on card</span>
         <input name="name" required autoComplete="cc-name" className="input" />

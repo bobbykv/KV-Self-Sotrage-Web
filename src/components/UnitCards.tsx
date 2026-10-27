@@ -52,7 +52,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "winter package + HST" : "/month + HST"}</p>
+          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "6-month package + HST" : "/28 days + HST"}</p>
         </div>
       </div>
       <FeatureTags g={g} />
