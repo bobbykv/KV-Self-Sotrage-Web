@@ -3,9 +3,11 @@ import { randomBytes } from "node:crypto";
 import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
+import { formatSize } from "./catalog";
 import { db } from "./db";
 import { cookieNames, env } from "./env";
 import { getInventory, refreshInventory } from "./inventory";
+import { captureLead } from "./leads";
 import { log, safeErrorMessage } from "./log";
 import { notifyStaff } from "./notify";
 import { getSettings } from "./settings";
@@ -13,6 +15,7 @@ import { sitelink, SiteLinkError } from "./sitelink/client";
 import { RESERVATION_CANCEL_TYPE, RESERVATION_STATUS_CANCELLED } from "./sitelink/enums";
 import type { MoveInCost } from "./sitelink/types";
 import { BLOCKING_HOLD_STATUSES } from "./hold-status";
+import { parseTenantVerification, verificationNote } from "./tenant-verification";
 
 export const HOLD_COOKIE = cookieNames.hold;
 const MAX_PAYMENT_ATTEMPTS = 3;
@@ -72,9 +75,16 @@ export async function createHold(input: HoldInput): Promise<Hold> {
   const unit = inventory.find((l) => l.location === input.locationKey)?.units.find((u) => u.unitId === input.unitId);
   if (!unit) throw new HoldError("unit not in cache", "This unit is no longer available. Check the other units at this location.");
 
-  const fresh = await sitelink.unitById(input.locationKey, input.unitId);
-  if (!fresh || fresh.rented || !fresh.rentable || fresh.waitingListReserved) {
-    throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
+  let fresh = unit;
+  try {
+    const live = await sitelink.unitById(input.locationKey, input.unitId);
+    if (!live || live.rented || !live.rentable || live.waitingListReserved) {
+      throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
+    }
+    fresh = live;
+  } catch (err) {
+    if (!isSiteLinkPermissionDenied(err)) throw err;
+    log.warn("SiteLink unit lookup returned -95; holding the verified catalog unit", { location: input.locationKey, unitId: input.unitId });
   }
 
   const id = randomBytes(18).toString("base64url");
@@ -104,9 +114,14 @@ export async function createHold(input: HoldInput): Promise<Hold> {
     throw new HoldError("unit already held", "Someone is checking out this unit right now. Please pick another, or try again in a few minutes.");
   }
 
+  let tenantId: number | undefined;
+  let created = false;
+  let waitingId: number | undefined;
   try {
-    const { tenantId, created } = await sitelink.findOrCreateTenant(input.locationKey, input);
-    const waitingId = await sitelink.createReservation(input.locationKey, {
+    const tenant = await sitelink.findOrCreateTenant(input.locationKey, input);
+    tenantId = tenant.tenantId;
+    created = tenant.created;
+    waitingId = await sitelink.createReservation(input.locationKey, {
       tenantId,
       unitId: unit.unitId,
       needed: input.moveInDate,
@@ -115,20 +130,30 @@ export async function createHold(input: HoldInput): Promise<Hold> {
       comment: `Website ${settings.holdMinutes}-minute checkout hold`,
       trackingCode: `web-${id.slice(0, 10)}`,
     });
-    let cost: MoveInCost | null = null;
+  } catch (err) {
+    if (!isSiteLinkPermissionDenied(err)) {
+      await db.hold.update({ where: { id }, data: { status: "error", lastFailure: safeErrorMessage(err) } });
+      throw new HoldError(safeErrorMessage(err), "We couldn't hold that space for you. Please try again or call (902) 867-3779.");
+    }
+    log.warn("SiteLink reservation returned -95; website hold kept on the verified catalog", { holdId: id });
+  }
+  let cost: MoveInCost | null = null;
+  if (waitingId) {
     try {
       cost = await sitelink.moveInCost(input.locationKey, { unitId: unit.unitId, moveInDate: input.moveInDate, waitingId });
     } catch (err) {
       log.warn("move-in cost retrieve failed", { holdId: id, err });
     }
-    return await db.hold.update({
-      where: { id },
-      data: { tenantId, tenantCreated: created, waitingId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
-    });
-  } catch (err) {
-    await db.hold.update({ where: { id }, data: { status: "error", lastFailure: safeErrorMessage(err) } });
-    throw new HoldError(safeErrorMessage(err), "We couldn't hold that space for you. Please try again or call (902) 867-3779.");
   }
+  return await db.hold.update({
+    where: { id },
+    data: { tenantId, tenantCreated: created, waitingId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },
+  });
+}
+
+/** Corporate Control Center has not granted this API user yet. */
+export function isSiteLinkPermissionDenied(err: unknown): boolean {
+  return err instanceof SiteLinkError && err.code === -95;
 }
 
 export async function getHold(id: string): Promise<Hold | null> {
@@ -165,10 +190,80 @@ function assertActive(h: Hold | null): asserts h is Hold {
   }
 }
 
+/**
+ * Saves license, mailing address, and ID photo onto the SiteLink tenant before
+ * payment or reservation confirmation. TenantUpdate_v3 must succeed. A failed
+ * TenantImageUpload is logged and does not stop checkout. Image bytes are not stored.
+ */
+export async function syncTenantVerification(h: Hold, body: Record<string, unknown>): Promise<Hold> {
+  const parsed = parseTenantVerification(body);
+  if (!parsed.ok) throw new HoldError("verification", parsed.error);
+  if (!h.tenantId) throw new HoldError("verification", "We couldn't find your rental profile. Call (902) 867-3779.");
+  const loc = h.locationKey as LocationKey;
+  const v = parsed.value;
+  try {
+    await sitelink.updateTenantForLease(loc, h.tenantId, {
+      firstName: h.firstName,
+      lastName: h.lastName,
+      email: h.email,
+      phone: h.phone,
+      addr1: v.addr1,
+      city: v.city,
+      region: v.region,
+      postalCode: v.postalCode,
+      license: v.licenseNumber,
+      licRegion: v.licenseRegion,
+    });
+  } catch (err) {
+    throw new HoldError(
+      safeErrorMessage(err),
+      "We couldn't save your address and driver's license for the lease. Please try again or call (902) 867-3779.",
+    );
+  }
+
+  let idPhotoUploaded = false;
+  try {
+    await sitelink.uploadTenantImage(loc, h.tenantId, v.imageBase64, v.fileName);
+    idPhotoUploaded = true;
+  } catch (err) {
+    log.warn("TenantImageUpload failed; continuing checkout", { holdId: h.id, err });
+  }
+
+  const updated = await db.hold.update({
+    where: { id: h.id },
+    data: {
+      licenseNumber: v.licenseNumber,
+      licenseRegion: v.licenseRegion,
+      addr1: v.addr1,
+      city: v.city,
+      region: v.region,
+      postalCode: v.postalCode,
+      idPhotoUploaded,
+    },
+  });
+
+  const note = verificationNote(v, idPhotoUploaded);
+  if (h.waitingId) await sitelink.reservationNote(loc, h.waitingId, note).catch(() => undefined);
+  await captureLead({
+    channel: "website_form",
+    reason: "contact_request",
+    name: `${h.firstName} ${h.lastName}`,
+    phone: h.phone,
+    email: h.email,
+    locationKey: loc,
+    unitType: h.unitTypeName,
+    unitSize: formatSize(h.widthFt, h.lengthFt),
+    notes: note,
+    externalId: `checkout:${h.id}`,
+  }).catch((err) => log.warn("checkout verification lead sync failed", { holdId: h.id, err }));
+  return updated;
+}
+
 /** PAYMENT_MODE=pay_separately: keep the SiteLink reservation open longer and hand payment to the office / pay-online page. */
-export async function confirmPaySeparately(id: string): Promise<Hold> {
+export async function confirmPaySeparately(id: string, verification: Record<string, unknown>): Promise<Hold> {
   const h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
+  await syncTenantVerification(h, verification);
   const settings = await getSettings();
   const newExpiry = new Date(Date.now() + settings.confirmedReservationHours * 3_600_000);
   const loc = h.locationKey as LocationKey;
@@ -203,7 +298,7 @@ export type CardInput = { number: string; cvv: string; expiry: string; name: str
  * outbound SOAP request. Do not add logging, persistence or error reporting
  * that could capture it.
  */
-export async function payPassthrough(id: string, card: CardInput): Promise<Hold> {
+export async function payPassthrough(id: string, card: CardInput, verification: Record<string, unknown>): Promise<Hold> {
   if (env.PAYMENT_MODE !== "passthrough") throw new HoldError("passthrough disabled", "Online card payment isn't enabled.");
   const h = await db.hold.findUnique({ where: { id } });
   assertActive(h);
@@ -222,6 +317,7 @@ export async function payPassthrough(id: string, card: CardInput): Promise<Hold>
   const types = await sitelink.paymentTypes(loc);
   const typeId = paymentTypeIdFor(cardBrand(number), types);
   if (!typeId) throw new HoldError("unsupported brand", "We can't accept that card type online. Please use Visa or Mastercard, or call us.");
+  await syncTenantVerification(h, verification);
 
   try {
     const result = await sitelink.moveInWithCard(loc, {

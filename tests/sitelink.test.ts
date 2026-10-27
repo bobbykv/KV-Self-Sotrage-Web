@@ -68,6 +68,44 @@ describe("SOAP envelope builder", () => {
     expect(() => buildEnvelope("ReservationNewWithSource_v5", AUTH, { sCorpPassword: "x" })).toThrow();
   });
 
+  it("sends license, address, and ID photo with the live parameter names", () => {
+    const update = buildEnvelope("TenantUpdate_v3", AUTH, {
+      iTenantID: 42,
+      sLicense: "NS123456",
+      sLicRegion: "NS",
+      sAddr1: "12 Main St",
+      sCity: "Antigonish",
+      sRegion: "NS",
+      sPostalCode: "B2G 1A1",
+      dDOB: "",
+    });
+    expect(update).toContain("<iTenantID>42</iTenantID>");
+    expect(update).toContain("<sLicense>NS123456</sLicense>");
+    expect(update).toContain("<sLicRegion>NS</sLicRegion>");
+    expect(update).toContain("<sAddr1>12 Main St</sAddr1>");
+    expect(update).toContain("<sCity>Antigonish</sCity>");
+    expect(update).toContain("<sRegion>NS</sRegion>");
+    expect(update).toContain("<sPostalCode>B2G 1A1</sPostalCode>");
+    expect(update.indexOf("<sTenNote>")).toBeLessThan(update.indexOf("<sLicense>"));
+    expect(update.indexOf("<sLicense>")).toBeLessThan(update.indexOf("<sLicRegion>"));
+    const names = CONTRACT.TenantUpdate_v3.params.map((p) => p.name);
+    expect(names.slice(0, 8)).toEqual(["sCorpCode", "sLocationCode", "sCorpUserName", "sCorpPassword", "iTenantID", "sGateCode", "sWebPassword", "sMrMrs"]);
+
+    const image = buildEnvelope("TenantImageUpload", AUTH, { iTenantID: 42, aryImageBytes: "abc+/=", sFileName: "drivers-license.jpg" });
+    expect(image).toContain("<iTenantID>42</iTenantID>");
+    expect(image).toContain("<aryImageBytes>abc+/=</aryImageBytes>");
+    expect(image).toContain("<sFileName>drivers-license.jpg</sFileName>");
+    expect(CONTRACT.TenantImageUpload.params.map((p) => p.name)).toEqual([
+      "sCorpCode",
+      "sLocationCode",
+      "sCorpUserName",
+      "sCorpPassword",
+      "iTenantID",
+      "aryImageBytes",
+      "sFileName",
+    ]);
+  });
+
   it("formats datetimes as Halifax wall-clock without an offset", () => {
     expect(toSiteLinkDateTime(new Date("2026-07-01T16:00:00Z"))).toBe("2026-07-01T13:00:00");
     expect(toSiteLinkDateTime(new Date("2026-01-15T16:00:00Z"))).toBe("2026-01-15T12:00:00");

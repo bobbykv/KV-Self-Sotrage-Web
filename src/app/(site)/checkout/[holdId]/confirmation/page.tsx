@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { MoveInSteps } from "@/components/MoveInSteps";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
 import { env } from "@/lib/env";
@@ -92,32 +93,62 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
         </dl>
       </section>
 
+      <div className="mt-8">
+        <MoveInSteps current={movedIn ? 2 : 1} />
+      </div>
+
+      {movedIn ? (
+        <section className="card mt-4 border-2 border-kv-navy p-6 sm:p-8">
+          <p className="text-sm font-extrabold uppercase tracking-wide text-kv-red">Step 1 after payment</p>
+          <h2 className="mt-1 text-2xl font-extrabold text-kv-navy">Sign your SiteLink lease</h2>
+          <p className="mt-2 text-kv-muted">
+            Your lease is ready now. Sign it here. The same link is emailed to you so you can finish it on your phone. Unit access comes after the lease.
+          </p>
+          {leaseUrl ? (
+            <a href={leaseUrl} className="btn-primary mt-5 inline-flex px-8 py-4 text-lg">
+              View and sign my lease
+            </a>
+          ) : (
+            <p className="mt-5 rounded-xl bg-kv-yellow-light p-4 text-sm text-kv-navy">
+              Your lease link is on its way by email. If it doesn&apos;t arrive in a few minutes, call {BRAND.phone} and we&apos;ll send it again.
+            </p>
+          )}
+        </section>
+      ) : (
+        <section className="card mt-4 p-6">
+          <h2 className="font-extrabold text-kv-navy">Finish payment, then sign your lease</h2>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
+            <li>
+              {env.PAY_ONLINE_URL
+                ? `Pay using the link below, or call ${BRAND.phone} during office hours.`
+                : `Pay by calling ${BRAND.phone} or visiting the office during office hours.`}
+            </li>
+            <li>Sign your SiteLink lease from the link we email after payment.</li>
+            <li>Get unit access: a Nokē Smart Entry invite for Addington Forks and Stellarton, or a gate and door code for Haley Road.</li>
+          </ol>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {env.PAY_ONLINE_URL && (
+              <a href={env.PAY_ONLINE_URL} className="btn-primary" target="_blank" rel="noopener noreferrer">
+                Continue to payment
+              </a>
+            )}
+            <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
+              Call {BRAND.phone}
+            </a>
+          </div>
+        </section>
+      )}
+
       <section className="card mt-4 p-6">
-        <h2 className="font-extrabold text-kv-navy">{movedIn ? "Before you move in" : "What to do next"}</h2>
-        {movedIn ? (
+        <p className="text-xs font-extrabold uppercase tracking-wide text-kv-muted">Step 3</p>
+        <h2 className="mt-1 font-extrabold text-kv-navy">Get unit access</h2>
+        {loc.amenities.nokeRemoteUnlock ? (
           <p className="mt-3 text-sm text-kv-muted">
-            Complete your lease using the link below, if shown. Follow the access instructions for your location. If anything is missing, call {BRAND.phone}.
+            {loc.shortName} uses Nokē Smart Entry. After your lease is signed, an app invite is texted and emailed to you so you can unlock your unit. Missing the invitation? Call {BRAND.phone}.
           </p>
         ) : (
-          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">
-            {env.PAY_ONLINE_URL && (
-              <li>
-                Finish payment using the link below. You can also call {BRAND.phone} or visit the office during office hours.
-              </li>
-            )}
-            {!env.PAY_ONLINE_URL && (
-              <li>
-                Finish payment by calling {BRAND.phone} or visiting the office during office hours.
-              </li>
-            )}
-            <li>Complete your rental and lease.</li>
-            <li>Follow your access instructions. Call us if you haven&apos;t received them.</li>
-          </ol>
-        )}
-        {loc.amenities.nokeRemoteUnlock && !env.appTestMode && env.sitelinkMode !== "mock" && (
-          <p className="mt-4 rounded-xl border border-kv-yellow bg-kv-yellow-light p-3 text-sm text-kv-navy">
-            Addington Forks and Stellarton use the Nokē app to unlock your unit. Follow the setup instructions you receive after completing your rental. Missing the
-            invitation? Call {BRAND.phone}.
+          <p className="mt-3 text-sm text-kv-muted">
+            Haley Road uses a gate and door code. You receive the code with your rental. Call {BRAND.phone} if you need help getting in.
           </p>
         )}
         {(env.appTestMode || env.sitelinkMode === "mock") && (
@@ -125,32 +156,11 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             Simulator: access codes shown in the portal are sample data only. Nokē is not activated here.
           </p>
         )}
-        {!loc.amenities.nokeRemoteUnlock && !env.appTestMode && env.sitelinkMode !== "mock" && (
-          <p className="mt-4 text-sm text-kv-muted">
-            Follow the gate and unit-access instructions provided with your rental. Call {BRAND.phone} if you need help getting in.
-          </p>
+        {movedIn && (
+          <Link href="/portal" className="btn-ghost mt-5 inline-flex">
+            My storage
+          </Link>
         )}
-        <div className="mt-5 flex flex-wrap gap-3">
-          {movedIn && leaseUrl && (
-            <a href={leaseUrl} className="btn-primary">
-              View and sign my lease
-            </a>
-          )}
-          {!movedIn && env.PAY_ONLINE_URL && (
-            <a href={env.PAY_ONLINE_URL} className="btn-primary" target="_blank" rel="noopener noreferrer">
-              Continue to payment
-            </a>
-          )}
-          {movedIn ? (
-            <Link href="/portal" className="btn-ghost">
-              My storage
-            </Link>
-          ) : (
-            <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
-              Call {BRAND.phone}
-            </a>
-          )}
-        </div>
       </section>
 
       {movedIn && hold.tenantCreated && !hold.portalPasswordSet && (

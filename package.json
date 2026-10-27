@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@tesseract.js-data/eng": "^1.0.0",
     "@vercel/blob": "^2.8.1",
     "bcryptjs": "^3.0.3",
     "fast-xml-parser": "^5.11.2",
@@ -30,6 +31,7 @@
     "sanitize-html": "^2.18.0",
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

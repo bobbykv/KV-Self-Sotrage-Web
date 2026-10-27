@@ -75,7 +75,10 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
         </Link>
       </p>
       <p className="mt-3 text-sm text-kv-muted">
-        Prices and availability last updated: {updatedLabel(oldest)}. Availability can change. We check your unit again when you start checkout.
+        {oldest
+          ? `Prices and availability last updated: ${updatedLabel(oldest)}. `
+          : "Prices shown are our current published rates. "}
+        Availability can change. We check your unit again when you start checkout.
         {anyError && !oldest && " Live availability isn't connected yet — call us to confirm what's open."}
         {anyError && oldest && " We couldn't update some listings. Please call to confirm."}
       </p>

@@ -23,17 +23,17 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // microphone=(self) lets the optional Retell hybrid voice call request mic access.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=()" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=()" },
   { key: "Content-Security-Policy", value: csp },
 ];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["@prisma/client", "prisma"],
+  serverExternalPackages: ["@prisma/client", "prisma", "tesseract.js", "tesseract.js-core"],
   // The FAQ, shared prompt and tool schema are read from disk at runtime.
   // Prisma's query engine has to be traced in or Vercel throws on the first query.
   outputFileTracingIncludes: {
-    "/**": ["./agent-brain/**", "./node_modules/.prisma/client/**", "./node_modules/@prisma/client/**"],
+    "/**": ["./agent-brain/**", "./node_modules/.prisma/client/**", "./node_modules/@prisma/client/**", "./node_modules/@tesseract.js-data/eng/4.0.0/**"],
   },
   experimental: { serverActions: { bodySizeLimit: "12mb" } },
   images: {

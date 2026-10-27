@@ -36,6 +36,10 @@ const schema = z.object({
   CHAT_LLM_API_KEY: z.string().optional(),
   CHAT_LLM_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
   CHAT_LLM_MODEL: z.string().default("gpt-4o-mini"),
+  /** Optional vision keys for checkout licence auto-fill. OCR runs when none are set. */
+  OPENAI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
 
   NOTIFY_WEBHOOK_URL: z.string().url().optional(),
   OWNER_NOTIFY_EMAIL: z.string().optional(),
@@ -91,6 +95,9 @@ export const env = {
   GHL_STORAGE_PIPELINE_ID: appTestMode ? undefined : raw.GHL_STORAGE_PIPELINE_ID,
   GHL_STORAGE_STAGE_ID: appTestMode ? undefined : raw.GHL_STORAGE_STAGE_ID,
   CHAT_LLM_API_KEY: appTestMode ? undefined : raw.CHAT_LLM_API_KEY,
+  OPENAI_API_KEY: appTestMode ? undefined : raw.OPENAI_API_KEY,
+  GEMINI_API_KEY: appTestMode ? undefined : raw.GEMINI_API_KEY,
+  ANTHROPIC_API_KEY: appTestMode ? undefined : raw.ANTHROPIC_API_KEY,
   NOTIFY_WEBHOOK_URL: appTestMode ? undefined : raw.NOTIFY_WEBHOOK_URL,
   OWNER_NOTIFY_EMAIL: appTestMode ? undefined : raw.OWNER_NOTIFY_EMAIL,
   RETELL_API_KEY: appTestMode ? undefined : raw.RETELL_API_KEY,

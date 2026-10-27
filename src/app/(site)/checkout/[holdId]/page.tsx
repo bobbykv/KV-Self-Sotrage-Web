@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import { HoldCountdown } from "@/components/HoldCountdown";
+import { MoveInSteps } from "@/components/MoveInSteps";
 import { PromoBanner } from "@/components/PromoBanner";
 import { BRAND, getLocation, isLocationKey } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
@@ -13,7 +14,8 @@ import { getHold, HOLD_COOKIE, retryCost } from "@/lib/holds";
 import { getSettings } from "@/lib/settings";
 import type { MoveInCost } from "@/lib/sitelink/types";
 import { cancelHold } from "./actions";
-import { CardPaymentForm, PaySeparatelyPanel } from "./PaymentPanels";
+import { CardPaymentForm, CHECKOUT_FORM_ID, PaySeparatelyPanel } from "./PaymentPanels";
+import { VerificationFields } from "./VerificationFields";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
@@ -61,6 +63,15 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
   const [settings, promos] = await Promise.all([getSettings(), getLivePromotions({ placement: "checkout", location: locationKey })]);
   const loc = getLocation(locationKey);
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
+  const verification = {
+    licenseNumber: hold.licenseNumber,
+    licenseRegion: hold.licenseRegion,
+    addr1: hold.addr1,
+    city: hold.city,
+    region: hold.region,
+    postalCode: hold.postalCode,
+    idPhotoUploaded: hold.idPhotoUploaded,
+  };
 
   return (
     <div className="container-kv max-w-5xl py-6 sm:py-10">
@@ -68,6 +79,9 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
       <p className="mt-2 text-kv-muted">Check your details and the full cost before you finish.</p>
       <div className="mt-4">
         <HoldCountdown holdId={hold.id} expiresAt={hold.expiresAt.toISOString()} location={hold.locationKey} />
+      </div>
+      <div className="mt-6">
+        <MoveInSteps current={1} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_400px]">
@@ -107,6 +121,10 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
               <dd className="font-semibold">{hold.phone}</dd>
             </div>
           </dl>
+
+          <div className="mt-8 border-t border-kv-line pt-6">
+            <VerificationFields defaults={verification} form={CHECKOUT_FORM_ID} />
+          </div>
 
           <h2 className="mt-8 font-extrabold text-kv-navy">Your move-in total</h2>
           <div className="mt-3">
