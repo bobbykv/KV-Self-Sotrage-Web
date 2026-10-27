@@ -280,6 +280,19 @@ const ok = (code = 1, msg = ""): Row => ({ Ret_Code: String(code), Ret_Msg: msg 
 const fail = (msg: string, code = -1): DataSet => ({ RT: [ok(code, msg)] });
 const s = (v: unknown) => (v === undefined || v === null ? "" : v instanceof Date ? v.toISOString() : String(v));
 
+function applyMockPayment(st: MockState, loc: LocationKey, args: Args): DataSet {
+  const amount = Number(args.dcPaymentAmount);
+  if (!(amount > 0)) return fail("Invalid payment amount");
+  const ledger = st.ledgers[loc].find((l) => l.TenantID === Number(args.iTenantID) && l.UnitID === Number(args.iUnitID));
+  if (!ledger) return fail("Ledger not found");
+  const left = (n: number) => Math.max(0, Math.round((n - amount) * 100) / 100);
+  ledger.dcChargeBalance = left(ledger.dcChargeBalance);
+  ledger.dcPastDue = left(ledger.dcPastDue);
+  if (ledger.dcPastDue === 0) ledger.iDaysPastDue = 0;
+  const id = ++st.nextId;
+  return { Receipts: [{ ReceiptID: String(id) }], RT: [ok(id)] };
+}
+
 function discountPlansFor(st: MockState, loc: LocationKey): DataSet {
   if (loc !== "hwy4") return { ConcessionPlans: [], ConcessionUnitTypes: [], RT: [ok()] };
   const unit = st.units.hwy4.find((u) => /winter storage/i.test(u.sTypeName));
@@ -395,6 +408,10 @@ const MUTATING = new Set([
   "MoveInWithDiscount_v7",
   "TenantBillingInfoUpdate_v2",
   "ScheduleMoveOut",
+  "MoveOut",
+  "PaymentSimpleWithSource_v3",
+  "PaymentSimpleCashWithSource",
+  "PaymentSimpleCheckWithSource",
 ]);
 
 export async function invokeMock(method: string, loc: LocationKey, args: Args): Promise<DataSet> {
@@ -649,16 +666,18 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
       result = moveInCostResult(st, loc, args);
       break;
     case "MoveInWithDiscount_v7": {
+      const payMethod = Number(args.iPayMethod ?? 0);
+      const cashOrCheck = payMethod === 1 || payMethod === 2;
       const pan = s(args.sCreditCardNumber).replace(/\D/g, "");
       const waitingId = s(args.WaitingID);
-      if (pan === SIM_CARD_TIMEOUT) {
+      if (!cashOrCheck && pan === SIM_CARD_TIMEOUT) {
         throw new Error("MoveInWithDiscount_v7: transport error Simulated payment timeout");
       }
-      if (pan === SIM_CARD_DECLINE) {
+      if (!cashOrCheck && pan === SIM_CARD_DECLINE) {
         result = fail("Card declined by processor", -11);
         break;
       }
-      if (pan !== SIM_CARD_APPROVE) {
+      if (!cashOrCheck && pan !== SIM_CARD_APPROVE) {
         result = fail("Card declined by processor", -11);
         break;
       }
@@ -715,6 +734,40 @@ export async function invokeMock(method: string, loc: LocationKey, args: Args): 
       }
       l.dSchedOut = s(args.dScheduledOut);
       result = { RT: [ok()] };
+      break;
+    }
+    case "MoveOut": {
+      if (!s(args.sUsagePassword)) {
+        result = fail("Usage password required");
+        break;
+      }
+      const ledger = st.ledgers[loc].find((x) => x.TenantID === Number(args.TenantID) && x.UnitID === Number(args.UnitID));
+      if (!ledger) {
+        result = fail("Ledger not found", -1);
+        break;
+      }
+      const unit = st.units[loc].find((u) => u.UnitID === s(args.UnitID));
+      if (unit) unit.bRented = "false";
+      st.ledgers[loc] = st.ledgers[loc].filter((x) => x !== ledger);
+      result = { RT: [{ Ret_Code: "1", Ret_Msg: "", dcRefund: "0", dcAcctBalance: "0" }] };
+      break;
+    }
+    case "PaymentSimpleWithSource_v3":
+    case "PaymentSimpleCashWithSource":
+    case "PaymentSimpleCheckWithSource": {
+      if (method === "PaymentSimpleWithSource_v3") {
+        const pan = s(args.sCreditCardNumber).replace(/\D/g, "");
+        if (pan === SIM_CARD_TIMEOUT) throw new Error("PaymentSimpleWithSource_v3: transport error Simulated payment timeout");
+        if (pan !== SIM_CARD_APPROVE) {
+          result = fail("Card declined by processor", -11);
+          break;
+        }
+      }
+      if (method === "PaymentSimpleCheckWithSource" && !s(args.sCheckNumber)) {
+        result = fail("Check number is required");
+        break;
+      }
+      result = applyMockPayment(st, loc, args);
       break;
     }
     case "SiteLinkeSignCreateLeaseURL_v2":

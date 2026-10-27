@@ -222,12 +222,18 @@ export function mapReservation(r: Row): Reservation {
 export function mapReports(pastDue: Row[], moves: Row[], occupancy: Row[], today: string): ReportSummary {
   const pastDueRows = pastDue.filter((r) => num(r, "dcPastDue", "dcAmount", "dcBalance", "PastDueBalance") > 0);
   const day = (r: Row, ...k: string[]) => (date(r, ...k) ?? "").slice(0, 10);
+  const moveType = (r: Row) => str(r, "sMoveType", "MoveType", "sType");
+  const isIn = (r: Row) => /in/i.test(moveType(r));
+  const isOut = (r: Row) => /out/i.test(moveType(r));
+  const onDay = (r: Row) => day(r, "dDate", "dMoveIn", "dMoveOut", "MoveDate") === today;
   const occ = occupancy[0];
   return {
     pastDueCount: pastDue.length ? pastDueRows.length : null,
     pastDueAmount: pastDue.length ? round(pastDueRows.reduce((s, r) => s + num(r, "dcPastDue", "dcAmount", "dcBalance", "PastDueBalance"), 0)) : null,
-    moveInsToday: moves.length ? moves.filter((r) => /in/i.test(str(r, "sMoveType", "MoveType", "sType")) && day(r, "dDate", "dMoveIn", "MoveDate") === today).length : null,
-    moveOutsToday: moves.length ? moves.filter((r) => /out/i.test(str(r, "sMoveType", "MoveType", "sType")) && day(r, "dDate", "dMoveOut", "MoveDate") === today).length : null,
+    moveInsToday: moves.length ? moves.filter((r) => isIn(r) && onDay(r)).length : null,
+    moveOutsToday: moves.length ? moves.filter((r) => isOut(r) && onDay(r)).length : null,
+    moveInsMonth: moves.length ? moves.filter(isIn).length : null,
+    moveOutsMonth: moves.length ? moves.filter(isOut).length : null,
     occupancyPct: occ ? optNum(occ, "dcUnitOccupancyPct", "dcOccupancyPct", "OccupancyPct") : null,
   };
 }

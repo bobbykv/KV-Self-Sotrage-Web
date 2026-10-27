@@ -119,7 +119,7 @@ export async function refreshInventory(opts: { force?: boolean; full?: boolean; 
   });
 }
 
-/** Reporting API job (past-due, move-ins/outs, occupancy). Cron runs it after hours. */
+/** Reporting API job (past-due, today and month-to-date moves, occupancy). Cron runs it after hours. The dashboard only reads the saved snapshot. */
 export async function refreshReports() {
   return withJobLock("reports", 300, async () => {
     const out: RefreshResult[] = [];

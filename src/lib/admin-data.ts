@@ -3,6 +3,7 @@ import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { INCLUDED_CALLS_PER_LOCATION, usageThisMonth } from "./sitelink/budget";
 import { db } from "./db";
 import { getSettings } from "./settings";
+import { cashSnapshot, openUnitsBySize, type CashSnapshot, type SizeAvailability } from "./business-snapshot";
 import type { ReportSummary, Unit } from "./sitelink/types";
 
 export type SiteSummary = {
@@ -10,6 +11,8 @@ export type SiteSummary = {
   totalUnits: number | null;
   occupied: number | null;
   occupancyPct: number | null;
+  cash: CashSnapshot | null;
+  sizes: SizeAvailability[] | null;
   vacantOnWebsite: number;
   report: ReportSummary | null;
   reportAt: Date | null;
@@ -49,6 +52,8 @@ export async function dashboardData(filter?: LocationKey) {
       totalUnits: allUnits?.length ?? null,
       occupied,
       occupancyPct: allUnits?.length ? Math.round(((occupied ?? 0) / allUnits.length) * 1000) / 10 : null,
+      cash: allUnits ? cashSnapshot(allUnits) : null,
+      sizes: allUnits ? openUnitsBySize(allUnits) : null,
       vacantOnWebsite: ((avail?.data as Unit[]) ?? []).length,
       report: report && report.refreshedAt.getTime() > 0 ? (report.data as ReportSummary) : null,
       reportAt: report && report.refreshedAt.getTime() > 0 ? report.refreshedAt : null,

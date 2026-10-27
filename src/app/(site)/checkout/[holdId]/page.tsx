@@ -10,9 +10,11 @@ import { BRAND, getLocation, isLocationKey } from "@/config/locations";
 import { formatSize, isWinterStoragePackage, money } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { env } from "@/lib/env";
-import { getHold, HOLD_COOKIE, retryCost } from "@/lib/holds";
+import { getDiscountToggles } from "@/lib/discount-visibility";
+import { getHold, HOLD_COOKIE, quoteHold, retryCost } from "@/lib/holds";
+import { log } from "@/lib/log";
 import { getSettings } from "@/lib/settings";
-import { isMultiPeriodPrepaid, plansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
+import { discountToggleKey, isMultiPeriodPrepaid, publicPlansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
 import { sitelink } from "@/lib/sitelink/client";
 import type { MoveInCost } from "@/lib/sitelink/types";
 import { cancelHold } from "./actions";
@@ -63,20 +65,33 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
 
   const locationKey = hold.locationKey;
   hold = await retryCost(hold);
-  const [settings, promos, planReport] = await Promise.all([
+  const [settings, promos, planReport, toggles] = await Promise.all([
     getSettings(),
     getLivePromotions({ placement: "checkout", location: locationKey }),
     sitelink.discountPlans(locationKey),
+    getDiscountToggles(),
   ]);
   const loc = getLocation(locationKey);
-  const cost = hold.costBreakdown as unknown as MoveInCost | null;
-  const eligiblePlans = plansForUnit(planReport.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }).map((p) => ({
+  const eligiblePlans = publicPlansForUnit(planReport.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }, locationKey, toggles).map((p) => ({
     concessionId: p.concessionId,
     name: p.name,
     description: p.description,
     prepay: p.prepay,
     prepaidMonths: p.prepaidMonths,
   }));
+  const storedConcession = hold.concessionId;
+  const storedHidden =
+    storedConcession != null &&
+    (toggles[discountToggleKey(locationKey, storedConcession)] === false ||
+      (planReport.source === "sitelink" && !eligiblePlans.some((p) => p.concessionId === storedConcession)));
+  if (storedHidden) {
+    try {
+      hold = await quoteHold(hold, null);
+    } catch (err) {
+      log.warn("could not clear a hidden concession from checkout", { holdId: hold.id, err });
+    }
+  }
+  const cost = hold.costBreakdown as unknown as MoveInCost | null;
   const selectedPlan = eligiblePlans.find((p) => p.concessionId === hold.concessionId) ?? null;
   const prepaid = Boolean(selectedPlan?.prepay && selectedPlan.prepaidMonths > 1) || isMultiPeriodPrepaid(cost?.startDate, cost?.endDate);
   const recurringNote = recurringBillingNote(prepaid);

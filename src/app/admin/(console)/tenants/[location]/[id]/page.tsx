@@ -10,12 +10,21 @@ import { env } from "@/lib/env";
 import { loadPortalAccounts } from "@/lib/portal";
 import { redact } from "@/lib/redact";
 import { sitelink } from "@/lib/sitelink/client";
+import { immediateMoveOutAction, scheduleMoveOutAction } from "../../actions";
+import { LedgerPayments } from "../../LedgerPayments";
 
 export const metadata = { title: "Tenant" };
 
-export default async function TenantDetail({ params }: { params: Promise<{ location: string; id: string }> }) {
+export default async function TenantDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ location: string; id: string }>;
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const admin = await requireAdmin();
   const { location, id } = await params;
+  const notice = (await searchParams).notice;
   const tenantId = Number(id);
   if (!isLocationKey(location) || !tenantId) notFound();
   const [account] = await loadPortalAccounts([{ locationKey: location, tenantId }]);
@@ -39,6 +48,7 @@ export default async function TenantDetail({ params }: { params: Promise<{ locat
         <span className="badge bg-kv-navy text-white">{getLocation(location).shortName}</span>
         <span className="badge bg-kv-navy-50 text-kv-navy">SiteLink tenant #{tenantId}</span>
       </PageHeader>
+      {notice && <p className="mb-4 rounded-xl bg-kv-navy-50 p-3 text-sm text-kv-navy">{notice}</p>}
       {account.error && <p className="rounded-xl bg-kv-red-50 p-3 text-sm text-kv-red">{account.error}</p>}
       {t && (
         <div className="grid gap-3 sm:grid-cols-4">
@@ -69,6 +79,42 @@ export default async function TenantDetail({ params }: { params: Promise<{ locat
             ) : (
               <p className="mt-2 text-xs text-kv-muted">eSign lease not available for this ledger.</p>
             )}
+            <form action={scheduleMoveOutAction} className="mt-3 flex flex-wrap items-end gap-2">
+              <input type="hidden" name="location" value={location} />
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <input type="hidden" name="ledgerId" value={l.ledgerId} />
+              <label className="text-xs font-semibold text-kv-navy">
+                Schedule move-out
+                <input type="date" name="date" defaultValue={l.scheduledMoveOut?.slice(0, 10) ?? ""} className="input mt-1" />
+              </label>
+              <button className="btn-ghost btn-sm">Save date</button>
+            </form>
+            <form action={scheduleMoveOutAction} className="mt-2">
+              <input type="hidden" name="location" value={location} />
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <input type="hidden" name="ledgerId" value={l.ledgerId} />
+              <button className="text-xs font-semibold text-kv-navy underline">Clear scheduled move-out</button>
+            </form>
+            <form action={immediateMoveOutAction} className="mt-3 flex flex-wrap items-end gap-2">
+              <input type="hidden" name="location" value={location} />
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <input type="hidden" name="unitId" value={l.unitId} />
+              <label className="text-xs font-semibold text-kv-navy">
+                Immediate move-out
+                <input name="confirm" placeholder="Type MOVE OUT" className="input mt-1" autoComplete="off" />
+              </label>
+              <button className="btn-primary btn-sm">Move out now</button>
+            </form>
+            <LedgerPayments
+              locationKey={location}
+              tenantId={tenantId}
+              ledgerId={l.ledgerId}
+              unitId={l.unitId}
+              unitName={l.unitName}
+              balance={l.balance}
+              rent={l.rent}
+              autopay={Boolean(account.billing?.autopay)}
+            />
           </div>
         ))}
       </div>

@@ -18,6 +18,8 @@ const schema = z.object({
   /** Appended to the corporate username as `user:::key` when the username has no `:::`. */
   SITELINK_API_LICENSE_KEY: z.string().optional(),
   SITELINK_API_PASSWORD: z.string().optional(),
+  /** SiteLink MoveOut usage password (§10.64). Required only for immediate move-out from admin. */
+  SITELINK_USAGE_PASSWORD: z.string().optional(),
   SITELINK_TEST_MODE: z.string().optional(),
   SITELINK_TIMEOUT_MS: z.coerce.number().default(20000),
 

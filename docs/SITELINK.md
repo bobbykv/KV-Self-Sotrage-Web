@@ -52,8 +52,9 @@ them into `{ table: Row[] }`; `RT.Ret_Code < 0` is treated as an error.
 | Holds | `TenantSearchDetailed`, `TenantNewDetailed_v3`, `ReservationNewWithSource_v5`, `ReservationUpdate_v4`, `ReservationNoteInsert`, `ReservationList_v3`, `DiscountPlansRetrieve`, `MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4` (falls back to `MoveInCostRetrieveWithDiscount_Reservation_v4` if that method is unavailable) |
 | Checkout verification | `TenantInfoByTenantID`, `TenantUpdate_v3` (address, `sLicense`, `sLicRegion` before move-in), `TenantImageUpload` (ID photo; a failed upload is logged and does not block payment) |
 | Payment (passthrough only) | `PaymentTypesRetrieve`, `MoveInWithDiscount_v7` (`iBillingFrequency` 7, concession and the cost call's start/end dates), `TenantBillingInfoUpdate_v2` (saves the card with `iAutoBillType` 1 so SiteLink bills it every 28 days; a failure is logged and does not undo the move-in) |
+| Staff office | `MoveInWithDiscount_v7` (`iPayMethod` 0 card, 1 check, 2 cash), `PaymentSimpleWithSource_v3` (card, `iSource` 10), `PaymentSimpleCashWithSource`, `PaymentSimpleCheckWithSource` (check number or e-transfer reference), `TenantBillingInfoUpdate_v2` (card on file / 28-day auto-bill), `ScheduleMoveOut`, `MoveOut` (needs `SITELINK_USAGE_PASSWORD`; WSDL fields are `TenantID` and `UnitID`) |
 | Portal | `TenantLogin`, `TenantLoginAndSecurityUpdate`, `TenantInfoByTenantID`, `LedgersByTenantID_v3`, `CustomerAccountsBalanceDetails_v2`, `TenantBillingInfoByTenantID_v3`, `TenantIDByUnitNameOrAccessCode`, `ScheduleMoveOut`, `SiteLinkeSignCreateLeaseURL_v2` |
-| Reporting (nightly / on demand) | `PastDueBalances`, `MoveInsAndMoveOuts`, `OccupancyStatistics` |
+| Reporting (once a day) | `PastDueBalances`, `MoveInsAndMoveOuts` (first of the month through today), `OccupancyStatistics`. `/admin` reads the saved snapshot. Rent roll and open units come from the cached all-units snapshot. The dashboard does not call SiteLink when it renders. |
 
 Not used: any SiteLink AI feature, Panel writes, automatic unit transfers,
 refunds.
@@ -61,7 +62,8 @@ refunds.
 ## Verified vs. unverified
 
 **Verified** (Transaction API v2.19 doc + live WSDL): method signatures,
-`QTRentalTypeID = 2` (reservation), `iSource = 5` (website).
+`QTRentalTypeID = 2` (reservation), `iSource = 5` (website reservations),
+`PaymentSimple*` `iSource = 10` (website), `iPayMethod` 1 = check and 2 = cash on move-in.
 
 **Unverified — confirm with SiteLink support before go-live.** Each has an env
 override (see `.env.example`):
@@ -106,6 +108,12 @@ units only (5×10, 10×10, 10×15, 10×20).
 * Pass-through payments: `4242 4242 4242 4242` approves, any other valid card
   declines.
 * Highway 4 eSign returns an error so the lease fallback can be tested.
+* Staff cash and check move-ins (`iPayMethod` 2 and 1) rent the unit without a card number. Card payments still require `4242…4242`.
+* `MoveOut` needs `SITELINK_USAGE_PASSWORD` even in the simulator. It unrents the unit and removes the ledger.
+
+## Website discount toggles
+
+`/admin/discounts` stores an On/Off row per location and ConcessionID in `DiscountPlanToggle`. A plan with no row is On when SiteLink has it web-enabled (`bDisabled` is false and `iShowOn` is not 2) and Off when it is payments-only or disabled. Checkout, quotes, and payment only charge a plan that is On and matches the unit. Turning a plan Off blocks it even if `DiscountPlansRetrieve` fails.
 
 Mock mode refuses to run in production unless `ALLOW_MOCK_IN_PRODUCTION=1` or
 `APP_TEST_MODE=1` (hosted simulator — see [TEST_ENVIRONMENT.md](TEST_ENVIRONMENT.md)).
