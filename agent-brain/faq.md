@@ -25,7 +25,10 @@ Yes. Haley Road is close to StFX. Store your belongings between terms. Start wit
 Yes. Choose a unit with room for your items and space to reach them. Ask us before booking if you're unsure whether an item can be stored.
 
 ## Do you have RV, boat or vehicle parking?
-Yes, at Haley Road. Check availability and have your vehicle's dimensions ready.
+Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Check availability and have your vehicle's length, width and height ready.
+
+## Do you offer winter storage for cars, RVs and boats?
+Yes. Haley Road has indoor and outdoor parking for RVs, boats and cars. Stellarton also offers seasonal outdoor car storage. The Stellarton option is a $399 winter storage package, not a monthly rate. Checkout itemizes 14% Nova Scotia HST before you pay.
 
 ## What if the size I need is full?
 Check another size or location. You can also join the free waitlist. We'll contact you when a matching space opens.
@@ -33,7 +36,10 @@ Check another size or location. You can also join the free waitlist. We'll conta
 # Prices and payments
 
 ## How much does storage cost?
-See the monthly rent on Units & prices. Checkout shows fees, any deposit and HST before you pay. No surprise fees.
+See the monthly rent on Units & prices. Checkout shows fees, any deposit and 14% Nova Scotia HST as its own line before you pay. No surprise fees.
+
+## What are the Exit 31 unit sizes and starting rates?
+Exit 31 is Addington Forks at 2784 NS-4. Starting monthly rates there are $98 for a 5 × 10 (5x10), $140 for a 10 × 10 (10x10), and $177 for a 10 × 15 (10x15). These are starting rates before tax. Checkout shows 14% Nova Scotia HST on its own line before you pay.
 
 ## Are the prices and availability live?
 When the site is live, check the last-update time on Units & prices. We check availability again when you start checkout. When the demonstration banner is shown, the listings and prices are examples.
@@ -56,7 +62,7 @@ Check your balance in My storage. Call us early if you're having trouble paying.
 Choose your location, size and move-in date. Start checkout and review the total. Follow the payment or reservation steps. Your confirmation explains what to do next.
 
 ## How does the 20-minute hold work?
-We hold your selected unit for 20 minutes while you check out. Starting a hold does not charge you or give you access. If it expires, check availability and start again.
+An online reservation places a free 20-minute hold on the unit you selected while you check out. The hold is not a charge and does not give you access. Checkout itemizes 14% Nova Scotia HST before you pay. If the hold expires, check availability and start again.
 
 ## Can I move in as soon as I reserve?
 Finish payment, your rental and access setup first. Follow the instructions on your confirmation. Call us if you need help.

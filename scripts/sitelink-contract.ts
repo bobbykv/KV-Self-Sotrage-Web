@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { XMLParser } from "fast-xml-parser";
+import { SITELINK_USER_AGENT } from "../src/lib/sitelink/http";
 
 const SERVICES = {
   callcenter: {
@@ -58,7 +59,7 @@ async function load(): Promise<Contract> {
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true, isArray: (n) => ["element", "complexType"].includes(n) });
   const contract: Contract = {};
   for (const [service, cfg] of Object.entries(SERVICES)) {
-    const res = await fetch(cfg.wsdl);
+    const res = await fetch(cfg.wsdl, { headers: { "User-Agent": SITELINK_USER_AGENT } });
     if (!res.ok) throw new Error(`${cfg.wsdl} -> HTTP ${res.status}`);
     const doc = parser.parse(await res.text());
     const defs = doc.definitions;

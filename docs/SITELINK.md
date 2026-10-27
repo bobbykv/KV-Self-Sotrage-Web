@@ -14,6 +14,28 @@ corp/location credentials itself, and throws on any parameter that isn't in the
 contract — so a typo or a removed field fails loudly instead of silently
 sending the wrong request.
 
+## HTTP client
+
+Storable's firewall in front of `api.smdservers.net` returns **HTTP 403
+Forbidden** when a request has no `User-Agent`, and **200 OK** when the
+request includes `User-Agent: Mozilla/5.0 (compatible; KVSelfStorage/1.0)`.
+Every SOAP POST to Call Center and Reporting, and the WSDL fetch used by
+`npm run sitelink:contract` / `sitelink:check`, sends that header
+(`SITELINK_USER_AGENT` in `src/lib/sitelink/http.ts`).
+
+## API license key
+
+`sCorpUserName` is the corporate API user. SiteLink expects the license key
+in the same field, separated by `:::`:
+
+* Set `SITELINK_API_USERNAME` to `user:::licenseKey` directly, or
+* Set `SITELINK_API_USERNAME` to the user and `SITELINK_API_LICENSE_KEY` to
+  the key. If the username does not already contain `:::`, the client sends
+  `${SITELINK_API_USERNAME}:::${SITELINK_API_LICENSE_KEY}`.
+
+A username that already contains `:::` is sent unchanged, even when
+`SITELINK_API_LICENSE_KEY` is also set.
+
 * Call Center: `https://api.smdservers.net/CCWs_3.5/CallCenterWs.asmx`,
   namespace `http://tempuri.org/CallCenterWs/CallCenterWs`
 * Reporting: `https://api.smdservers.net/CCWs_3.5/ReportingWs.asmx`,
@@ -72,7 +94,11 @@ override (see `.env.example`):
 
 ## Testing with the mock
 
-With no SiteLink credentials the app uses `src/lib/sitelink/mock.ts`:
+With no SiteLink credentials the app uses `src/lib/sitelink/mock.ts`. Exit 31
+fallback inventory matches the verified availability: 5×10 at $98 (4 open),
+10×10 at $140 (9 open) and 10×15 at $177 (4 open). Haley includes climate
+control plus indoor and outdoor RV, boat and car parking. Stellarton includes
+Nokē drive-up units and outdoor car winter storage ($399 winter package).
 
 * Portal login: `demo@kvselfstorage.ca` / `demo1234`
 * Pass-through payments: `4242 4242 4242 4242` approves, any other valid card

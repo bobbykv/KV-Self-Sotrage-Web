@@ -1,8 +1,9 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { LOCATION_KEYS, isLocationKey, type LocationKey } from "@/config/locations";
+import { LOCATION_KEYS, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
 import { type LeadInput, sendLeadToGhl } from "./leads";
 import { env } from "./env";
+import { postGhlStorageOpportunity } from "./ghl";
 import { db } from "./db";
 import { log, safeErrorMessage } from "./log";
 
@@ -328,7 +329,8 @@ async function upsertGhlContact(lead: LeadInput) {
   if (!res.ok) throw new Error(`GHL contacts/upsert HTTP ${res.status}`);
   const body = (await res.json()) as { contact?: { id?: string } };
   const contactId = body.contact?.id;
-  if (contactId && lead.notes) {
+  if (!contactId) return;
+  if (lead.notes) {
     await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
       method: "POST",
       headers,
@@ -336,4 +338,11 @@ async function upsertGhlContact(lead: LeadInput) {
       signal: AbortSignal.timeout(10000),
     }).catch(() => undefined);
   }
+  const preferredLocation = lead.locationKey ? getLocation(lead.locationKey).shortName : "Any";
+  await postGhlStorageOpportunity(contactId, {
+    name: lead.name,
+    unitSize: lead.unitSize,
+    unitType: lead.unitType,
+    preferredLocation,
+  }).catch(() => undefined);
 }

@@ -1,8 +1,11 @@
 import "server-only";
 import contractJson from "./contract.generated.json";
 import { parseDataSetResponse, str, type DataSet } from "./dataset";
+import { SITELINK_USER_AGENT, siteLinkCorpUserName } from "./http";
 import { redactString } from "../redact";
 import { isAppTestMode } from "../test-mode";
+
+export { SITELINK_USER_AGENT, siteLinkCorpUserName };
 
 type Param = { name: string; type: string };
 type MethodSig = { service: "callcenter" | "reporting"; namespace: string; params: Param[] };
@@ -97,6 +100,8 @@ export type LiveConfig = {
   reportingEndpoint: string;
   corpCode: string;
   username: string;
+  /** Optional. Appended as `username:::key` when username does not already contain `:::`. */
+  licenseKey?: string | null;
   password: string;
   timeoutMs: number;
 };
@@ -110,7 +115,7 @@ export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locati
     sCorpCode: cfg.corpCode,
     sLocationCode: locationCode,
     sLocationCodesCommaDelimited: locationCode,
-    sCorpUserName: cfg.username,
+    sCorpUserName: siteLinkCorpUserName(cfg.username, cfg.licenseKey),
     sCorpPassword: cfg.password,
   };
   const envelope = buildEnvelope(method, auth, args);
@@ -121,7 +126,12 @@ export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locati
   try {
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: `"${sig.namespace}/${method}"` },
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        SOAPAction: `"${sig.namespace}/${method}"`,
+        // Required. api.smdservers.net answers 403 when User-Agent is missing.
+        "User-Agent": SITELINK_USER_AGENT,
+      },
       body: envelope,
       signal: controller.signal,
       cache: "no-store",

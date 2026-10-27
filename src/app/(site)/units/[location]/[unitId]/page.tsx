@@ -6,7 +6,7 @@ import { AmenityList } from "@/components/LocationCards";
 import { PromoBanner } from "@/components/PromoBanner";
 import { FeatureTags } from "@/components/UnitCards";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
-import { formatSize, money } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { unitTypePhotoUrl } from "@/lib/photos";
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: `${sizeLabel} ${noun} at ${loc.shortName}`,
     description: unit
-      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}/month + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
+      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}${isWinterStoragePackage(unit.typeName) ? " winter storage package" : "/month"} + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
       : `Storage at ${loc.shortName}.`,
     robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
   };
@@ -71,7 +71,9 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
           </h1>
           <p className="mt-2 text-2xl font-extrabold text-kv-red">
             {money(unit.rate)}
-            <span className="text-base font-semibold text-kv-muted">/month + HST</span>
+            <span className="text-base font-semibold text-kv-muted">
+              {isWinterStoragePackage(unit.typeName) ? " winter package + HST" : "/month + HST"}
+            </span>
           </p>
           {unit.standardRate > unit.rate && <p className="text-sm text-kv-muted line-through">{money(unit.standardRate)} standard rate</p>}
           <p className="mt-3 text-kv-muted">
@@ -102,8 +104,11 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
                 <dd className="font-semibold">{loc.shortName}</dd>
               </div>
               <div>
-                <dt className="text-kv-muted">Monthly rent</dt>
-                <dd className="font-semibold">{money(unit.rate)}/month + HST</dd>
+                <dt className="text-kv-muted">{isWinterStoragePackage(unit.typeName) ? "Winter storage package" : "Monthly rent"}</dt>
+                <dd className="font-semibold">
+                  {money(unit.rate)}
+                  {isWinterStoragePackage(unit.typeName) ? " winter package + HST" : "/month + HST"}
+                </dd>
               </div>
             </dl>
           </div>

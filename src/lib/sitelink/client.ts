@@ -37,6 +37,7 @@ async function call(locationKey: LocationKey, method: SiteLinkMethod, args: Args
           reportingEndpoint: env.SITELINK_REPORTING_ENDPOINT,
           corpCode: env.SITELINK_CORP_CODE!,
           username: env.SITELINK_API_USERNAME!,
+          licenseKey: env.SITELINK_API_LICENSE_KEY,
           password: env.SITELINK_API_PASSWORD!,
           timeoutMs: env.SITELINK_TIMEOUT_MS,
         },

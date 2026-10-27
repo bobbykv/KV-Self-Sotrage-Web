@@ -10,6 +10,11 @@ export const SIZE_LABELS: Record<SizeCategory, { label: string; hint: string }> 
   parking: { label: "Vehicle / RV / Boat", hint: "Parking and vehicle storage" },
 };
 
+/** Seasonal Stellarton car storage is a package price, not monthly rent. */
+export function isWinterStoragePackage(typeName: string): boolean {
+  return /winter storage/i.test(typeName);
+}
+
 export function sizeCategory(u: Pick<Unit, "vehicle" | "widthFt" | "lengthFt">): SizeCategory {
   if (u.vehicle) return "parking";
   const area = u.widthFt * u.lengthFt;

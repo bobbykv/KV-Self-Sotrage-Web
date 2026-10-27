@@ -106,6 +106,27 @@ describe("FAQ", () => {
     expect(searchFaq(cats, "how does the noke app work").length).toBeGreaterThan(0);
   });
 
+  it("states Exit 31 rates, winter storage, the free hold and HST", () => {
+    const all = cats.flatMap((c) => c.entries);
+    const text = all.map((e) => `${e.question}\n${e.answer}`).join("\n");
+    expect(text).toMatch(/2784 NS-4/);
+    expect(text).toMatch(/\$98/);
+    expect(text).toMatch(/\$140/);
+    expect(text).toMatch(/\$177/);
+    expect(text).toMatch(/5 × 10/);
+    expect(text).toMatch(/10 × 10/);
+    expect(text).toMatch(/10 × 15/);
+    expect(text).toMatch(/14% Nova Scotia HST/);
+    expect(text).toMatch(/free 20-minute hold/);
+    expect(text).toMatch(/indoor and outdoor parking for RVs, boats and cars/);
+    expect(text).toMatch(/\$399 winter storage package/);
+    const brain = readFileSync("agent-brain/brain.md", "utf8");
+    expect(brain).toMatch(/\$98/);
+    expect(brain).toMatch(/\$399 winter storage package/);
+    expect(brain).toMatch(/free 20-minute hold/);
+    expect(brain).toMatch(/14% Nova Scotia HST/);
+  });
+
   it("rejects an FAQ with no questions", () => {
     expect(() => parseFaq("# Only a heading")).toThrow();
   });

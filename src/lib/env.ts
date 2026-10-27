@@ -15,6 +15,8 @@ const schema = z.object({
   SITELINK_CORP_CODE: z.string().optional(),
   SITELINK_LOCATION_CODES: z.string().optional(),
   SITELINK_API_USERNAME: z.string().optional(),
+  /** Appended to the corporate username as `user:::key` when the username has no `:::`. */
+  SITELINK_API_LICENSE_KEY: z.string().optional(),
   SITELINK_API_PASSWORD: z.string().optional(),
   SITELINK_TEST_MODE: z.string().optional(),
   SITELINK_TIMEOUT_MS: z.coerce.number().default(20000),
@@ -26,6 +28,10 @@ const schema = z.object({
   GHL_WEBHOOK_URL: z.string().url().optional(),
   GHL_API_KEY: z.string().optional(),
   GHL_LOCATION_ID: z.string().optional(),
+  /** Storage pipeline. Defaults to KV's pipeline when GHL_LOCATION_ID is the KV location. */
+  GHL_STORAGE_PIPELINE_ID: z.string().optional(),
+  /** Storage pipeline stage. Defaults to New Inquiry. */
+  GHL_STORAGE_STAGE_ID: z.string().optional(),
 
   CHAT_LLM_API_KEY: z.string().optional(),
   CHAT_LLM_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
@@ -82,6 +88,8 @@ export const env = {
   GHL_WEBHOOK_URL: appTestMode ? undefined : raw.GHL_WEBHOOK_URL,
   GHL_API_KEY: appTestMode ? undefined : raw.GHL_API_KEY,
   GHL_LOCATION_ID: appTestMode ? undefined : raw.GHL_LOCATION_ID,
+  GHL_STORAGE_PIPELINE_ID: appTestMode ? undefined : raw.GHL_STORAGE_PIPELINE_ID,
+  GHL_STORAGE_STAGE_ID: appTestMode ? undefined : raw.GHL_STORAGE_STAGE_ID,
   CHAT_LLM_API_KEY: appTestMode ? undefined : raw.CHAT_LLM_API_KEY,
   NOTIFY_WEBHOOK_URL: appTestMode ? undefined : raw.NOTIFY_WEBHOOK_URL,
   OWNER_NOTIFY_EMAIL: appTestMode ? undefined : raw.OWNER_NOTIFY_EMAIL,

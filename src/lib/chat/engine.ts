@@ -192,7 +192,10 @@ export async function rulesChat(text: string): Promise<ChatReply> {
       .sort((a, b) => Number(b.size === intent.sizeText) - Number(a.size === intent.sizeText));
     const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : area ? `our ${area[0]} locations` : "our locations";
     if (available.length) {
-      const lines = available.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name}: ${money(u.monthly_price)}/month + HST (${u.available_count} listed)`);
+      const lines = available.slice(0, 4).map((u) => {
+        const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/month + HST`;
+        return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price} (${u.available_count} listed)`;
+      });
       return {
         reply: `Here are some spaces to compare at ${where}:\n${lines.join("\n")}\n\nChoose one to review the details and your move-in total. Starting checkout holds the space for the time shown there.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,
         actions: available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `View ${u.size} · ${u.location_name}` })),

@@ -75,7 +75,12 @@ same conversation is not created twice.
 
 **Recommended:** set `GHL_WEBHOOK_URL` to a GHL workflow webhook so the rich
 Retell payload (including transcript) drives your pipeline. Add
-`GHL_API_KEY` + `GHL_LOCATION_ID` if you also want LeadConnector contact upsert.
+`GHL_API_KEY` + `GHL_LOCATION_ID` to upsert the LeadConnector contact and, after
+the note, open a Storage → New Inquiry opportunity. For location
+`nGDJgf5wtNXdc5NWsm0z` the pipeline defaults to `LjSbI4Go4wJrqD2dEqdz` and the
+stage defaults to `8a2cbc31-d9a5-411a-b89c-184cb31b4262` (`GHL_STORAGE_PIPELINE_ID`
+/ `GHL_STORAGE_STAGE_ID` override either). The opportunity call is best-effort,
+so a pipeline error does not fail the contact.
 
 ## Fallback
 

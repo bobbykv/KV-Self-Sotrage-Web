@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isAppTestMode } from "@/lib/test-mode";
-import { invokeLive } from "@/lib/sitelink/soap";
+import { invokeLive, retCode } from "@/lib/sitelink/soap";
 import {
   SIM_CARD_APPROVE,
   SIM_CARD_DECLINE,
@@ -9,7 +9,7 @@ import {
   invokeMock,
   resetMockMemory,
 } from "@/lib/sitelink/mock";
-import { retCode } from "@/lib/sitelink/soap";
+import { mapUnit } from "@/lib/sitelink/mappers";
 
 vi.mock("@/lib/sitelink/mock-store", () => {
   let payload: unknown = null;
@@ -58,6 +58,33 @@ describe("APP_TEST_MODE helpers", () => {
     ).rejects.toThrow(/blocked in APP_TEST_MODE/);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
+  });
+});
+
+describe("fallback inventory", () => {
+  it("matches verified Exit 31 rates and the Haley and Stellarton mix", () => {
+    const st = initMockState();
+    const open = (loc: "haley" | "hwy4" | "stellarton") => st.units[loc].map((u) => mapUnit(loc, u)).filter((u) => !u.rented);
+    const hwy = open("hwy4");
+    const sized = (w: number, l: number) => hwy.filter((u) => u.widthFt === w && u.lengthFt === l);
+    expect(sized(5, 10)).toHaveLength(4);
+    expect(sized(10, 10)).toHaveLength(9);
+    expect(sized(10, 15)).toHaveLength(4);
+    expect(hwy).toHaveLength(17);
+    expect(new Set(sized(5, 10).map((u) => u.rate))).toEqual(new Set([98]));
+    expect(new Set(sized(10, 10).map((u) => u.rate))).toEqual(new Set([140]));
+    expect(new Set(sized(10, 15).map((u) => u.rate))).toEqual(new Set([177]));
+
+    const haley = open("haley");
+    expect(haley.some((u) => u.climate)).toBe(true);
+    expect(haley.some((u) => u.vehicle && u.inside)).toBe(true);
+    expect(haley.some((u) => u.vehicle && !u.inside)).toBe(true);
+
+    const stel = st.units.stellarton.map((u) => mapUnit("stellarton", u));
+    expect(stel.some((u) => !u.vehicle && /nokē smart entry/i.test(u.description))).toBe(true);
+    const winter = stel.filter((u) => /winter storage/i.test(u.typeName) && !u.rented);
+    expect(winter.length).toBeGreaterThan(0);
+    expect(winter.every((u) => u.vehicle && u.rate === 399 && /\$399 winter storage package/i.test(u.description))).toBe(true);
   });
 });
 
