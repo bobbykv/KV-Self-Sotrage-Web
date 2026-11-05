@@ -7,15 +7,14 @@ import { HoldCountdown } from "@/components/HoldCountdown";
 import { MoveInSteps } from "@/components/MoveInSteps";
 import { PromoBanner } from "@/components/PromoBanner";
 import { BRAND, getLocation, isLocationKey } from "@/config/locations";
-import { billedRentAmount, formatSize, isWinterStoragePackage, money, publicMonthlyRate, standardRateMismatch } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
-import { getInventory } from "@/lib/inventory";
 import { env } from "@/lib/env";
 import { getDiscountToggles } from "@/lib/discount-visibility";
 import { getHold, HOLD_COOKIE, quoteHold, retryCost } from "@/lib/holds";
 import { log } from "@/lib/log";
 import { getSettings } from "@/lib/settings";
-import { discountToggleKey, isMultiPeriodPrepaid, publicPlansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
+import { discountToggleKey, isMoveInDiscount, isMultiPeriodPrepaid, promoOfferLabel, publicPlansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
 import { sitelink } from "@/lib/sitelink/client";
 import type { MoveInCost } from "@/lib/sitelink/types";
 import { cancelHold } from "./actions";
@@ -66,17 +65,16 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
 
   const locationKey = hold.locationKey;
   hold = await retryCost(hold);
-  const [settings, promos, planReport, toggles, inventory] = await Promise.all([
+  const [settings, promos, planReport, toggles] = await Promise.all([
     getSettings(),
     getLivePromotions({ placement: "checkout", location: locationKey }),
     sitelink.discountPlans(locationKey),
     getDiscountToggles(),
-    getInventory(),
   ]);
   const loc = getLocation(locationKey);
   const eligiblePlans = publicPlansForUnit(planReport.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }, locationKey, toggles).map((p) => ({
     concessionId: p.concessionId,
-    name: p.name,
+    name: isMoveInDiscount(p) ? promoOfferLabel(p) : p.name,
     description: p.description,
     prepay: p.prepay,
     prepaidMonths: p.prepaidMonths,
@@ -94,10 +92,6 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
     }
   }
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
-  const cachedUnit = inventory.find((row) => row.location === locationKey)?.units.find((unit) => unit.unitId === hold.unitId);
-  const advertisedMonthly = publicMonthlyRate({ standardRate: cachedUnit?.standardRate, rate: Number(hold.quotedRate) });
-  const billedRent = billedRentAmount(cost?.lines);
-  const rateWarning = standardRateMismatch({ advertisedMonthly, quotedRate: Number(hold.quotedRate), billedRent });
   const selectedPlan = eligiblePlans.find((p) => p.concessionId === hold.concessionId) ?? null;
   const prepaid = Boolean(selectedPlan?.prepay && selectedPlan.prepaidMonths > 1) || isMultiPeriodPrepaid(cost?.startDate, cost?.endDate);
   const recurringNote = recurringBillingNote(prepaid);
@@ -143,7 +137,7 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
             <div>
               <dt className="text-kv-muted">{selectedPlan?.prepay ? "Prepaid package" : "Monthly rent"}</dt>
               <dd className="font-semibold">
-                {selectedPlan?.prepay ? selectedPlan.name : `${money(advertisedMonthly)}/month + HST`}
+                {selectedPlan?.prepay ? selectedPlan.name : `${money(Number(hold.quotedRate))}/month + HST`}
               </dd>
             </div>
             <div>
@@ -174,12 +168,6 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
                 The $399 6-month winter outdoor package shows up here once that discount plan is set up in SiteLink. This checkout is using standard 28-day billing until then.
               </p>
             )
-          )}
-
-          {rateWarning && (
-            <p className="mt-6 rounded-xl bg-kv-yellow-light p-4 text-sm text-kv-navy" role="status">
-              {rateWarning}
-            </p>
           )}
 
           <h2 className="mt-8 font-extrabold text-kv-navy">Your move-in total</h2>

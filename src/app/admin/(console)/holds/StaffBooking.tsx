@@ -150,7 +150,6 @@ export function StaffBooking({
             {siteUnits.map((u) => (
               <option key={u.unitId} value={u.unitId}>
                 {u.unitName} · {formatSize(u.widthFt, u.lengthFt)} {u.typeName} · {money(publicMonthlyRate(u))}/month
-                {publicMonthlyRate(u) !== u.rate ? ` · SiteLink quote ${money(u.rate)} unchanged` : ""}
               </option>
             ))}
           </select>

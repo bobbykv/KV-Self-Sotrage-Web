@@ -194,7 +194,7 @@ export async function rulesChat(text: string): Promise<ChatReply> {
     if (available.length) {
       const lines = available.slice(0, 4).map((u) => {
         const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/month + HST`;
-        return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price} (${u.available_count} listed)`;
+        return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price}${u.offer ? ` — ${u.offer}` : ""} (${u.available_count} listed)`;
       });
       return {
         reply: `Here are some spaces to compare at ${where}:\n${lines.join("\n")}\n\nChoose one to review the details and your move-in total. Starting checkout holds the space for the time shown there.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,

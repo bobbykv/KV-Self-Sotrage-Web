@@ -55,7 +55,7 @@ export function ConcessionPicker({
   return (
     <fieldset className="mt-6 space-y-3">
       <legend className="font-extrabold text-kv-navy">Billing plan</legend>
-      <p className="text-sm text-kv-muted">KV bills every 28 days. Choose standard billing, or a prepaid package when one applies to this unit.</p>
+      <p className="text-sm text-kv-muted">The monthly price is the standard rate. A SiteLink discount is already selected when one applies. You can switch back to standard billing.</p>
       <label className="flex items-start gap-3 rounded-xl border border-kv-line p-3 text-sm">
         <input type="radio" name="billingPlan" className="mt-1" checked={selected === null} onChange={() => choose(null)} disabled={pending} />
         <span>

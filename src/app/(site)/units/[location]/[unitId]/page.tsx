@@ -7,7 +7,8 @@ import { PromoBanner } from "@/components/PromoBanner";
 import { FeatureTags } from "@/components/UnitCards";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
 import { formatSize, isWinterStoragePackage, money, publicMonthlyRate } from "@/lib/catalog";
-import { rateSuffix } from "@/lib/sitelink/concessions";
+import { getPublicDiscountPlans } from "@/lib/discount-catalog";
+import { offerForUnit, rateSuffix } from "@/lib/sitelink/concessions";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { unitTypePhotoUrl } from "@/lib/photos";
@@ -42,12 +43,18 @@ function isoDate(d: Date) {
 export default async function UnitDetail({ params }: { params: Promise<Params> }) {
   const { location, unitId } = await params;
   if (!isLocationKey(location)) redirect("/units");
-  const [inventory, settings, promos] = await Promise.all([getInventory(), getSettings(), getLivePromotions({ placement: "units", location })]);
+  const [inventory, settings, promos, discountPlans] = await Promise.all([
+    getInventory(),
+    getSettings(),
+    getLivePromotions({ placement: "units", location }),
+    getPublicDiscountPlans(),
+  ]);
   const unit = inventory.find((l) => l.location === location)?.units.find((u) => u.unitId === Number(unitId));
   if (!unit) redirect(`/units?location=${location}&notice=${encodeURIComponent("This unit is no longer available. Check the other units at this location.")}`);
   const loc = getLocation(location);
   const sizeLabel = formatSize(unit.widthFt, unit.lengthFt);
   const monthly = publicMonthlyRate(unit);
+  const offer = offerForUnit(discountPlans[location] ?? [], unit);
   const photoUrl = await unitTypePhotoUrl({
     locationKey: location,
     typeName: unit.typeName,
@@ -76,6 +83,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
             {money(monthly)}
             <span className="text-base font-semibold text-kv-muted"> {rateSuffix(unit.typeName)}</span>
           </p>
+          {offer && <p className="mt-1 font-bold text-kv-red">{offer}</p>}
           <p className="mt-3 text-kv-muted">
             Check the size and features below. Choose your move-in date to start checkout. We&apos;ll hold this unit for {settings.holdMinutes} minutes while you review the total.
           </p>

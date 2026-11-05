@@ -6,6 +6,9 @@ export const BILLING_PERIOD_DAYS = 28;
 
 /** Simulator ConcessionID only. Live checkout uses the id DiscountPlansRetrieve returns. */
 export const MOCK_WINTER_CONCESSION_ID = 39906;
+/** Simulator only. A 30% first-month concession returned by DiscountPlansRetrieve. */
+export const MOCK_FIRST_MONTH_CONCESSION_ID = 30030;
+export const MOCK_FIRST_MONTH_PERCENT = 30;
 
 export const WINTER_PLAN_NAME = "$399 6-Month Winter Outdoor Storage Package";
 
@@ -129,6 +132,42 @@ export function plansForUnit(plans: ConcessionPlan[], unit: PlanUnit): Concessio
 /** Plans the public checkout and staff booking form may charge. */
 export function publicPlansForUnit(plans: ConcessionPlan[], unit: PlanUnit, locationKey: string, toggles: Record<string, boolean>): ConcessionPlan[] {
   return plans.filter((p) => planShownOnWebsite(p, locationKey, toggles) && planMatchesUnit(p, unit));
+}
+
+/** A move-in percent or fixed discount. Prepaid packages (the winter plan) are not this. */
+export function isMoveInDiscount(plan: ConcessionPlan): boolean {
+  if (plan.disabled || plan.prepay || plan.showOn === 2 || !plan.applyAtMoveIn) return false;
+  if (plan.amountType === 1 && plan.percentDiscount > 0) return true;
+  if (plan.amountType === 0 && (plan.fixedDiscount > 0 || plan.chargeAmount > 0)) return true;
+  return false;
+}
+
+/** Customer-facing line, e.g. "30% off first month". */
+export function promoOfferLabel(plan: ConcessionPlan): string {
+  if (plan.amountType === 1 && plan.percentDiscount > 0) {
+    const pct = Number.isInteger(plan.percentDiscount) ? String(plan.percentDiscount) : String(plan.percentDiscount);
+    return `${pct}% off first month`;
+  }
+  if (plan.fixedDiscount > 0) return `${plan.fixedDiscount} off first month`;
+  return plan.name;
+}
+
+/** Largest move-in discount among plans already filtered for this unit. */
+export function bestMoveInPromo(plans: ConcessionPlan[]): ConcessionPlan | null {
+  const promos = plans.filter(isMoveInDiscount);
+  promos.sort((a, b) => b.percentDiscount - a.percentDiscount || b.fixedDiscount - a.fixedDiscount || a.concessionId - b.concessionId);
+  return promos[0] ?? null;
+}
+
+/** Text for a unit card. Winter packages keep their SiteLink plan name. */
+export function offerForUnit(plans: ConcessionPlan[], unit: PlanUnit & { locationKey: string }, toggles: Record<string, boolean> = {}): string | null {
+  const shown = publicPlansForUnit(plans, unit, unit.locationKey, toggles);
+  if (isWinterStoragePackage(unit.typeName)) {
+    const winter = matchingWinterPrepaidPlan(shown);
+    if (winter) return winter.name;
+  }
+  const promo = bestMoveInPromo(shown);
+  return promo ? promoOfferLabel(promo) : null;
 }
 
 /** Blank, 0, and -999 mean standard 28-day billing (no concession). */

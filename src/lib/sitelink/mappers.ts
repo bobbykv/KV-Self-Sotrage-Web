@@ -38,8 +38,7 @@ export function mapUnit(locationKey: LocationKey, r: Row): Unit {
     alarm: bool(r, "bAlarm"),
     vehicle: VEHICLE_RE.test(typeName) || bool(r, "bVehicle", "bParking"),
     /**
-     * Kept for the SiteLink reservation quote (dcQuotedRate). This is dcWebRate
-     * when SiteLink sends one. Public pages show standardRate instead.
+     * dcWebRate when SiteLink sends one. Reservations quote standardRate, not this.
      */
     rate: webRate && webRate > 0 ? webRate : standardRate,
     standardRate,

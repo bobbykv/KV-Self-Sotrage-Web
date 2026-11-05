@@ -3,9 +3,9 @@ import { randomBytes } from "node:crypto";
 import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
-import { formatSize, isWinterStoragePackage } from "./catalog";
+import { formatSize, isWinterStoragePackage, quotedStandardRate, standardRateDrift } from "./catalog";
 import { getDiscountToggles } from "./discount-visibility";
-import { discountToggleKey, matchingWinterPrepaidPlan, planMatchesUnit, planShownOnWebsite, publicPlansForUnit } from "./sitelink/concessions";
+import { bestMoveInPromo, discountToggleKey, matchingWinterPrepaidPlan, planMatchesUnit, planShownOnWebsite, publicPlansForUnit } from "./sitelink/concessions";
 import { db } from "./db";
 import { cookieNames, env } from "./env";
 import { getInventory, refreshInventory } from "./inventory";
@@ -117,7 +117,7 @@ export async function createHold(input: HoldInput): Promise<Hold> {
         unitTypeName: unit.typeName,
         widthFt: unit.widthFt,
         lengthFt: unit.lengthFt,
-        quotedRate: fresh.rate || unit.rate,
+        quotedRate: quotedStandardRate({ standardRate: fresh.standardRate || unit.standardRate, rate: fresh.rate || unit.rate }),
         firstName: input.firstName,
         lastName: input.lastName,
         email: input.email.toLowerCase(),
@@ -172,6 +172,7 @@ export async function createHold(input: HoldInput): Promise<Hold> {
         waitingId,
         concessionId,
       });
+      noteRateDrift(id, Number(hold.quotedRate), cost?.lines);
     } catch (err) {
       log.warn("move-in cost retrieve failed", { holdId: id, err });
     }
@@ -217,6 +218,12 @@ export async function retryCost(hold: Hold): Promise<Hold> {
   }
 }
 
+function noteRateDrift(holdId: string, standardRate: number, lines: MoveInCost["lines"] | undefined) {
+  const detail = standardRateDrift(standardRate, lines);
+  if (!detail) return;
+  log.warn("sitelink rate drift", { holdId, standardRate, detail });
+}
+
 type HoldUnit = { unitTypeId?: number; typeName: string; widthFt: number; lengthFt: number };
 
 /** Picks the concession stored on a new hold. An explicit Off toggle is never charged. */
@@ -229,8 +236,12 @@ export async function chooseHoldConcession(
 ): Promise<number | null> {
   if (input.concessionId === null) return null;
   if (input.concessionId === undefined) {
-    if (!isWinterStoragePackage(unit.typeName)) return null;
-    return matchingWinterPrepaidPlan(publicPlansForUnit(plans, unit, input.locationKey, toggles))?.concessionId ?? null;
+    const shown = publicPlansForUnit(plans, unit, input.locationKey, toggles);
+    if (isWinterStoragePackage(unit.typeName)) {
+      const winter = matchingWinterPrepaidPlan(shown);
+      if (winter) return winter.concessionId;
+    }
+    return bestMoveInPromo(shown)?.concessionId ?? null;
   }
   const id = input.concessionId;
   if (toggles[discountToggleKey(input.locationKey, id)] === false) {
@@ -307,6 +318,7 @@ export async function quoteHold(hold: Hold, concessionId: number | null): Promis
       log.warn("move-in cost with concession returned -95", { holdId: hold.id });
     }
   }
+  noteRateDrift(hold.id, Number(hold.quotedRate), cost?.lines);
   return db.hold.update({
     where: { id: hold.id },
     data: { concessionId, costBreakdown: (cost ?? undefined) as Prisma.InputJsonValue | undefined },

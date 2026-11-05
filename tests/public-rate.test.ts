@@ -1,5 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { billedRentAmount, groupUnits, publicMonthlyRate, publishedRates, standardRateMismatch } from "@/lib/catalog";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/sitelink/mock-store", () => {
+  let payload: unknown = null;
+  return {
+    loadMockPayload: async () => payload,
+    saveMockPayload: async (next: unknown) => {
+      payload = structuredClone(next);
+    },
+  };
+});
+import { billedRentAmount, groupUnits, publicMonthlyRate, publishedRates, quotedStandardRate, standardRateDrift } from "@/lib/catalog";
+import { bestMoveInPromo, MOCK_FIRST_MONTH_CONCESSION_ID, offerForUnit, promoOfferLabel } from "@/lib/sitelink/concessions";
+import { initMockState, invokeMock, resetMockMemory } from "@/lib/sitelink/mock";
+import type { ConcessionPlan } from "@/lib/sitelink/types";
 import { mapPriceList, mapUnit } from "@/lib/sitelink/mappers";
 import type { PriceListEntry, Unit } from "@/lib/sitelink/types";
 
@@ -82,26 +95,85 @@ describe("public price is the SiteLink standard rate", () => {
   });
 });
 
-describe("billing that differs from the shown price is flagged and left unchanged", () => {
-  it("names the web-rate quote and the SiteLink rent charge without altering them", () => {
-    const advertisedMonthly = 140;
-    const quotedRate = 124;
-    const billedRent = 124;
-    const note = standardRateMismatch({ advertisedMonthly, quotedRate, billedRent });
-    expect(note).toMatch(/\$140\.00 per month/);
-    expect(note).toMatch(/\$124\.00/);
-    expect(note).toMatch(/was not changed/);
-    expect(note).toMatch(/amount due stays SiteLink's total/);
-    expect(quotedRate).toBe(124);
-    expect(billedRent).toBe(124);
-    expect(standardRateMismatch({ advertisedMonthly: 140, quotedRate: 140, billedRent: 140 })).toBeNull();
-    expect(billedRentAmount([{ kind: "rent", amount: 124 }, { kind: "fee", amount: 20 }])).toBe(124);
+describe("the quoted rate is the standard rate", () => {
+  it("sends dcStdRate, not the web rate", () => {
+    expect(quotedStandardRate({ standardRate: 140, rate: 124, webRate: 124 })).toBe(140);
+    expect(quotedStandardRate({ standardRate: 98, rate: 85 })).toBe(98);
+    expect(quotedStandardRate({ standardRate: 177, rate: 159 })).toBe(177);
+  });
+
+  it("flags a SiteLink rent line that is not the standard rate, and stays quiet when a concession is a separate discount", () => {
+    const drift = standardRateDrift(140, [{ kind: "rent", amount: 124 }]);
+    expect(drift).toMatch(/\$124\.00/);
+    expect(drift).toMatch(/\$140\.00/);
+    expect(standardRateDrift(140, [{ kind: "rent", amount: 140 }, { kind: "discount", amount: -42 }, { kind: "fee", amount: 20 }])).toBeNull();
+    expect(standardRateDrift(140, [{ kind: "rent", amount: 98 }, { kind: "discount", amount: -42 }])).toBeNull();
+    expect(billedRentAmount([{ kind: "rent", amount: 140 }, { kind: "fee", amount: 20 }])).toBe(140);
   });
 
   it("still groups a unit by its standard rate when the web rate is lower", () => {
     const groups = groupUnits([unit({ unitId: 1, rate: 124, standardRate: 140 }), unit({ unitId: 2, rate: 110, standardRate: 140 })]);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.fromRate).toBe(140);
+  });
+});
+
+function promo(partial: Partial<ConcessionPlan>): ConcessionPlan {
+  return {
+    concessionId: MOCK_FIRST_MONTH_CONCESSION_ID,
+    name: "30% off first month",
+    description: "",
+    comment: "",
+    showOn: 1,
+    prepay: false,
+    prepaidMonths: 0,
+    amountType: 1,
+    chargeAmount: 0,
+    fixedDiscount: 0,
+    percentDiscount: 30,
+    forAllUnits: true,
+    disabled: false,
+    applyAtMoveIn: true,
+    unitTypes: [],
+    ...partial,
+  };
+}
+
+describe("SiteLink concessions are the promotion data", () => {
+  beforeEach(() => {
+    resetMockMemory();
+  });
+
+  it("labels a percent plan and would show it on a $140 unit", () => {
+    const plan = promo({});
+    expect(promoOfferLabel(plan)).toBe("30% off first month");
+    expect(bestMoveInPromo([plan])).toMatchObject({ concessionId: MOCK_FIRST_MONTH_CONCESSION_ID });
+    expect(offerForUnit([plan], { locationKey: "hwy4", typeName: "Drive-up", widthFt: 10, lengthFt: 10 })).toBe("30% off first month");
+  });
+
+  it("charges the standard rate and takes 30% off that rate, not the web rate", async () => {
+    resetMockMemory();
+    const st = initMockState();
+    const unitRow = st.units.hwy4.find((row) => row.dcWidth === "10" && row.dcLength === "10" && row.sTypeName === "Drive-up")!;
+    unitRow.dcStdRate = "140.00";
+    unitRow.dcWebRate = "124.00";
+    const store = await import("@/lib/sitelink/mock-store");
+    await store.saveMockPayload(st);
+    const plain = await invokeMock("MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4", "hwy4", {
+      iUnitID: unitRow.UnitID,
+      dMoveInDate: "2026-11-01T00:00:00",
+      ConcessionPlanID: -999,
+    });
+    expect(plain.Table[0].ChargeAmount).toBe("140.00");
+    expect(plain.Table[0].dcDiscount).toBe("0");
+    const sale = await invokeMock("MoveInCostRetrieveWithDiscount_28DayBilling_Reservation_v4", "hwy4", {
+      iUnitID: unitRow.UnitID,
+      dMoveInDate: "2026-11-01T00:00:00",
+      ConcessionPlanID: MOCK_FIRST_MONTH_CONCESSION_ID,
+    });
+    expect(sale.Table[0].ChargeAmount).toBe("140.00");
+    expect(sale.Table[0].dcDiscount).toBe("42.00");
+    expect(standardRateDrift(140, [{ kind: "rent", amount: 140 }, { kind: "discount", amount: -42 }])).toBeNull();
   });
 });
 

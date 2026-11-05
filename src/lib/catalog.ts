@@ -39,25 +39,22 @@ export function billedRentAmount(lines: Pick<CostLine, "kind" | "amount">[] | nu
   return rent.reduce((sum, line) => sum + line.amount, 0);
 }
 
+/** dcQuotedRate sent on a reservation or move-in. The standard rate the customer was shown. */
+export function quotedStandardRate(source: { standardRate?: number | null; rate?: number | null; webRate?: number | null }): number {
+  return publicMonthlyRate(source);
+}
+
 /**
- * Describes a charge that does not match the monthly standard rate on the site.
- * Returns null when they match. Does not change either amount.
+ * Staff/log guard. Null when SiteLink's rent line matches the standard rate,
+ * including when a concession is a separate discount line on that rent.
+ * Does not change the amount.
  */
-export function standardRateMismatch(input: { advertisedMonthly: number; quotedRate: number; billedRent: number | null }): string | null {
-  const advertised = cents(input.advertisedMonthly);
-  const quoted = cents(input.quotedRate);
-  const billed = input.billedRent == null ? null : cents(input.billedRent);
-  const quoteDiffers = quoted !== advertised;
-  const billDiffers = billed != null && billed !== advertised;
-  if (!quoteDiffers && !billDiffers) return null;
-  const notes = [`The website price is ${money(input.advertisedMonthly)} per month, SiteLink's standard rate.`];
-  if (quoteDiffers) {
-    notes.push(`The reservation quote sent to SiteLink is still ${money(input.quotedRate)} from the web rate. That quote was not changed.`);
-  }
-  if (billDiffers && input.billedRent != null) {
-    notes.push(`SiteLink's move-in cost charges ${money(input.billedRent)} rent for this billing period, which is not the standard rate shown. The amount due stays SiteLink's total.`);
-  }
-  return notes.join(" ");
+export function standardRateDrift(standardRate: number, lines: Pick<CostLine, "kind" | "amount">[] | null | undefined): string | null {
+  const rent = billedRentAmount(lines);
+  if (rent == null || !(standardRate > 0)) return null;
+  const discount = (lines ?? []).filter((line) => line.kind === "discount").reduce((sum, line) => sum + Math.abs(line.amount), 0);
+  if (cents(rent) === cents(standardRate) || cents(rent) + cents(discount) === cents(standardRate)) return null;
+  return `SiteLink move-in rent is ${money(rent)}, not the standard rate ${money(standardRate)} that was quoted.`;
 }
 
 export function sizeCategory(u: Pick<Unit, "vehicle" | "widthFt" | "lengthFt">): SizeCategory {

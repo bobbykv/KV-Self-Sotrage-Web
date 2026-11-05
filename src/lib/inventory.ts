@@ -7,6 +7,7 @@ import { env } from "./env";
 import { withJobLock } from "./job-lock";
 import { log, safeErrorMessage } from "./log";
 import { getSettings } from "./settings";
+import { refreshDiscountPlanCache } from "./discount-catalog";
 import { sitelink } from "./sitelink/client";
 import { soapDiagnostic, type SoapDiagnostic } from "./sitelink/diagnostics";
 import { mockPriceListFor, mockUnitsFor } from "./sitelink/mock";
@@ -165,6 +166,7 @@ export async function refreshInventory(opts: RefreshOptions = {}): Promise<Refre
         } else results.push({ location: loc, kind: "all", ok: true, skipped: true });
       }
     });
+    if (!opts.probe) await refreshDiscountPlanCache(locations);
     log.info("inventory refresh", { results: results.filter((r) => !r.skipped) });
     return results;
   });

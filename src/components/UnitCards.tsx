@@ -23,7 +23,7 @@ export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "
   );
 }
 
-export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string }) {
+export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?: string; offer?: string | null }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
@@ -54,6 +54,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
           <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
+          {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}
         </div>
       </div>
       <FeatureTags g={g} />
@@ -68,7 +69,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
 }
 
 /** Published size and price when live availability did not load. No hold link. */
-export function PublishedRateCard({ g }: { g: PublishedRate }) {
+export function PublishedRateCard({ g, offer }: { g: PublishedRate; offer?: string | null }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
@@ -87,6 +88,7 @@ export function PublishedRateCard({ g }: { g: PublishedRate }) {
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
           <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
+          {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}
         </div>
       </div>
       <FeatureTags g={g} />

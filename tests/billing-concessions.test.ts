@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addBillingDays, BILLING_PERIOD_DAYS, isWinterPrepaidPlan, matchingWinterPrepaidPlan, MOCK_WINTER_CONCESSION_ID, planAppliesTo, plansForUnit } from "@/lib/sitelink/concessions";
+import { addBillingDays, BILLING_PERIOD_DAYS, isWinterPrepaidPlan, matchingWinterPrepaidPlan, MOCK_FIRST_MONTH_CONCESSION_ID, MOCK_WINTER_CONCESSION_ID, planAppliesTo, plansForUnit } from "@/lib/sitelink/concessions";
 import { mapDiscountPlans, mapMoveInCost } from "@/lib/sitelink/mappers";
 import { initMockState, invokeMock, resetMockMemory } from "@/lib/sitelink/mock";
 import { buildEnvelope } from "@/lib/sitelink/soap";
@@ -146,16 +146,17 @@ describe("mock discount plans and 28-day cost", () => {
     resetMockMemory();
   });
 
-  it("returns the Exit 31 $399 6-month plan and no plans at the other sites", async () => {
+  it("returns the Exit 31 winter plan plus a 30% first-month concession at every site", async () => {
     const hwy = await invokeMock("DiscountPlansRetrieve", "hwy4", {});
     const mapped = mapDiscountPlans(hwy.ConcessionPlans ?? [], hwy.ConcessionUnitTypes ?? []);
-    expect(mapped).toHaveLength(1);
-    expect(mapped[0]).toMatchObject({ concessionId: MOCK_WINTER_CONCESSION_ID, prepay: true, prepaidMonths: 6, chargeAmount: 399 });
-    expect(mapped[0].name).toMatch(/\$399 6-Month Winter/);
+    expect(mapped.map((plan) => plan.concessionId).sort()).toEqual([MOCK_FIRST_MONTH_CONCESSION_ID, MOCK_WINTER_CONCESSION_ID].sort());
+    expect(mapped.find((plan) => plan.concessionId === MOCK_WINTER_CONCESSION_ID)).toMatchObject({ prepay: true, prepaidMonths: 6, chargeAmount: 399 });
+    expect(mapped.find((plan) => plan.concessionId === MOCK_WINTER_CONCESSION_ID)?.name).toMatch(/\$399 6-Month Winter/);
     const stel = await invokeMock("DiscountPlansRetrieve", "stellarton", {});
     const haley = await invokeMock("DiscountPlansRetrieve", "haley", {});
-    expect(stel.ConcessionPlans ?? []).toHaveLength(0);
-    expect(haley.ConcessionPlans ?? []).toHaveLength(0);
+    expect(stel.ConcessionPlans ?? []).toHaveLength(1);
+    expect(stel.ConcessionPlans?.[0]?.dcPCDiscount).toBe("30");
+    expect(haley.ConcessionPlans ?? []).toHaveLength(1);
   });
 
   it("quotes one 28-day period without a concession and 168 days for the winter package", async () => {
@@ -170,7 +171,7 @@ describe("mock discount plans and 28-day cost", () => {
       ConcessionPlanID: -999,
     });
     const standardCost = mapMoveInCost(standard.Table, 0.14);
-    expect(standard.Table[0].ChargeDescription).toBe("Rent (28-day period)");
+    expect(standard.Table[0].ChargeDescription).toBe("Rent");
     expect(standard.Table[0].ChargeAmount).toBe("98.00");
     expect(standard.Table[0].EndDate).toBe(addBillingDays(start, BILLING_PERIOD_DAYS));
     expect(standardCost.total).toBeCloseTo(98 * 1.14 + 22.8, 2);
