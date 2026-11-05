@@ -6,7 +6,8 @@ import { AmenityList } from "@/components/LocationCards";
 import { PromoBanner } from "@/components/PromoBanner";
 import { FeatureTags } from "@/components/UnitCards";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
-import { formatSize, isWinterStoragePackage, money } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money, publicMonthlyRate } from "@/lib/catalog";
+import { rateSuffix } from "@/lib/sitelink/concessions";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { unitTypePhotoUrl } from "@/lib/photos";
@@ -24,10 +25,11 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const loc = getLocation(location);
   const sizeLabel = unit ? formatSize(unit.widthFt, unit.lengthFt) : "Storage";
   const noun = unit?.vehicle ? "parking space" : "storage unit";
+  const monthly = unit ? publicMonthlyRate(unit) : 0;
   return {
     title: `${sizeLabel} ${noun} at ${loc.shortName}`,
     description: unit
-      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(unit.rate)}${isWinterStoragePackage(unit.typeName) ? " 6-month winter storage package" : " per 28 days"} + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
+      ? `${sizeLabel} ${noun} at ${loc.shortName} from ${money(monthly)}${isWinterStoragePackage(unit.typeName) ? " 6-month winter storage package" : " per month"} + HST. ${fullAddress(loc)}. Gated access and ${loc.access} entry.`
       : `Storage at ${loc.shortName}.`,
     robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
   };
@@ -45,6 +47,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
   if (!unit) redirect(`/units?location=${location}&notice=${encodeURIComponent("This unit is no longer available. Check the other units at this location.")}`);
   const loc = getLocation(location);
   const sizeLabel = formatSize(unit.widthFt, unit.lengthFt);
+  const monthly = publicMonthlyRate(unit);
   const photoUrl = await unitTypePhotoUrl({
     locationKey: location,
     typeName: unit.typeName,
@@ -70,12 +73,9 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
             {sizeLabel} {noun} at {loc.shortName}
           </h1>
           <p className="mt-2 text-2xl font-extrabold text-kv-red">
-            {money(unit.rate)}
-            <span className="text-base font-semibold text-kv-muted">
-              {isWinterStoragePackage(unit.typeName) ? " 6-month package + HST" : "/28 days + HST"}
-            </span>
+            {money(monthly)}
+            <span className="text-base font-semibold text-kv-muted"> {rateSuffix(unit.typeName)}</span>
           </p>
-          {unit.standardRate > unit.rate && <p className="text-sm text-kv-muted line-through">{money(unit.standardRate)} standard rate</p>}
           <p className="mt-3 text-kv-muted">
             Check the size and features below. Choose your move-in date to start checkout. We&apos;ll hold this unit for {settings.holdMinutes} minutes while you review the total.
           </p>
@@ -104,10 +104,9 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
                 <dd className="font-semibold">{loc.shortName}</dd>
               </div>
               <div>
-                <dt className="text-kv-muted">{isWinterStoragePackage(unit.typeName) ? "Winter storage package" : "28-day rent"}</dt>
+                <dt className="text-kv-muted">{isWinterStoragePackage(unit.typeName) ? "Winter storage package" : "Monthly rent"}</dt>
                 <dd className="font-semibold">
-                  {money(unit.rate)}
-                  {isWinterStoragePackage(unit.typeName) ? " 6-month package + HST" : "/28 days + HST"}
+                  {money(monthly)} {rateSuffix(unit.typeName)}
                 </dd>
               </div>
             </dl>

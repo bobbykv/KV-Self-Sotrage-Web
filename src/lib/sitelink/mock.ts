@@ -4,9 +4,10 @@ import "server-only";
  * Returns DataSets shaped like the real API so the mappers and every flow
  * above them run unchanged.
  *
- * Exit 31 (hwy4) availability and 28-day rates are the verified fallback
+ * Exit 31 (hwy4) standard monthly rates are the verified fallback
  * while the Corporate Control Center permission toggle is still off:
  * 5×10 at $98 (4 available), 10×10 at $140 (9 available), 10×15 at $177 (4 available).
+ * The simulator sets dcWebRate equal to dcStdRate, so checkout matches the public price.
  * Haley includes climate-controlled units and no vehicle parking. Stellarton
  * is drive-up units with Nokē smart entry only. Outdoor vehicle, RV and boat
  * storage, including the $399 6-month winter outdoor storage package, is only at Exit 31.

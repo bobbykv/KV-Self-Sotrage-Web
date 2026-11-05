@@ -3,7 +3,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { MoveInSteps } from "@/components/MoveInSteps";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
-import { formatSize, money } from "@/lib/catalog";
+import { billedRentAmount, formatSize, money, publicMonthlyRate, standardRateMismatch } from "@/lib/catalog";
+import { getInventory } from "@/lib/inventory";
 import { isMultiPeriodPrepaid, recurringBillingNote } from "@/lib/sitelink/concessions";
 import { env } from "@/lib/env";
 import { getHold, HOLD_COOKIE } from "@/lib/holds";
@@ -29,6 +30,14 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
     );
   }
   const loc = getLocation(hold.locationKey);
+  const inventory = await getInventory();
+  const cachedUnit = inventory.find((row) => row.location === hold.locationKey)?.units.find((unit) => unit.unitId === hold.unitId);
+  const advertisedMonthly = publicMonthlyRate({ standardRate: cachedUnit?.standardRate, rate: Number(hold.quotedRate) });
+  const rateWarning = standardRateMismatch({
+    advertisedMonthly,
+    quotedRate: Number(hold.quotedRate),
+    billedRent: billedRentAmount((hold.costBreakdown as unknown as MoveInCost | null)?.lines),
+  });
   const movedIn = hold.status === "moved_in";
   const cost = hold.costBreakdown as unknown as MoveInCost | null;
   const prepaid = Boolean(hold.concessionId) && isMultiPeriodPrepaid(cost?.startDate, cost?.endDate);
@@ -72,8 +81,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             <dd className="font-semibold">{moveInDate}</dd>
           </div>
           <div>
-            <dt className="text-kv-muted">{prepaid ? "Prepaid package" : "28-day rent"}</dt>
-            <dd className="font-semibold">{prepaid ? "6 billing periods" : `${money(Number(hold.quotedRate))} + HST`}</dd>
+            <dt className="text-kv-muted">{prepaid ? "Prepaid package" : "Monthly rent"}</dt>
+            <dd className="font-semibold">{prepaid ? "6 billing periods" : `${money(advertisedMonthly)}/month + HST`}</dd>
           </div>
           {!movedIn && (
             <div>
@@ -94,6 +103,7 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             </div>
           )}
         </dl>
+        {rateWarning && <p className="mt-4 rounded-xl bg-kv-yellow-light p-4 text-sm text-kv-navy">{rateWarning}</p>}
         <p className="mt-4 rounded-xl bg-kv-navy-50 p-4 text-sm font-semibold text-kv-navy">
           {movedIn && hold.autoBillEnabled
             ? recurringNote.replace("will be saved", "is saved in SiteLink")

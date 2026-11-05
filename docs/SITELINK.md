@@ -115,6 +115,10 @@ units only (5×10, 10×10, 10×15, 10×20).
 
 `/admin/discounts` stores an On/Off row per location and ConcessionID in `DiscountPlanToggle`. A plan with no row is On when SiteLink has it web-enabled (`bDisabled` is false and `iShowOn` is not 2) and Off when it is payments-only or disabled. Checkout, quotes, and payment only charge a plan that is On and matches the unit. Turning a plan Off blocks it even if `DiscountPlansRetrieve` fails.
 
+## Public prices
+
+The number on the public site is `dcStdRate` (standard rate), shown per month, with no conversion. `dcWebRate` is kept on the unit as `rate` and is still what a reservation sends as `dcQuotedRate`. Move-in payment is still the total from `MoveInCostRetrieve`. When that rent line or the reservation quote is not the standard rate, checkout shows a notice and does not change the amount SiteLink charged.
+
 ## When live availability fails
 
 The public site never substitutes the sample catalog in live mode. If

@@ -59,6 +59,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
         widthFt: unit.widthFt,
         lengthFt: unit.lengthFt,
         rate: unit.rate,
+        standardRate: unit.standardRate,
         unitTypeId: unit.unitTypeId,
       });
     }

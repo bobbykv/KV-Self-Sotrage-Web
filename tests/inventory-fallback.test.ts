@@ -35,7 +35,7 @@ describe("live availability does not fall back to sample units", () => {
     expect(denied.lastError).toMatch(/timed out before response headers/);
     expect(denied.refreshedAt).toBeNull();
     expect(denied.pricesAsOf).toBe("2026-11-01T12:00:00.000Z");
-    expect(publishedRates(denied.priceList).map((p) => p.fromRate)).toEqual([99]);
+    expect(publishedRates(denied.priceList).map((p) => p.fromRate)).toEqual([110]);
     expect(publishedRates(denied.priceList).every((p) => !("bestUnitId" in p) && !("unitId" in p))).toBe(true);
   });
 

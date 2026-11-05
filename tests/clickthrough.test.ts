@@ -112,7 +112,7 @@ describe("chat quotes published prices when availability is unconfirmed", () => 
     const { rulesChat } = await import("@/lib/chat/engine");
     const reply = await rulesChat("What sizes do you have at Haley Rd?");
     expect(reply.reply).toMatch(/call/i);
-    expect(reply.reply).toMatch(/99/);
+    expect(reply.reply).toMatch(/110/);
     expect(reply.reply).not.toMatch(/sample|demo/i);
     expect(reply.actions.some((action) => action.type === "call")).toBe(true);
     expect(reply.actions.some((action) => action.type === "link" && "href" in action && String(action.href).includes("/units/haley/"))).toBe(false);

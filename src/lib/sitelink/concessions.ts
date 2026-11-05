@@ -14,11 +14,12 @@ export const WINTER_PLAN_DESCRIPTION =
 
 export const STANDARD_BILLING_LABEL = "Standard 28-day billing";
 
-export const RATE_CYCLE_SUFFIX = "/28 days + HST";
+/** Public price label. dcStdRate is the monthly standard rate, not a 28-day conversion. */
+export const MONTHLY_RATE_SUFFIX = "/month + HST";
 export const PACKAGE_RATE_SUFFIX = "6-month package + HST";
 
 export function rateSuffix(typeName: string): string {
-  return isWinterStoragePackage(typeName) ? PACKAGE_RATE_SUFFIX : RATE_CYCLE_SUFFIX;
+  return isWinterStoragePackage(typeName) ? PACKAGE_RATE_SUFFIX : MONTHLY_RATE_SUFFIX;
 }
 
 /** Advance a SiteLink wall-clock datetime by whole days without shifting the clock time. */

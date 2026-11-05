@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { LocationKey } from "@/config/locations";
 import { getLocation } from "@/config/locations";
-import { formatSize, money } from "@/lib/catalog";
+import { formatSize, money, publicMonthlyRate } from "@/lib/catalog";
 import { CA_PROVINCES, US_STATES } from "@/lib/regions";
 import { isWinterPrepaidPlan, publicPlansForUnit } from "@/lib/sitelink/concessions";
 import type { ConcessionPlan } from "@/lib/sitelink/types";
@@ -15,7 +15,10 @@ export type BookUnit = {
   typeName: string;
   widthFt: number;
   lengthFt: number;
+  /** SiteLink web rate when present. Still sent as the reservation quote. */
   rate: number;
+  /** SiteLink standard rate. This is the public monthly price. */
+  standardRate: number;
   unitTypeId: number;
 };
 
@@ -146,7 +149,8 @@ export function StaffBooking({
             <option value="">Choose a unit</option>
             {siteUnits.map((u) => (
               <option key={u.unitId} value={u.unitId}>
-                {u.unitName} · {formatSize(u.widthFt, u.lengthFt)} {u.typeName} · {money(u.rate)}/28 days
+                {u.unitName} · {formatSize(u.widthFt, u.lengthFt)} {u.typeName} · {money(publicMonthlyRate(u))}/month
+                {publicMonthlyRate(u) !== u.rate ? ` · SiteLink quote ${money(u.rate)} unchanged` : ""}
               </option>
             ))}
           </select>

@@ -1,5 +1,5 @@
 import type { LocationKey } from "@/config/locations";
-import type { PriceListEntry, Unit } from "./sitelink/types";
+import type { CostLine, PriceListEntry, Unit } from "./sitelink/types";
 
 export type SizeCategory = "small" | "medium" | "large" | "parking";
 
@@ -13,6 +13,51 @@ export const SIZE_LABELS: Record<SizeCategory, { label: string; hint: string }> 
 /** Exit 31 winter outdoor storage is a 6-period prepaid package, not one 28-day charge. */
 export function isWinterStoragePackage(typeName: string): boolean {
   return /winter storage/i.test(typeName);
+}
+
+/**
+ * Price shown on the public site: SiteLink's standard rate (dcStdRate), unchanged.
+ * dcWebRate is not substituted and the number is not converted to a 28-day amount.
+ * If a row has no positive standard rate, the only other rate we have is used.
+ */
+export function publicMonthlyRate(source: { standardRate?: number | null; rate?: number | null; webRate?: number | null }): number {
+  const standard = Number(source.standardRate);
+  if (Number.isFinite(standard) && standard > 0) return standard;
+  const fallback = Number(source.webRate ?? source.rate);
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+}
+
+function cents(amount: number): number {
+  return Math.round(amount * 100);
+}
+
+/** Rent SiteLink put on the move-in cost. Null when that quote has no rent line. */
+export function billedRentAmount(lines: Pick<CostLine, "kind" | "amount">[] | null | undefined): number | null {
+  if (!lines?.length) return null;
+  const rent = lines.filter((line) => line.kind === "rent" && line.amount > 0);
+  if (!rent.length) return null;
+  return rent.reduce((sum, line) => sum + line.amount, 0);
+}
+
+/**
+ * Describes a charge that does not match the monthly standard rate on the site.
+ * Returns null when they match. Does not change either amount.
+ */
+export function standardRateMismatch(input: { advertisedMonthly: number; quotedRate: number; billedRent: number | null }): string | null {
+  const advertised = cents(input.advertisedMonthly);
+  const quoted = cents(input.quotedRate);
+  const billed = input.billedRent == null ? null : cents(input.billedRent);
+  const quoteDiffers = quoted !== advertised;
+  const billDiffers = billed != null && billed !== advertised;
+  if (!quoteDiffers && !billDiffers) return null;
+  const notes = [`The website price is ${money(input.advertisedMonthly)} per month, SiteLink's standard rate.`];
+  if (quoteDiffers) {
+    notes.push(`The reservation quote sent to SiteLink is still ${money(input.quotedRate)} from the web rate. That quote was not changed.`);
+  }
+  if (billDiffers && input.billedRent != null) {
+    notes.push(`SiteLink's move-in cost charges ${money(input.billedRent)} rent for this billing period, which is not the standard rate shown. The amount due stays SiteLink's total.`);
+  }
+  return notes.join(" ");
 }
 
 export function sizeCategory(u: Pick<Unit, "vehicle" | "widthFt" | "lengthFt">): SizeCategory {
@@ -60,12 +105,12 @@ export type PublishedRate = {
 
 const VEHICLE_RE = /(parking|rv|boat|vehicle|trailer|car\b|outdoor)/i;
 
-/** One card per size. Uses the web rate when SiteLink published one. */
+/** One card per size. Uses the SiteLink standard rate (dcStdRate). */
 export function publishedRates(entries: PriceListEntry[]): PublishedRate[] {
   const seen = new Set<string>();
   const out: PublishedRate[] = [];
   for (const p of entries) {
-    const fromRate = p.webRate && p.webRate > 0 ? p.webRate : p.standardRate;
+    const fromRate = publicMonthlyRate(p);
     if (!fromRate || fromRate <= 0 || p.widthFt <= 0 || p.lengthFt <= 0) continue;
     const vehicle = VEHICLE_RE.test(p.typeName);
     const rate: PublishedRate = {
@@ -106,6 +151,7 @@ export function groupUnits(units: Unit[]): UnitGroup[] {
   const map = new Map<string, UnitGroup>();
   for (const u of units) {
     const key = `${u.locationKey}:${groupKey(u)}`;
+    const price = publicMonthlyRate(u);
     const g = map.get(key);
     if (!g) {
       map.set(key, {
@@ -120,13 +166,13 @@ export function groupUnits(units: Unit[]): UnitGroup[] {
         vehicle: u.vehicle,
         category: sizeCategory(u),
         available: 1,
-        fromRate: u.rate,
+        fromRate: price,
         bestUnitId: u.unitId,
       });
     } else {
       g.available++;
-      if (u.rate < g.fromRate) {
-        g.fromRate = u.rate;
+      if (price < g.fromRate) {
+        g.fromRate = price;
         g.bestUnitId = u.unitId;
       }
     }

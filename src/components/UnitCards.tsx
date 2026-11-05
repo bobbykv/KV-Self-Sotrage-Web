@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BRAND, getLocation } from "@/config/locations";
 import { formatSize, isWinterStoragePackage, money, type PublishedRate, type UnitGroup } from "@/lib/catalog";
+import { rateSuffix } from "@/lib/sitelink/concessions";
 
 export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle" | "typeName"> }) {
   const tags = [
@@ -52,7 +53,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "6-month package + HST" : "/28 days + HST"}</p>
+          <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
         </div>
       </div>
       <FeatureTags g={g} />
@@ -85,7 +86,7 @@ export function PublishedRateCard({ g }: { g: PublishedRate }) {
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "6-month package + HST" : "/28 days + HST"}</p>
+          <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
         </div>
       </div>
       <FeatureTags g={g} />
