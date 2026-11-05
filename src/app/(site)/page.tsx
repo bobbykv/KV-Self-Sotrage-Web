@@ -5,9 +5,9 @@ import { LocalSchema } from "@/components/LocalSchema";
 import { LocationCards } from "@/components/LocationCards";
 import { PromoBanner } from "@/components/PromoBanner";
 import { ReviewsBlock } from "@/components/Reviews";
-import { BRAND } from "@/config/locations";
+import { BRAND, getLocation } from "@/config/locations";
 import { getLivePromotions } from "@/lib/cms";
-import { getInventory } from "@/lib/inventory";
+import { getInventory, openUnitCounts } from "@/lib/inventory";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const [promos, inventory, settings] = await Promise.all([getLivePromotions({ placement: "homepage" }), getInventory(), getSettings()]);
-  const availabilityDown = inventory.every((l) => l.units.length === 0 && l.lastError && !l.refreshedAt);
-  const counts = Object.fromEntries(inventory.map((l) => [l.location, l.units.length]));
+  const counts = openUnitCounts(inventory);
+  const unconfirmed = inventory.filter((l) => l.availability === "published" || l.availability === "none");
 
   return (
     <>
@@ -84,15 +84,16 @@ export default async function Home() {
         <div className="container-kv">
           <h2 className="h2">Choose your location</h2>
           <div className="mt-8">
-            <LocationCards counts={availabilityDown ? undefined : counts} />
+            <LocationCards counts={counts} />
           </div>
-          {availabilityDown && (
+          {unconfirmed.length > 0 && (
             <p className="mt-4 text-sm text-kv-muted">
-              Live availability isn&apos;t connected yet. Call{" "}
+              Call to confirm availability
+              {unconfirmed.length < inventory.length ? ` at ${unconfirmed.map((l) => getLocation(l.location).shortName).join(" and ")}` : ""}. Call{" "}
               <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
                 {BRAND.phone}
               </a>{" "}
-              and we&apos;ll tell you what&apos;s open.
+              or <Link href="/contact" className="font-bold text-kv-red underline">contact us</Link> and we&apos;ll tell you what&apos;s open.
             </p>
           )}
         </div>

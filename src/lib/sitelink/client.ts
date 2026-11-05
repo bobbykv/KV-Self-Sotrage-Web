@@ -1,7 +1,7 @@
 import "server-only";
 import { LOCATION_KEYS, type LocationKey } from "@/config/locations";
 import { assertSiteLinkConfig, env } from "../env";
-import { log } from "../log";
+import { log, safeErrorMessage } from "../log";
 import { countryForRegion } from "../regions";
 import { recordCall } from "./budget";
 import { SiteLinkSoapFault, num, str, type DataSet, type Row } from "./dataset";
@@ -23,7 +23,7 @@ import { matchingWinterPrepaidPlan, paidThroughDate } from "./concessions";
 import { mapBalance, mapBillingInfo, mapDiscountPlans, mapLedger, mapMoveInCost, mapPriceList, mapReports, mapReservation, mapTenant, mapUnit, rowsOf } from "./mappers";
 import type { DiscountPlansReport } from "./types";
 import { invokeMock } from "./mock";
-import { assertOk, invokeLive, retCode, SiteLinkError, type Args, type SiteLinkMethod } from "./soap";
+import { assertOk, invokeLive, retCode, SiteLinkError, soapDiagnostic, type Args, type SiteLinkMethod } from "./soap";
 
 export { SiteLinkError };
 
@@ -53,12 +53,20 @@ async function call(locationKey: LocationKey, method: SiteLinkMethod, args: Args
         args,
       );
     }
-    void recordCall(locationKey, method, true);
-    log.debug("sitelink call", { method, locationKey, ms: Date.now() - started });
+    await recordCall(locationKey, method, true);
     return data;
   } catch (err) {
-    void recordCall(locationKey, method, false);
-    log.warn("sitelink call failed", { method, locationKey, ms: Date.now() - started, err });
+    await recordCall(locationKey, method, false);
+    // Live calls already logged a credential-free diagnostic inside invokeLive.
+    if (!soapDiagnostic(err)) {
+      log.warn("sitelink call failed", {
+        method,
+        locationKey,
+        durationMs: Date.now() - started,
+        category: env.sitelinkMode === "mock" || env.appTestMode ? "mock" : "config",
+        message: safeErrorMessage(err),
+      });
+    }
     throw err;
   }
 }

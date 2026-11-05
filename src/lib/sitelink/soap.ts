@@ -1,9 +1,21 @@
 import "server-only";
 import contractJson from "./contract.generated.json";
 import { parseDataSetResponse, str, type DataSet } from "./dataset";
+import {
+  attachDiagnostic,
+  isAbortError,
+  isCloudflareBlock,
+  recordSoapDiagnostic,
+  safeCfRay,
+  soapDiagnostic,
+  type SoapDiagnostic,
+} from "./diagnostics";
 import { SITELINK_USER_AGENT, siteLinkCorpUserName } from "./http";
-import { redactString } from "../redact";
+import { scrubSecrets } from "../redact";
 import { isAppTestMode } from "../test-mode";
+
+export { soapDiagnostic };
+export type { SoapDiagnostic };
 
 export { SITELINK_USER_AGENT, siteLinkCorpUserName };
 
@@ -106,6 +118,12 @@ export type LiveConfig = {
   timeoutMs: number;
 };
 
+function finish(diagnostic: SoapDiagnostic, err?: Error): never {
+  const recorded = recordSoapDiagnostic(diagnostic);
+  if (!err) throw new Error(`${diagnostic.method}: ${diagnostic.category}`);
+  throw attachDiagnostic(err, recorded);
+}
+
 export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locationCode: string, args: Args): Promise<DataSet> {
   if (isAppTestMode()) {
     throw new Error(`${method}: live SiteLink calls are blocked in APP_TEST_MODE`);
@@ -121,8 +139,21 @@ export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locati
   const envelope = buildEnvelope(method, auth, args);
   const endpoint = sig.service === "reporting" ? cfg.reportingEndpoint : cfg.callCenterEndpoint;
   const controller = new AbortController();
+  const started = Date.now();
   const timer = setTimeout(() => controller.abort(), cfg.timeoutMs);
-  let text: string;
+  let phase: "headers" | "body" = "headers";
+  let httpStatus: number | null = null;
+  let cfRay: string | null = null;
+  const base = (partial: Pick<SoapDiagnostic, "category" | "cloudflareBlock" | "retCode"> & { httpStatus?: number | null }): SoapDiagnostic => ({
+    locationCode,
+    method,
+    durationMs: Date.now() - started,
+    httpStatus: partial.httpStatus ?? httpStatus,
+    category: partial.category,
+    cfRay,
+    cloudflareBlock: partial.cloudflareBlock,
+    retCode: partial.retCode,
+  });
   try {
     const res = await fetch(endpoint, {
       method: "POST",
@@ -136,16 +167,40 @@ export async function invokeLive(cfg: LiveConfig, method: SiteLinkMethod, locati
       signal: controller.signal,
       cache: "no-store",
     });
-    text = await res.text();
-    if (!res.ok && !text.includes("Fault")) throw new Error(`${method}: HTTP ${res.status}`);
+    phase = "body";
+    httpStatus = res.status;
+    cfRay = safeCfRay(res.headers.get("cf-ray"));
+    const text = await res.text();
+    const cloudflareBlock = isCloudflareBlock(res.status, res.headers.get("server"), cfRay, text.slice(0, 2000));
+    const soapFault = /<(?:\w+:)?Fault\b/.test(text);
+    if (!res.ok && !soapFault) {
+      const detail = cloudflareBlock ? " blocked" : "";
+      const ray = cfRay ? ` cf-ray ${cfRay}` : "";
+      finish(base({ category: "http_rejection", cloudflareBlock, retCode: null }), new Error(scrubSecrets(`${method}: HTTP ${res.status}${detail}${ray}`)));
+    }
+    let data: DataSet;
+    try {
+      data = parseDataSetResponse(text, method);
+      assertOk(method, data);
+    } catch (err) {
+      const retCode = err instanceof SiteLinkError ? err.code : null;
+      const wrapped = err instanceof Error ? err : new Error(scrubSecrets(String(err)));
+      finish(base({ category: "soap_error", cloudflareBlock: false, retCode }), wrapped);
+    }
+    const rt = Number(str(data.RT?.[0], "Ret_Code"));
+    recordSoapDiagnostic(base({ category: "ok", cloudflareBlock: false, retCode: Number.isFinite(rt) ? rt : null }));
+    return data;
   } catch (err) {
-    throw new Error(redactString(`${method}: transport error ${(err as Error).message}`));
+    if (soapDiagnostic(err)) throw err;
+    const aborted = isAbortError(err);
+    const category = aborted ? (phase === "headers" ? "timeout_headers" : "timeout_body") : "transport";
+    const message = aborted
+      ? `${method}: ${category === "timeout_headers" ? "timed out before response headers" : "timed out while reading the response body"}`
+      : `${method}: transport error ${scrubSecrets(err instanceof Error ? err.message : "unknown").slice(0, 180)}`;
+    finish(base({ category, cloudflareBlock: false, retCode: null }), new Error(message));
   } finally {
     clearTimeout(timer);
   }
-  const data = parseDataSetResponse(text, method);
-  assertOk(method, data);
-  return data;
 }
 
 /** SiteLink signals errors with a negative Ret_Code in the RT table. */
@@ -153,7 +208,7 @@ export function assertOk(method: string, data: DataSet) {
   const rt = data.RT?.[0];
   if (!rt) return;
   const code = Number(str(rt, "Ret_Code"));
-  if (Number.isFinite(code) && code < 0) throw new SiteLinkError(method, code, redactString(str(rt, "Ret_Msg") || "unknown error"));
+  if (Number.isFinite(code) && code < 0) throw new SiteLinkError(method, code, scrubSecrets(str(rt, "Ret_Msg") || "unknown error"));
 }
 
 /** The positive Ret_Code is the new record id for create methods (tenant, reservation...). */

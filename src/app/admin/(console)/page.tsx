@@ -5,6 +5,7 @@ import { dashboardData } from "@/lib/admin-data";
 import { addCash, SNAPSHOT_SITE_ORDER, type SizeAvailability } from "@/lib/business-snapshot";
 import { money } from "@/lib/catalog";
 import { env } from "@/lib/env";
+import { automaticRefreshIsPaused } from "@/lib/inventory";
 import { refreshCacheAction, runReportsAction } from "./actions";
 
 export const metadata = { title: "Dashboard" };
@@ -28,7 +29,7 @@ function rateLabel(row: SizeAvailability | undefined) {
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ location?: string }> }) {
   const sp = await searchParams;
   const location = isLocationKey(sp.location) ? sp.location : undefined;
-  const data = await dashboardData(location);
+  const [data, refreshPaused] = await Promise.all([dashboardData(location), automaticRefreshIsPaused()]);
   const totals = data.sites.reduce(
     (t, s) => ({
       holds: t.holds + s.activeHolds,
@@ -44,12 +45,18 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title="Dashboard">
-        <form action={refreshCacheAction.bind(null, false)}>
-          <button className="btn-navy btn-sm">Refresh SiteLink cache</button>
-        </form>
-        <form action={runReportsAction}>
-          <button className="btn-ghost btn-sm">Run reports now</button>
-        </form>
+        {refreshPaused ? (
+          <p className="max-w-md text-sm text-kv-muted">Automatic SiteLink refreshes are paused. These buttons are hidden so a click cannot call every location. Use the one-location probe when you are ready.</p>
+        ) : (
+          <>
+            <form action={refreshCacheAction.bind(null, false)}>
+              <button className="btn-navy btn-sm">Refresh SiteLink cache</button>
+            </form>
+            <form action={runReportsAction}>
+              <button className="btn-ghost btn-sm">Run reports now</button>
+            </form>
+          </>
+        )}
       </PageHeader>
       <LocationSwitcher current={location} basePath="/admin" />
 
@@ -123,9 +130,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <p className="mt-1 text-kv-muted">
           Vacant units every {data.settings.pollIntervalMinutes} min · all units (occupancy and the rent roll) every {data.settings.allUnitsPollMinutes} min · price list every {data.settings.priceListPollMinutes} min · reports once a day. This page reads those snapshots and does not call SiteLink.
         </p>
-        <form action={refreshCacheAction.bind(null, true)} className="mt-3">
-          <button className="text-sm font-semibold text-kv-red underline">Force full re-pull now (resets lngLastTimePolled)</button>
-        </form>
+        {refreshPaused ? (
+          <p className="mt-3 text-sm text-kv-muted">Full re-pull is paused with the other automatic SiteLink calls.</p>
+        ) : (
+          <form action={refreshCacheAction.bind(null, true)} className="mt-3">
+            <button className="text-sm font-semibold text-kv-red underline">Force full re-pull now (resets lngLastTimePolled)</button>
+          </form>
+        )}
       </section>
     </>
   );

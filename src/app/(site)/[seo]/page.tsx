@@ -3,10 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LocalSchema } from "@/components/LocalSchema";
-import { UnitGroupCard } from "@/components/UnitCards";
+import { PublishedRateCard, UnitGroupCard } from "@/components/UnitCards";
 import { LOCATIONS } from "@/config/locations";
 import { SEO_PAGES } from "@/content/seo-pages";
-import { groupUnits } from "@/lib/catalog";
+import { groupUnits, publishedRates } from "@/lib/catalog";
 import { getInventory } from "@/lib/inventory";
 
 type Params = { seo: string };
@@ -28,7 +28,9 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
   const page = SEO_PAGES.find((p) => p.slug === seo);
   if (!page) notFound();
   const inventory = await getInventory();
-  const groups = groupUnits(inventory.filter((l) => page.locations.includes(l.location)).flatMap((l) => l.units)).slice(0, 6);
+  const scoped = inventory.filter((l) => page.locations.includes(l.location));
+  const groups = groupUnits(scoped.filter((l) => l.availability === "live" || l.availability === "demo").flatMap((l) => l.units)).slice(0, 6);
+  const rates = publishedRates(scoped.filter((l) => l.availability === "published").flatMap((l) => l.priceList)).slice(0, 6);
   const locs = LOCATIONS.filter((l) => page.locations.includes(l.key));
   const primary = page.primaryCta ?? { href: page.locations.length === 1 ? `/units?location=${page.locations[0]}` : "/units", label: "See units & prices" };
   const secondary = page.secondaryCta ?? { href: "tel:+19028673779", label: "Call (902) 867-3779" };
@@ -74,7 +76,7 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
         ))}
       </div>
 
-      {groups.length > 0 && (
+      {(groups.length > 0 || rates.length > 0) && (
         <section className="mt-14">
           <h2 className="h2">
             {page.slug === "self-storage-near-me"
@@ -85,10 +87,14 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
                   ? "Compare Stellarton units"
                   : "Compare Antigonish units"}
           </h2>
+          {rates.length > 0 && groups.length === 0 && (
+            <p className="mt-2 text-sm text-kv-muted">Published prices are below. Call to confirm availability before you plan a move-in.</p>
+          )}
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((g) => (
               <UnitGroupCard key={g.key} g={g} />
             ))}
+            {groups.length === 0 && rates.map((g) => <PublishedRateCard key={g.key} g={g} />)}
           </div>
         </section>
       )}

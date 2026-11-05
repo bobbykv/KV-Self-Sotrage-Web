@@ -44,6 +44,64 @@ export function groupKey(u: Pick<Unit, "typeName" | "widthFt" | "lengthFt" | "cl
   return `${u.typeName}|${u.widthFt}x${u.lengthFt}|${u.climate ? "c" : "n"}`.toLowerCase();
 }
 
+/** A published size and rate. Not a vacant unit — there is no unit id to hold. */
+export type PublishedRate = {
+  key: string;
+  locationKey: LocationKey;
+  typeName: string;
+  widthFt: number;
+  lengthFt: number;
+  climate: boolean;
+  inside: boolean;
+  power: boolean;
+  vehicle: boolean;
+  fromRate: number;
+};
+
+const VEHICLE_RE = /(parking|rv|boat|vehicle|trailer|car\b|outdoor)/i;
+
+/** One card per size. Uses the web rate when SiteLink published one. */
+export function publishedRates(entries: PriceListEntry[]): PublishedRate[] {
+  const seen = new Set<string>();
+  const out: PublishedRate[] = [];
+  for (const p of entries) {
+    const fromRate = p.webRate && p.webRate > 0 ? p.webRate : p.standardRate;
+    if (!fromRate || fromRate <= 0 || p.widthFt <= 0 || p.lengthFt <= 0) continue;
+    const vehicle = VEHICLE_RE.test(p.typeName);
+    const rate: PublishedRate = {
+      key: `${p.locationKey}:${groupKey(p)}`,
+      locationKey: p.locationKey,
+      typeName: p.typeName || "Storage unit",
+      widthFt: p.widthFt,
+      lengthFt: p.lengthFt,
+      climate: p.climate,
+      // The price list has no indoor flag. Climate-controlled units are not labeled drive-up.
+      inside: p.climate,
+      power: false,
+      vehicle,
+      fromRate,
+    };
+    if (seen.has(rate.key)) continue;
+    seen.add(rate.key);
+    out.push(rate);
+  }
+  return out.sort((a, b) => a.widthFt * a.lengthFt - b.widthFt * b.lengthFt || a.fromRate - b.fromRate);
+}
+
+export function filterPublished(rates: PublishedRate[], f: UnitFilter): PublishedRate[] {
+  return rates.filter((p) => {
+    const area = p.widthFt * p.lengthFt;
+    if (f.location && p.locationKey !== f.location) return false;
+    if (f.category && sizeCategory(p) !== f.category) return false;
+    if (f.climate && !p.climate) return false;
+    if (f.vehicle !== undefined && p.vehicle !== f.vehicle) return false;
+    if (f.minArea && area < f.minArea) return false;
+    if (f.maxArea && area > f.maxArea) return false;
+    if (f.maxRate && p.fromRate > f.maxRate) return false;
+    return true;
+  });
+}
+
 export function groupUnits(units: Unit[]): UnitGroup[] {
   const map = new Map<string, UnitGroup>();
   for (const u of units) {

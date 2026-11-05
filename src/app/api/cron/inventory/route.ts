@@ -6,7 +6,12 @@ import { refreshInventory } from "@/lib/inventory";
 
 export const maxDuration = 60;
 
-/** Manual or scheduled refresh. Not registered in vercel.json (Hobby plan). Only snapshots that are due actually hit SiteLink. */
+/**
+ * Manual or scheduled refresh. Not registered in vercel.json (Hobby plan).
+ * The handler awaits every location, one after another, before it responds,
+ * so Vercel does not freeze the function mid-call. While automatic refreshes
+ * are paused this returns without calling SiteLink.
+ */
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const expired = await expireHolds();

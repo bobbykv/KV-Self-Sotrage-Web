@@ -30,7 +30,9 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
   if (!isLocationKey(slug)) notFound();
   const loc = getLocation(slug);
   const [photos, inventory] = await Promise.all([listLocationPhotos(slug), getInventory()]);
-  const unitCount = inventory.find((l) => l.location === slug)?.units.length ?? 0;
+  const row = inventory.find((l) => l.location === slug);
+  const unitCount = row && (row.availability === "live" || row.availability === "demo") ? row.units.length : 0;
+  const confirmAvailability = row?.availability === "published" || row?.availability === "none";
   const address = fullAddress(loc);
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
   const gallery = photos.length ? photos : [{ id: "stock", url: "/photos/hero.jpg", altText: `Storage at ${loc.shortName}`, caption: null as string | null, isCover: true }];
@@ -93,6 +95,11 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
             <Link href={`/units?location=${loc.key}`} className="btn-primary">
               See units &amp; prices{unitCount ? ` (${unitCount} open)` : ""}
             </Link>
+            {confirmAvailability && (
+              <a href={`tel:${BRAND.phoneE164}`} className="btn-ghost">
+                Call to confirm availability
+              </a>
+            )}
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
               target="_blank"

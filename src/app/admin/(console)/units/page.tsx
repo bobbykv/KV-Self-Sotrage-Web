@@ -4,6 +4,7 @@ import { getLocation, isLocationKey, LOCATION_KEYS } from "@/config/locations";
 import { formatSize, money } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import type { Unit } from "@/lib/sitelink/types";
+import { automaticRefreshIsPaused } from "@/lib/inventory";
 import { refreshCacheAction } from "../actions";
 import { blockingHoldWhere } from "@/lib/hold-status";
 
@@ -15,8 +16,11 @@ export default async function AdminUnits({ searchParams }: { searchParams: Promi
   const status = sp.status === "vacant" || sp.status === "occupied" ? sp.status : "all";
   const q = (sp.q ?? "").trim().toLowerCase();
   const locs = location ? [location] : [...LOCATION_KEYS];
-  const snaps = await db.siteLinkSnapshot.findMany({ where: { locationKey: { in: locs }, kind: { in: ["all", "available"] } } });
-  const holds = await db.hold.findMany({ where: blockingHoldWhere(), select: { locationKey: true, unitId: true, firstName: true, lastName: true, expiresAt: true } });
+  const [snaps, holds, refreshPaused] = await Promise.all([
+    db.siteLinkSnapshot.findMany({ where: { locationKey: { in: locs }, kind: { in: ["all", "available"] } } }),
+    db.hold.findMany({ where: blockingHoldWhere(), select: { locationKey: true, unitId: true, firstName: true, lastName: true, expiresAt: true } }),
+    automaticRefreshIsPaused(),
+  ]);
 
   const rows: (Unit & { source: string })[] = [];
   for (const loc of locs) {
@@ -35,9 +39,13 @@ export default async function AdminUnits({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader title="Units">
-        <form action={refreshCacheAction.bind(null, false)}>
-          <button className="btn-navy btn-sm">Refresh from SiteLink</button>
-        </form>
+        {refreshPaused ? (
+          <p className="max-w-sm text-sm text-kv-muted">Automatic SiteLink refresh is paused.</p>
+        ) : (
+          <form action={refreshCacheAction.bind(null, false)}>
+            <button className="btn-navy btn-sm">Refresh from SiteLink</button>
+          </form>
+        )}
       </PageHeader>
       <LocationSwitcher current={location} basePath="/admin/units" extra={extra} />
       <form className="mt-4 flex flex-wrap gap-2" method="get">
