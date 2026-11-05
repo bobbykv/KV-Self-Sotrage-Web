@@ -5,7 +5,7 @@
  */
 
 const SENSITIVE_KEYS =
-  /(credit.?card|card.?num|^card$|^number$|^sCC|cvv|cvc|^pan$|expir|track2|routing|^sABA|account.?num|password|passwd|secret|token|authorization|^sLicense$|^sSSN$|^aryImageBytes$|^idPhoto$|^licenseNumber$)/i;
+  /(credit.?card|card.?num|^card$|^number$|^sCC|cvv|cvc|^pan$|expir|track2|routing|^sABA|account.?num|password|passwd|secret|token|authorization|^sLicense$|^sSSN$|^aryImageBytes$|^idPhoto$|^licenseNumber$|license.?key|sCorpUserName|sCorpPassword)/i;
 
 const SOAP_SENSITIVE_ELEMENTS = [
   "sCreditCardNumber",
@@ -34,7 +34,22 @@ export function redactString(input: string): string {
   for (const el of SOAP_SENSITIVE_ELEMENTS) {
     out = out.replace(new RegExp(`<${el}>[\\s\\S]*?</${el}>`, "g"), `<${el}>[REDACTED]</${el}>`);
   }
-  return out.replace(PAN_PATTERN, "[REDACTED-PAN]");
+  out = out.replace(PAN_PATTERN, "[REDACTED-PAN]");
+  // SiteLink sends the license key in the corporate username as user:::licenseKey.
+  out = out.replace(/[A-Za-z0-9._+-]{1,80}:::[^\s<'"]{4,200}/g, "[REDACTED]");
+  return out;
+}
+
+const SECRET_ENV_KEYS = ["SITELINK_API_PASSWORD", "SITELINK_API_LICENSE_KEY", "SITELINK_API_USERNAME", "SITELINK_USAGE_PASSWORD", "SITELINK_CORP_CODE"] as const;
+
+/** redactString, then remove any live SiteLink secret that was copied into the text. */
+export function scrubSecrets(input: string): string {
+  let out = redactString(input);
+  for (const key of SECRET_ENV_KEYS) {
+    const value = process.env[key];
+    if (value && value.length >= 3) out = out.split(value).join("[REDACTED]");
+  }
+  return out;
 }
 
 export function redact(value: unknown, depth = 0): unknown {

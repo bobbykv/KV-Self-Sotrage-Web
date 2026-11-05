@@ -115,6 +115,57 @@ units only (5×10, 10×10, 10×15, 10×20).
 
 `/admin/discounts` stores an On/Off row per location and ConcessionID in `DiscountPlanToggle`. A plan with no row is On when SiteLink has it web-enabled (`bDisabled` is false and `iShowOn` is not 2) and Off when it is payments-only or disabled. Checkout, quotes, and payment only charge a plan that is On and matches the unit. Turning a plan Off blocks it even if `DiscountPlansRetrieve` fails.
 
+## When live availability fails
+
+The public site never substitutes the sample catalog in live mode. If
+`UnitsInformationAvailableUnitsOnly_v2` has not succeeded, or the last pull
+failed, visitors see published sizes and prices from `UnitTypePriceList_v2`
+when that snapshot exists, with a “Call to confirm availability” phone and
+contact link. They do not see sample unit ids and cannot start a hold on one.
+Sample units are served only when `SITELINK_MODE=mock` or `APP_TEST_MODE=1`.
+
+Every live SOAP call logs one JSON line, `sitelink soap`, with `locationCode`,
+`method`, `durationMs`, `httpStatus`, and `category`:
+
+| category | meaning |
+| --- | --- |
+| `ok` | HTTP response parsed and `Ret_Code` was not negative |
+| `timeout_headers` | The timer aborted the call before any HTTP status |
+| `timeout_body` | Status arrived, then the timer aborted the body read |
+| `http_rejection` | Non-SOAP HTTP response. Cloudflare blocks set `cloudflareBlock` and `cfRay` |
+| `soap_error` | SOAP fault or negative `Ret_Code` (`retCode` is included) |
+| `transport` | Connection failure before a response |
+
+The line does not include the envelope, corporate password, license key, or customer fields.
+
+## Automatic refresh and the one-location probe
+
+Public pages only read the database. They do not start a SiteLink call.
+Refreshes that do run walk locations one at a time and skip a snapshot that is
+still inside its poll interval. The cron and nightly handlers await that work
+before they respond.
+
+Automatic refreshes (inventory cron, nightly full pull, nightly reports, and
+the dashboard refresh buttons) stay off until you allow them:
+
+* Admin → Settings → uncheck “Pause automatic SiteLink refreshes”, or
+* `SITELINK_REFRESH_PAUSED=0` (this wins over the checkbox). `1` forces the pause.
+* The checkbox defaults to paused. Mock mode and `APP_TEST_MODE` ignore it.
+
+The probe is the only live call that ignores the pause. It runs one method for
+one location and returns the same diagnostic fields:
+
+```bash
+curl -sS -X POST \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  "https://YOUR_DOMAIN/api/sitelink/probe?location=hwy4&kind=available"
+```
+
+`location` is `haley`, `hwy4` (Addington Forks), or `stellarton`. `kind` is
+`available` (default, `UnitsInformationAvailableUnitsOnly_v2`), `pricelist`, or
+`all`. Run it once, read `diagnostics` in the JSON and the matching
+`sitelink soap` log line, then decide whether to unpause.
+
 Mock mode refuses to run in production unless `ALLOW_MOCK_IN_PRODUCTION=1` or
 `APP_TEST_MODE=1` (hosted simulator — see [TEST_ENVIRONMENT.md](TEST_ENVIRONMENT.md)).
 

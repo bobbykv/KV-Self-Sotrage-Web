@@ -51,7 +51,9 @@ describe("chat size question routes to units", () => {
           ],
           priceList: [],
           refreshedAt: new Date().toISOString(),
+          pricesAsOf: null,
           lastError: null,
+          availability: "live",
         },
       ]),
     }));
@@ -67,6 +69,53 @@ describe("chat size question routes to units", () => {
     const reply = await rulesChat("What sizes do you have at Haley Rd?");
     expect(reply.reply.toLowerCase()).toMatch(/haley|space|compare|10/);
     expect(reply.actions.some((a) => a.type === "link" && "href" in a && String((a as { href: string }).href).includes("/units"))).toBe(true);
+  });
+});
+
+describe("chat quotes published prices when availability is unconfirmed", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/lib/inventory", () => ({
+      getInventory: vi.fn(async () => [
+        {
+          location: "haley",
+          units: [],
+          priceList: [
+            {
+              locationKey: "haley",
+              unitTypeId: 3,
+              typeName: "Climate-controlled",
+              widthFt: 5,
+              lengthFt: 10,
+              climate: true,
+              standardRate: 110,
+              webRate: 99,
+              vacant: 2,
+              total: 4,
+            },
+          ],
+          refreshedAt: null,
+          pricesAsOf: "2026-11-01T12:00:00.000Z",
+          lastError: "timed out before response headers",
+          availability: "published",
+        },
+      ]),
+    }));
+    vi.doMock("@/lib/faq", () => ({
+      getFaq: vi.fn(async () => []),
+      searchFaq: vi.fn(() => []),
+      parseFaq: vi.fn(),
+    }));
+  });
+
+  it("tells the visitor to call and does not link a sample unit", async () => {
+    const { rulesChat } = await import("@/lib/chat/engine");
+    const reply = await rulesChat("What sizes do you have at Haley Rd?");
+    expect(reply.reply).toMatch(/call/i);
+    expect(reply.reply).toMatch(/99/);
+    expect(reply.reply).not.toMatch(/sample|demo/i);
+    expect(reply.actions.some((action) => action.type === "call")).toBe(true);
+    expect(reply.actions.some((action) => action.type === "link" && "href" in action && String(action.href).includes("/units/haley/"))).toBe(false);
   });
 });
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LocalSchema } from "@/components/LocalSchema";
 import { LocationCards } from "@/components/LocationCards";
 import { BRAND } from "@/config/locations";
-import { getInventory } from "@/lib/inventory";
+import { getInventory, openUnitCounts } from "@/lib/inventory";
 
 export const metadata: Metadata = {
   title: "Storage Locations in Antigonish and Stellarton",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function LocationsPage() {
   const inventory = await getInventory();
-  const counts = Object.fromEntries(inventory.map((l) => [l.location, l.units.length]));
+  const counts = openUnitCounts(inventory);
   return (
     <div className="container-kv py-10 sm:py-16">
       <LocalSchema />

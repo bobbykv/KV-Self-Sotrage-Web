@@ -1,4 +1,4 @@
-import { redact, redactString } from "./redact";
+import { redact, redactString, scrubSecrets } from "./redact";
 
 type Level = "debug" | "info" | "warn" | "error";
 
@@ -26,5 +26,5 @@ export const log = {
 /** Safe, short error text suitable for storing in our DB or showing staff. */
 export function safeErrorMessage(err: unknown, max = 300): string {
   const msg = err instanceof Error ? err.message : String(err);
-  return redactString(msg).slice(0, max);
+  return scrubSecrets(msg).slice(0, max);
 }

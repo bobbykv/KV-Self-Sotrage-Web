@@ -1,6 +1,6 @@
 import "server-only";
 import { BRAND, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
-import { filterGroups, formatSize, fullTypes, groupUnits, isWinterStoragePackage, type SizeCategory } from "../catalog";
+import { filterGroups, filterPublished, formatSize, fullTypes, groupUnits, isWinterStoragePackage, publishedRates, type SizeCategory } from "../catalog";
 import { getFaq, searchFaq } from "../faq";
 import { getInventory } from "../inventory";
 import { captureLead, type LeadInput } from "../leads";
@@ -18,24 +18,34 @@ export async function searchUnits(args: Args) {
   const inv = await getInventory();
   const location = isLocationKey(args.location) ? args.location : undefined;
   const category = CATS.includes(args.size_category as SizeCategory) ? (args.size_category as SizeCategory) : undefined;
-  const groups = groupUnits(inv.flatMap((l) => l.units));
-  const matches = filterGroups(groups, {
+  const inScope = (key: string) => !location || key === location;
+  const bookable = inv.filter((l) => inScope(l.location) && (l.availability === "live" || l.availability === "demo"));
+  const publishedRows = inv.filter((l) => inScope(l.location) && l.availability === "published");
+  const groups = groupUnits(bookable.flatMap((l) => l.units));
+  const filter = {
     location,
     category,
     climate: args.climate_controlled === true ? true : undefined,
     vehicle: args.vehicle_parking === true ? true : category === "parking" ? true : undefined,
     maxRate: typeof args.max_monthly_price === "number" ? args.max_monthly_price : undefined,
-  });
+  };
+  const matches = filterGroups(groups, filter);
+  const published = filterPublished(publishedRates(publishedRows.flatMap((l) => l.priceList)), filter);
   const full = fullTypes(
-    inv.flatMap((l) => l.priceList),
+    bookable.flatMap((l) => l.priceList),
     groups,
   ).filter((p) => !location || p.locationKey === location);
-  const asOf = inv
+  const asOf = bookable
     .map((l) => l.refreshedAt)
     .filter(Boolean)
     .sort()[0];
   return {
     as_of: asOf ?? null,
+    availability: matches.length ? "live" : published.length ? "call_to_confirm" : publishedRows.length || inv.some((l) => inScope(l.location) && l.availability === "none") ? "call_to_confirm" : "none",
+    instruction:
+      matches.length
+        ? null
+        : "Do not invent vacant units or offer a hold link. Quote published prices when present and tell the customer to call (902) 867-3779 to confirm availability.",
     available: matches.slice(0, 8).map((g) => ({
       location: g.locationKey,
       location_name: getLocation(g.locationKey).shortName,
@@ -52,6 +62,16 @@ export async function searchUnits(args: Args) {
       climate_controlled: g.climate,
       vehicle: g.vehicle,
       hold_url: `/units/${g.locationKey}/${g.bestUnitId}`,
+    })),
+    published_rates: published.slice(0, 8).map((p) => ({
+      location: p.locationKey,
+      location_name: getLocation(p.locationKey).shortName,
+      type: p.typeName,
+      size: `${p.widthFt}x${p.lengthFt}`,
+      size_label: formatSize(p.widthFt, p.lengthFt),
+      price: p.fromRate,
+      billing_cycle: isWinterStoragePackage(p.typeName) ? "6-month prepaid package" : "28-day",
+      call_to_confirm: true,
     })),
     total_matches: matches.length,
     currently_full: full.slice(0, 6).map((p) => ({

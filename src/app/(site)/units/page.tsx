@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LeadForm } from "@/components/LeadForm";
 import { PromoBanner } from "@/components/PromoBanner";
-import { UnitGroupCard } from "@/components/UnitCards";
-import { LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
-import { areaRangeFromParams, filterFullTypes, filterGroups, formatSize, fullTypes, groupUnits, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
+import { PublishedRateCard, UnitGroupCard } from "@/components/UnitCards";
+import { BRAND, LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
+import { areaRangeFromParams, filterFullTypes, filterGroups, filterPublished, formatSize, fullTypes, groupUnits, publishedRates, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { listingUnitPhotoUrl } from "@/lib/photos";
@@ -48,22 +48,26 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   const notice = sp.notice;
 
   const [inventory, promos] = await Promise.all([getInventory(), getLivePromotions({ placement: "units", location })]);
-  const groups = groupUnits(inventory.flatMap((l) => l.units));
+  const scoped = inventory.filter((l) => !location || l.location === location);
+  const bookable = scoped.filter((l) => l.availability === "live" || l.availability === "demo");
+  const unconfirmed = scoped.filter((l) => l.availability === "published" || l.availability === "none");
+  const groups = groupUnits(bookable.flatMap((l) => l.units));
   if (!category && !storageType && !range.minArea && !range.maxArea) filter.vehicle = undefined;
   const shown = filterGroups(groups, filter);
   const imageUrls = shown.map((g) => listingUnitPhotoUrl(g));
+  const rates = filterPublished(
+    publishedRates(unconfirmed.filter((l) => l.availability === "published").flatMap((l) => l.priceList)),
+    filter,
+  );
   const full = filterFullTypes(
     fullTypes(
-      inventory.flatMap((l) => l.priceList),
+      bookable.flatMap((l) => l.priceList),
       groups,
     ),
     filter,
   );
-  const oldest = inventory
-    .filter((l) => !location || l.location === location)
-    .map((l) => l.refreshedAt)
-    .sort()[0] ?? null;
-  const anyError = inventory.some((l) => l.lastError && (!location || l.location === location));
+  const oldest = bookable.map((l) => l.refreshedAt).sort()[0] ?? null;
+  const pricesAsOf = unconfirmed.map((l) => l.pricesAsOf).filter((value): value is string => Boolean(value)).sort()[0] ?? null;
 
   return (
     <div className="container-kv py-8 sm:py-12">
@@ -77,11 +81,22 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
       <p className="mt-3 text-sm text-kv-muted">
         {oldest
           ? `Prices and availability last updated: ${updatedLabel(oldest)}. `
-          : "Prices shown are our current published rates. "}
+          : pricesAsOf
+            ? `Published prices as of ${updatedLabel(pricesAsOf)}. `
+            : "Call to confirm availability. "}
         Availability can change. We check your unit again when you start checkout.
-        {anyError && !oldest && " Live availability isn't connected yet — call us to confirm what's open."}
-        {anyError && oldest && " We couldn't update some listings. Please call to confirm."}
       </p>
+      {unconfirmed.length > 0 && (
+        <p className="mt-4 rounded-xl bg-kv-yellow-light p-4 text-kv-navy">
+          <span className="font-extrabold">Call to confirm availability</span>
+          {unconfirmed.length < scoped.length ? ` at ${unconfirmed.map((l) => getLocation(l.location).shortName).join(" and ")}` : ""}.{" "}
+          {rates.length ? "We can show published sizes and prices, and we'll confirm what's open." : "We'll confirm what's open."} Call{" "}
+          <a href={`tel:${BRAND.phoneE164}`} className="font-bold text-kv-red">
+            {BRAND.phone}
+          </a>{" "}
+          or <Link href="/contact" className="font-bold text-kv-red underline">contact us</Link>.
+        </p>
+      )}
 
       {notice && (
         <p className="mt-4 rounded-xl bg-kv-red-50 p-4 font-semibold text-kv-red" role="alert">
@@ -144,10 +159,19 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
             <UnitGroupCard key={g.key} g={g} imageUrl={imageUrls[i]} />
           ))}
         </div>
+      ) : rates.length ? null : unconfirmed.length > 0 && bookable.length === 0 ? (
+        <div className="card mt-8 p-6">
+          <h2 className="text-xl font-extrabold text-kv-navy">Call to confirm availability</h2>
+          <p className="mt-1 text-kv-muted">We don&apos;t have a live list of open units to show. Call {BRAND.phone} or send a message and we&apos;ll check what&apos;s open.</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href={`tel:${BRAND.phoneE164}`} className="btn-primary">Call {BRAND.phone}</a>
+            <Link href="/contact" className="btn-ghost">Contact us</Link>
+          </div>
+        </div>
       ) : (
         <div className="card mt-8 p-6">
           <h2 className="text-xl font-extrabold text-kv-navy">No units match your choices</h2>
-          <p className="mt-1 text-kv-muted">Try another size or location. Call (902) 867-3779 if you need help finding a fit.</p>
+          <p className="mt-1 text-kv-muted">Try another size or location. Call {BRAND.phone} if you need help finding a fit.</p>
           <div className="mt-6">
             <h3 className="font-extrabold text-kv-navy">Want us to let you know?</h3>
             <p className="mt-1 text-sm text-kv-muted">Leave your details and the size you need. We&apos;ll contact you when a matching space opens. Joining the waitlist is free.</p>
@@ -156,6 +180,18 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
             </div>
           </div>
         </div>
+      )}
+
+      {rates.length > 0 && (
+        <section className="mt-8">
+          <h2 className="h2 text-xl sm:text-2xl">Published prices</h2>
+          <p className="mt-1 text-sm text-kv-muted">These are real sizes and published prices. Call to confirm which spaces are open before you plan a move-in.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rates.map((g) => (
+              <PublishedRateCard key={g.key} g={g} />
+            ))}
+          </div>
+        </section>
       )}
 
       {full.length > 0 && (

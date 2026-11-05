@@ -201,6 +201,19 @@ export async function rulesChat(text: string): Promise<ChatReply> {
         actions: available.slice(0, 3).map((u) => ({ type: "link" as const, href: u.hold_url, label: `View ${u.size} · ${u.location_name}` })),
       };
     }
+    const published = (r.published_rates ?? [])
+      .filter((u) => !area || area[2].includes(u.location as LocationKey))
+      .sort((a, b) => Number(b.size === intent.sizeText) - Number(a.size === intent.sizeText));
+    if (published.length || r.availability === "call_to_confirm") {
+      const lines = published.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name}: ${money(u.price)} ${u.billing_cycle === "6-month prepaid package" ? "6-month package" : "/28 days"} + HST`);
+      return {
+        reply: `I can't confirm what's open at ${where} right now. Call ${BRAND.phone} and we'll check availability.${lines.length ? `\n\nPublished prices:\n${lines.join("\n")}` : ""}`,
+        actions: [
+          { type: "call" },
+          { type: "link", href: "/contact", label: "Contact us" },
+        ],
+      };
+    }
     return {
       reply: `No spaces match that request at ${where} at the moment. Compare another size or location, or leave your details for the free waitlist. We'll contact you when a suitable space opens.`,
       actions: [

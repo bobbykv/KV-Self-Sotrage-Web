@@ -9,6 +9,7 @@ export const maxDuration = 120;
  * recommended daily cache clear — plus the Reporting API dashboard job.
  * Not scheduled (Vercel crons are off on the Hobby plan); staff can run the
  * same work from the dashboard. Never runs on the public request path.
+ * Both jobs are awaited, and both no-op while automatic refreshes are paused.
  */
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

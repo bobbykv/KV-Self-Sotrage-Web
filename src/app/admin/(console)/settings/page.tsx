@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { retellChatConfigured } from "@/lib/retell";
+import { automaticRefreshIsPaused } from "@/lib/inventory";
 import { getSettings } from "@/lib/settings";
 import { changePasswordAction, createStaffAction, saveSettingsAction } from "../actions";
 
@@ -23,10 +24,11 @@ function NumberField({ name, label, value, min, max, hint }: { name: string; lab
 
 export default async function AdminSettings() {
   const admin = await requireAdmin();
-  const [s, staff, logs] = await Promise.all([
+  const [s, staff, logs, refreshPaused] = await Promise.all([
     getSettings(),
     db.adminUser.findMany({ orderBy: { createdAt: "asc" }, select: { id: true, email: true, name: true, role: true, lastLoginAt: true, lockedUntil: true } }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
+    automaticRefreshIsPaused(),
   ]);
   const when = (d: Date | null) => (d ? d.toLocaleString("en-CA", { timeZone: "America/Halifax", dateStyle: "medium", timeStyle: "short" }) : "—");
 
@@ -50,6 +52,15 @@ export default async function AdminSettings() {
             <label className="flex items-center gap-2 font-semibold text-kv-navy">
               <input type="checkbox" name="showReviews" defaultChecked={s.showReviews} className="h-5 w-5" /> Show reviews on the website
             </label>
+            <label className="flex items-start gap-2 font-semibold text-kv-navy">
+              <input type="checkbox" name="sitelinkRefreshPaused" defaultChecked={s.sitelinkRefreshPaused} className="mt-1 h-5 w-5" />
+              <span>
+                Pause automatic SiteLink refreshes
+                <span className="mt-1 block text-sm font-normal text-kv-muted">
+                  Page visits never call SiteLink. While this is checked, the dashboard refresh, inventory cron, and nightly reports skip SiteLink too. The one-location probe still runs. Set SITELINK_REFRESH_PAUSED=0 to allow automatic refreshes, or 1 to force this pause. Demo mode ignores it.
+                </span>
+              </span>
+            </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField name="holdMinutes" label="Hold length (minutes)" value={s.holdMinutes} min={5} max={60} />
               <NumberField name="confirmedReservationHours" label="Pay-separately reservation (hours)" value={s.confirmedReservationHours} min={1} max={168} hint="How long a confirmed web reservation stays on the SiteLink waiting list." />
@@ -65,6 +76,8 @@ export default async function AdminSettings() {
             <dd>{env.appTestMode ? "On — live SiteLink, GHL, staff webhooks and Nokē activation are blocked" : "Off"}</dd>
             <dt className="font-semibold">SiteLink</dt>
             <dd>{env.sitelinkMode === "mock" ? "Mock (demo data)" : `Live${env.sitelinkTestMode ? " · test mode" : ""}`}</dd>
+            <dt className="font-semibold">Automatic SiteLink refresh</dt>
+            <dd>{refreshPaused ? "Paused — cron and dashboard refresh will not call SiteLink" : "Allowed when a cron or dashboard refresh runs"}</dd>
             <dt className="font-semibold">Payment mode</dt>
             <dd>{env.PAYMENT_MODE === "passthrough" ? (env.appTestMode ? "Simulated card payments (APP_TEST_MODE)" : "Card pass-through to SiteLink") : "Pay separately (no card on website)"}</dd>
             <dt className="font-semibold">HST rate</dt>

@@ -247,6 +247,7 @@ export async function saveSettingsAction(_prev: State, form: FormData): Promise<
     allUnitsPollMinutes: Number(form.get("allUnitsPollMinutes")),
     priceListPollMinutes: Number(form.get("priceListPollMinutes")),
     confirmedReservationHours: Number(form.get("confirmedReservationHours")),
+    sitelinkRefreshPaused: form.get("sitelinkRefreshPaused") === "on",
   });
   await audit(admin.email, "settings.update", undefined, next);
   return { ok: true, message: "Settings saved." };

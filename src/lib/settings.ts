@@ -16,6 +16,12 @@ export type Settings = {
   chatEnabled: boolean;
   /** When false, hide reviews block, /reviews page link, and reviews nav. */
   showReviews: boolean;
+  /**
+   * When true, cron and the dashboard refresh buttons do not call SiteLink.
+   * The one-location probe ignores this. Page views never call SiteLink either way.
+   * SITELINK_REFRESH_PAUSED overrides this when set.
+   */
+  sitelinkRefreshPaused: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   confirmedReservationHours: 48,
   chatEnabled: true,
   showReviews: false,
+  sitelinkRefreshPaused: true,
 };
 
 const LIMITS: Partial<Record<keyof Settings, [number, number]>> = {
