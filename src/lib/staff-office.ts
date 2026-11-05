@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
+import { quotedStandardRate, standardRateDrift } from "./catalog";
 import { db } from "./db";
 import { env } from "./env";
 import { getDiscountToggles } from "./discount-visibility";
@@ -194,7 +195,7 @@ export async function staffMoveIn(input: StaffBookInput) {
       unitId: unit.unitId,
       needed: input.moveInDate,
       expires,
-      quotedRate: unit.rate,
+      quotedRate: quotedStandardRate(unit),
       comment: concessionId ? `Staff move-in · concession ${concessionId}` : "Staff move-in · standard 28-day billing",
       trackingCode: "staff-move-in",
       concessionId,
@@ -205,6 +206,8 @@ export async function staffMoveIn(input: StaffBookInput) {
       waitingId,
       concessionId,
     });
+    const drift = standardRateDrift(quotedStandardRate(unit), cost.lines);
+    if (drift) log.warn("sitelink rate drift", { location: loc, unitId: unit.unitId, standardRate: quotedStandardRate(unit), detail: drift });
     const method = payMethod === "cash" ? PAY_METHOD_CASH : payMethod === "check" ? PAY_METHOD_CHECK : PAY_METHOD_CREDIT_CARD;
     let card: { typeId: number; number: string; cvv: string; expires: Date; name: string; street: string; postal: string };
     if (method === PAY_METHOD_CREDIT_CARD) {
@@ -265,7 +268,7 @@ export async function staffMoveIn(input: StaffBookInput) {
         lengthFt: unit.lengthFt,
         tenantId,
         waitingId,
-        quotedRate: unit.rate,
+        quotedRate: quotedStandardRate(unit),
         firstName: input.firstName,
         lastName: input.lastName,
         email: input.email.toLowerCase(),

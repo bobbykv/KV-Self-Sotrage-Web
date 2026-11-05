@@ -1,6 +1,6 @@
 import { LocationSwitcher, PageHeader, StatusBadge } from "@/components/admin/LocationSwitcher";
 import { getLocation, isLocationKey, LOCATION_KEYS, type LocationKey } from "@/config/locations";
-import { formatSize, money } from "@/lib/catalog";
+import { formatSize, money, standardRateDrift } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { getDiscountToggles } from "@/lib/discount-visibility";
 import { env } from "@/lib/env";
@@ -59,6 +59,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
         widthFt: unit.widthFt,
         lengthFt: unit.lengthFt,
         rate: unit.rate,
+        standardRate: unit.standardRate,
         unitTypeId: unit.unitTypeId,
       });
     }
@@ -100,6 +101,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
         {holds.length === 0 && <p className="text-sm text-kv-muted">Nothing here.</p>}
         {holds.map((h) => {
           const cost = h.costBreakdown as unknown as MoveInCost | null;
+          const drift = standardRateDrift(Number(h.quotedRate), cost?.lines);
           return (
             <article key={h.id} className="card flex flex-wrap items-start justify-between gap-4 p-4">
               <div>
@@ -107,7 +109,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
                   {h.firstName} {h.lastName} <StatusBadge status={h.status} />
                 </p>
                 <p className="text-sm">
-                  {getLocation(h.locationKey as LocationKey).shortName} · unit {h.unitName} · {formatSize(h.widthFt, h.lengthFt)} {h.unitTypeName} · {money(Number(h.quotedRate))}/28 days
+                  {getLocation(h.locationKey as LocationKey).shortName} · unit {h.unitName} · {formatSize(h.widthFt, h.lengthFt)} {h.unitTypeName} · {money(Number(h.quotedRate))}/month
                 </p>
                 <p className="text-sm text-kv-muted">
                   <a href={`tel:${h.phone}`} className="underline">
@@ -124,6 +126,7 @@ export default async function AdminHolds({ searchParams }: { searchParams: Promi
                   {cost && ` · total ${money(cost.total)} (HST ${money(cost.tax)}${cost.taxSource === "computed" ? ", computed locally — SiteLink returned no tax lines" : ""})`}
                   {h.paymentRef && ` · receipt ${h.paymentRef}`}
                 </p>
+                {drift && <p className="mt-1 text-xs font-semibold text-kv-red">{drift}</p>}
                 {h.lastFailure && <p className="mt-1 text-xs text-kv-red">Last failure: {h.lastFailure} ({h.failureCount}×)</p>}
               </div>
               {h.status === "active" && (

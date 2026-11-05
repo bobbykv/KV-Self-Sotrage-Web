@@ -14,7 +14,7 @@ import { getDiscountToggles } from "@/lib/discount-visibility";
 import { getHold, HOLD_COOKIE, quoteHold, retryCost } from "@/lib/holds";
 import { log } from "@/lib/log";
 import { getSettings } from "@/lib/settings";
-import { discountToggleKey, isMultiPeriodPrepaid, publicPlansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
+import { discountToggleKey, isMoveInDiscount, isMultiPeriodPrepaid, promoOfferLabel, publicPlansForUnit, recurringBillingNote } from "@/lib/sitelink/concessions";
 import { sitelink } from "@/lib/sitelink/client";
 import type { MoveInCost } from "@/lib/sitelink/types";
 import { cancelHold } from "./actions";
@@ -74,7 +74,7 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
   const loc = getLocation(locationKey);
   const eligiblePlans = publicPlansForUnit(planReport.plans, { typeName: hold.unitTypeName, widthFt: hold.widthFt, lengthFt: hold.lengthFt }, locationKey, toggles).map((p) => ({
     concessionId: p.concessionId,
-    name: p.name,
+    name: isMoveInDiscount(p) ? promoOfferLabel(p) : p.name,
     description: p.description,
     prepay: p.prepay,
     prepaidMonths: p.prepaidMonths,
@@ -135,9 +135,9 @@ export default async function Checkout({ params }: { params: Promise<{ holdId: s
               <dd className="font-semibold">{hold.moveInDate.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}</dd>
             </div>
             <div>
-              <dt className="text-kv-muted">{selectedPlan?.prepay ? "Prepaid package" : "28-day rent"}</dt>
+              <dt className="text-kv-muted">{selectedPlan?.prepay ? "Prepaid package" : "Monthly rent"}</dt>
               <dd className="font-semibold">
-                {selectedPlan?.prepay ? selectedPlan.name : `${money(Number(hold.quotedRate))} + HST`}
+                {selectedPlan?.prepay ? selectedPlan.name : `${money(Number(hold.quotedRate))}/month + HST`}
               </dd>
             </div>
             <div>

@@ -53,6 +53,7 @@ vi.mock("@/lib/sitelink/client", () => ({
       return [];
     }),
     allUnits: vi.fn(async () => []),
+    discountPlans: vi.fn(async () => ({ plans: [], source: "sitelink", error: null, winterPlanId: null })),
     dailyReports: vi.fn(async (loc: string) => {
       calls.push(`report:${loc}`);
       return {};

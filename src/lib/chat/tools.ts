@@ -2,6 +2,8 @@ import "server-only";
 import { BRAND, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
 import { filterGroups, filterPublished, formatSize, fullTypes, groupUnits, isWinterStoragePackage, publishedRates, type SizeCategory } from "../catalog";
 import { getFaq, searchFaq } from "../faq";
+import { getPublicDiscountPlans } from "../discount-catalog";
+import { offerForUnit } from "../sitelink/concessions";
 import { getInventory } from "../inventory";
 import { captureLead, type LeadInput } from "../leads";
 import type { AgentChannel } from "../brain";
@@ -13,9 +15,9 @@ type Args = Record<string, unknown>;
 
 const CATS: SizeCategory[] = ["small", "medium", "large", "parking"];
 
-/** Reads ONLY the cached inventory — a chat turn never triggers a SiteLink SOAP call. */
+/** Reads cached inventory. Discount plans may refresh from SiteLink; availability is never called here. */
 export async function searchUnits(args: Args) {
-  const inv = await getInventory();
+  const [inv, discountPlans] = await Promise.all([getInventory(), getPublicDiscountPlans()]);
   const location = isLocationKey(args.location) ? args.location : undefined;
   const category = CATS.includes(args.size_category as SizeCategory) ? (args.size_category as SizeCategory) : undefined;
   const inScope = (key: string) => !location || key === location;
@@ -53,12 +55,13 @@ export async function searchUnits(args: Args) {
       size: `${g.widthFt}x${g.lengthFt}`,
       size_label: formatSize(g.widthFt, g.lengthFt),
       monthly_price: isWinterStoragePackage(g.typeName) ? null : g.fromRate,
-      billing_cycle: isWinterStoragePackage(g.typeName) ? "6-month prepaid package" : "28-day",
+      billing_cycle: isWinterStoragePackage(g.typeName) ? "6-month prepaid package" : "month",
       package_price: isWinterStoragePackage(g.typeName) ? g.fromRate : null,
       pricing_note: isWinterStoragePackage(g.typeName)
         ? `$${g.fromRate} prepaid 6-month winter outdoor storage package for vehicles, RVs and boats at Exit 31 only (6 billing periods of 28 days, not one period). 14% Nova Scotia HST is itemized before payment. After the prepaid period the card on file is billed every 28 days.`
         : null,
       available_count: g.available,
+      offer: offerForUnit(discountPlans[g.locationKey] ?? [], g),
       climate_controlled: g.climate,
       vehicle: g.vehicle,
       hold_url: `/units/${g.locationKey}/${g.bestUnitId}`,
@@ -70,7 +73,7 @@ export async function searchUnits(args: Args) {
       size: `${p.widthFt}x${p.lengthFt}`,
       size_label: formatSize(p.widthFt, p.lengthFt),
       price: p.fromRate,
-      billing_cycle: isWinterStoragePackage(p.typeName) ? "6-month prepaid package" : "28-day",
+      billing_cycle: isWinterStoragePackage(p.typeName) ? "6-month prepaid package" : "month",
       call_to_confirm: true,
     })),
     total_matches: matches.length,

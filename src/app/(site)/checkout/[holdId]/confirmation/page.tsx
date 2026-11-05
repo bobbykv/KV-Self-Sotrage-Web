@@ -72,8 +72,8 @@ export default async function Confirmation({ params }: { params: Promise<{ holdI
             <dd className="font-semibold">{moveInDate}</dd>
           </div>
           <div>
-            <dt className="text-kv-muted">{prepaid ? "Prepaid package" : "28-day rent"}</dt>
-            <dd className="font-semibold">{prepaid ? "6 billing periods" : `${money(Number(hold.quotedRate))} + HST`}</dd>
+            <dt className="text-kv-muted">{prepaid ? "Prepaid package" : "Monthly rent"}</dt>
+            <dd className="font-semibold">{prepaid ? "6 billing periods" : `${money(Number(hold.quotedRate))}/month + HST`}</dd>
           </div>
           {!movedIn && (
             <div>

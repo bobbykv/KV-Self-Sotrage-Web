@@ -4,9 +4,10 @@ import "server-only";
  * Returns DataSets shaped like the real API so the mappers and every flow
  * above them run unchanged.
  *
- * Exit 31 (hwy4) availability and 28-day rates are the verified fallback
+ * Exit 31 (hwy4) standard monthly rates are the verified fallback
  * while the Corporate Control Center permission toggle is still off:
  * 5×10 at $98 (4 available), 10×10 at $140 (9 available), 10×15 at $177 (4 available).
+ * The simulator sets dcWebRate equal to dcStdRate, so checkout matches the public price.
  * Haley includes climate-controlled units and no vehicle parking. Stellarton
  * is drive-up units with Nokē smart entry only. Outdoor vehicle, RV and boat
  * storage, including the $399 6-month winter outdoor storage package, is only at Exit 31.
@@ -19,7 +20,7 @@ import "server-only";
  * Simulator cards: 4242…4242 approve · 4000…0002 decline · 4000…0119 timeout
  */
 import type { LocationKey } from "@/config/locations";
-import { addBillingDays, BILLING_PERIOD_DAYS, MOCK_WINTER_CONCESSION_ID, WINTER_PLAN_DESCRIPTION, WINTER_PLAN_NAME } from "./concessions";
+import { addBillingDays, BILLING_PERIOD_DAYS, MOCK_FIRST_MONTH_CONCESSION_ID, MOCK_FIRST_MONTH_PERCENT, MOCK_WINTER_CONCESSION_ID, WINTER_PLAN_DESCRIPTION, WINTER_PLAN_NAME } from "./concessions";
 import type { PriceListEntry, Unit } from "./types";
 import { mapUnit } from "./mappers";
 import { loadMockPayload, saveMockPayload } from "./mock-store";
@@ -293,12 +294,42 @@ function applyMockPayment(st: MockState, loc: LocationKey, args: Args): DataSet 
   return { Receipts: [{ ReceiptID: String(id) }], RT: [ok(id)] };
 }
 
-function discountPlansFor(st: MockState, loc: LocationKey): DataSet {
-  if (loc !== "hwy4") return { ConcessionPlans: [], ConcessionUnitTypes: [], RT: [ok()] };
-  const unit = st.units.hwy4.find((u) => /winter storage/i.test(u.sTypeName));
+function firstMonthPlan(): Row {
   return {
-    ConcessionPlans: [
-      {
+    ConcessionID: String(MOCK_FIRST_MONTH_CONCESSION_ID),
+    SiteID: "1",
+    QTTouchDiscPlanID: "0",
+    iConcessionGlobalNum: "2",
+    sPlanName: "30% off first month",
+    sDescription: "30% off the first month. The standard rate applies after that.",
+    sComment: "",
+    iShowOn: "1",
+    bNeverExpires: "true",
+    iExpirMonths: "0",
+    bPrepay: "false",
+    bOnPmt: "false",
+    bManualCredit: "false",
+    iPrePaidMonths: "0",
+    iInMonth: "1",
+    iAmtType: "1",
+    dcChgAmt: "0",
+    dcFixedDiscount: "0",
+    dcPCDiscount: String(MOCK_FIRST_MONTH_PERCENT),
+    bRound: "false",
+    dcRoundTo: "0",
+    bForAllUnits: "true",
+    dDisabled: "",
+    bApplyAtMoveIn: "true",
+    bProrateAtMoveIn: "false",
+  };
+}
+
+function discountPlansFor(st: MockState, loc: LocationKey): DataSet {
+  const plans = [firstMonthPlan()];
+  const unitTypes: Row[] = [];
+  if (loc === "hwy4") {
+    const unit = st.units.hwy4.find((u) => /winter storage/i.test(u.sTypeName));
+    plans.push({
         ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
         SiteID: "1",
         QTTouchDiscPlanID: "0",
@@ -325,20 +356,17 @@ function discountPlansFor(st: MockState, loc: LocationKey): DataSet {
         bApplyAtMoveIn: "true",
         bProrateAtMoveIn: "false",
         dcPrice: "399.00",
-      },
-    ],
-    ConcessionUnitTypes: [
-      {
-        ConcessionUnitTypeID: "1",
-        ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
-        UnitTypeID: unit?.UnitTypeID ?? "0",
-        dcWidth: "12",
-        dcLength: "40",
-        sTypeName: unit?.sTypeName ?? "Outdoor Vehicle, RV & Boat Winter Storage",
-      },
-    ],
-    RT: [ok()],
-  };
+      });
+    unitTypes.push({
+      ConcessionUnitTypeID: "1",
+      ConcessionID: String(MOCK_WINTER_CONCESSION_ID),
+      UnitTypeID: unit?.UnitTypeID ?? "0",
+      dcWidth: "12",
+      dcLength: "40",
+      sTypeName: unit?.sTypeName ?? "Outdoor Vehicle, RV & Boat Winter Storage",
+    });
+  }
+  return { ConcessionPlans: plans, ConcessionUnitTypes: unitTypes, RT: [ok()] };
 }
 
 function moveInCostResult(st: MockState, loc: LocationKey, args: Args): DataSet {
@@ -347,8 +375,9 @@ function moveInCostResult(st: MockState, loc: LocationKey, args: Args): DataSet 
   const start = s(args.dMoveInDate) || new Date().toISOString();
   const concession = Number(args.ConcessionPlanID);
   const none = !concession || concession === -999;
-  if (!none && concession !== MOCK_WINTER_CONCESSION_ID) return fail("Invalid concession plan", -2);
-  if (!none) {
+  const known = concession === MOCK_WINTER_CONCESSION_ID || concession === MOCK_FIRST_MONTH_CONCESSION_ID;
+  if (!none && !known) return fail("Invalid concession plan", -2);
+  if (concession === MOCK_WINTER_CONCESSION_ID) {
     if (loc !== "hwy4" || !/winter storage/i.test(unit.sTypeName)) return fail("Invalid concession plan", -2);
     const rent = 399;
     const tax = (rent * 0.14).toFixed(2);
@@ -370,18 +399,20 @@ function moveInCostResult(st: MockState, loc: LocationKey, args: Args): DataSet 
       RT: [ok()],
     };
   }
-  const rent = Number(unit.dcWebRate);
+  const rent = Number(unit.dcStdRate) || Number(unit.dcWebRate);
+  const discount = concession === MOCK_FIRST_MONTH_CONCESSION_ID ? Math.round(rent * MOCK_FIRST_MONTH_PERCENT) / 100 : 0;
+  const taxable = rent - discount;
   return {
     Table: [
       {
-        ChargeDescription: "Rent (28-day period)",
+        ChargeDescription: "Rent",
         ChargeAmount: rent.toFixed(2),
-        dcTax1: (rent * 0.14).toFixed(2),
+        dcTax1: (taxable * 0.14).toFixed(2),
         dcTax2: "0",
-        dcDiscount: "0",
+        dcDiscount: discount ? discount.toFixed(2) : "0",
         StartDate: start,
         EndDate: addBillingDays(start, BILLING_PERIOD_DAYS),
-        ConcessionID: "-999",
+        ConcessionID: none ? "-999" : String(concession),
       },
       { ChargeDescription: "Administrative fee", ChargeAmount: "20.00", dcTax1: "2.80", dcTax2: "0", dcDiscount: "0" },
     ],

@@ -7,6 +7,8 @@ import { PublishedRateCard, UnitGroupCard } from "@/components/UnitCards";
 import { LOCATIONS } from "@/config/locations";
 import { SEO_PAGES } from "@/content/seo-pages";
 import { groupUnits, publishedRates } from "@/lib/catalog";
+import { getPublicDiscountPlans } from "@/lib/discount-catalog";
+import { offerForUnit } from "@/lib/sitelink/concessions";
 import { getInventory } from "@/lib/inventory";
 
 type Params = { seo: string };
@@ -27,7 +29,7 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
   const { seo } = await params;
   const page = SEO_PAGES.find((p) => p.slug === seo);
   if (!page) notFound();
-  const inventory = await getInventory();
+  const [inventory, discountPlans] = await Promise.all([getInventory(), getPublicDiscountPlans()]);
   const scoped = inventory.filter((l) => page.locations.includes(l.location));
   const groups = groupUnits(scoped.filter((l) => l.availability === "live" || l.availability === "demo").flatMap((l) => l.units)).slice(0, 6);
   const rates = publishedRates(scoped.filter((l) => l.availability === "published").flatMap((l) => l.priceList)).slice(0, 6);
@@ -92,9 +94,9 @@ export default async function SeoLanding({ params }: { params: Promise<Params> }
           )}
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((g) => (
-              <UnitGroupCard key={g.key} g={g} />
+              <UnitGroupCard key={g.key} g={g} offer={offerForUnit(discountPlans[g.locationKey] ?? [], g)} />
             ))}
-            {groups.length === 0 && rates.map((g) => <PublishedRateCard key={g.key} g={g} />)}
+            {groups.length === 0 && rates.map((g) => <PublishedRateCard key={g.key} g={g} offer={offerForUnit(discountPlans[g.locationKey] ?? [], g)} />)}
           </div>
         </section>
       )}

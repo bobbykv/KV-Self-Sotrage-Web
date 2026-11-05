@@ -3,15 +3,17 @@ import Link from "next/link";
 import { LeadForm } from "@/components/LeadForm";
 import { PromoBanner } from "@/components/PromoBanner";
 import { PublishedRateCard, UnitGroupCard } from "@/components/UnitCards";
-import { BRAND, LOCATIONS, getLocation, isLocationKey } from "@/config/locations";
+import { BRAND, LOCATIONS, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
 import { areaRangeFromParams, filterFullTypes, filterGroups, filterPublished, formatSize, fullTypes, groupUnits, publishedRates, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
+import { getPublicDiscountPlans } from "@/lib/discount-catalog";
+import { offerForUnit } from "@/lib/sitelink/concessions";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { listingUnitPhotoUrl } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Storage Units & Prices in Antigonish and Stellarton",
-  description: "Compare storage sizes and 28-day prices at KV Self Storage. Choose your location and check the full total, including HST, at checkout.",
+  description: "Compare storage sizes and monthly prices at KV Self Storage. Choose your location and check the full total, including HST, at checkout.",
 };
 
 const CATS = Object.keys(SIZE_LABELS) as SizeCategory[];
@@ -47,7 +49,9 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
   };
   const notice = sp.notice;
 
-  const [inventory, promos] = await Promise.all([getInventory(), getLivePromotions({ placement: "units", location })]);
+  const [inventory, promos, discountPlans] = await Promise.all([getInventory(), getLivePromotions({ placement: "units", location }), getPublicDiscountPlans()]);
+  const offerFor = (unit: { locationKey: LocationKey; typeName: string; widthFt: number; lengthFt: number; unitTypeId?: number }) =>
+    offerForUnit(discountPlans[unit.locationKey] ?? [], unit);
   const scoped = inventory.filter((l) => !location || l.location === location);
   const bookable = scoped.filter((l) => l.availability === "live" || l.availability === "demo");
   const unconfirmed = scoped.filter((l) => l.availability === "published" || l.availability === "none");
@@ -73,7 +77,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
     <div className="container-kv py-8 sm:py-12">
       <h1 className="h1">{location ? `Storage units at ${getLocation(location).shortName}` : "Storage units and prices in Antigonish and Stellarton"}</h1>
       <p className="mt-3 max-w-2xl text-kv-muted">
-        Pick your location. Compare sizes and 28-day rent. Checkout shows fees and HST before you pay.{" "}
+        Pick your location. Compare sizes and monthly rent. Checkout shows fees and HST before you pay.{" "}
         <Link href="/size-finder" className="font-semibold text-kv-red underline">
           Not sure what size? Try the size finder.
         </Link>
@@ -156,7 +160,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
       {shown.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((g, i) => (
-            <UnitGroupCard key={g.key} g={g} imageUrl={imageUrls[i]} />
+            <UnitGroupCard key={g.key} g={g} imageUrl={imageUrls[i]} offer={offerFor(g)} />
           ))}
         </div>
       ) : rates.length ? null : unconfirmed.length > 0 && bookable.length === 0 ? (
@@ -188,7 +192,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
           <p className="mt-1 text-sm text-kv-muted">These are real sizes and published prices. Call to confirm which spaces are open before you plan a move-in.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rates.map((g) => (
-              <PublishedRateCard key={g.key} g={g} />
+              <PublishedRateCard key={g.key} g={g} offer={offerFor(g)} />
             ))}
           </div>
         </section>

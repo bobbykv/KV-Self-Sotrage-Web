@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BRAND, getLocation } from "@/config/locations";
 import { formatSize, isWinterStoragePackage, money, type PublishedRate, type UnitGroup } from "@/lib/catalog";
+import { rateSuffix } from "@/lib/sitelink/concessions";
 
 export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle" | "typeName"> }) {
   const tags = [
@@ -22,7 +23,7 @@ export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "
   );
 }
 
-export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string }) {
+export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?: string; offer?: string | null }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
@@ -52,7 +53,8 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "6-month package + HST" : "/28 days + HST"}</p>
+          <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
+          {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}
         </div>
       </div>
       <FeatureTags g={g} />
@@ -67,7 +69,7 @@ export function UnitGroupCard({ g, imageUrl }: { g: UnitGroup; imageUrl?: string
 }
 
 /** Published size and price when live availability did not load. No hold link. */
-export function PublishedRateCard({ g }: { g: PublishedRate }) {
+export function PublishedRateCard({ g, offer }: { g: PublishedRate; offer?: string | null }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
@@ -85,7 +87,8 @@ export function PublishedRateCard({ g }: { g: PublishedRate }) {
         </div>
         <div className="text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
-          <p className="text-xs text-kv-muted">{isWinterStoragePackage(g.typeName) ? "6-month package + HST" : "/28 days + HST"}</p>
+          <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
+          {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}
         </div>
       </div>
       <FeatureTags g={g} />

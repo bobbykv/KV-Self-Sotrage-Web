@@ -115,6 +115,12 @@ units only (5×10, 10×10, 10×15, 10×20).
 
 `/admin/discounts` stores an On/Off row per location and ConcessionID in `DiscountPlanToggle`. A plan with no row is On when SiteLink has it web-enabled (`bDisabled` is false and `iShowOn` is not 2) and Off when it is payments-only or disabled. Checkout, quotes, and payment only charge a plan that is On and matches the unit. Turning a plan Off blocks it even if `DiscountPlansRetrieve` fails.
 
+## Public prices
+
+The number on the public site is `dcStdRate` (standard rate), shown per month, with no conversion. Reservations and move-ins send that same number as `dcQuotedRate`. `dcWebRate` is still stored on the unit as `rate` and is not quoted. The amount due is SiteLink's move-in total. If the rent line in that total is not the standard rate (after a separate discount line), a warning is written to the log and shown on the staff holds page. The customer is not shown that warning.
+
+SiteLink does not give this integration a separate promotions catalog. The only promo data is `DiscountPlansRetrieve` (concession plans: percent off, fixed amount off, or a prepaid price, plus which units they apply to). `iPromoGlobalNum` is only an id we would send on a move-in quote; nothing in the API lists those ids, so it stays unset (`-999`). An active move-in concession is selected when a hold starts, priced from the standard rate, and shown on the unit card before reserve (for example `$140/month` and `30% off first month`). Prepaid packages such as the Exit 31 winter plan are still chosen for those units instead of a percent-off plan. The website's own Promotions screen is a banner, not a SiteLink discount.
+
 ## When live availability fails
 
 The public site never substitutes the sample catalog in live mode. If

@@ -193,8 +193,8 @@ export async function rulesChat(text: string): Promise<ChatReply> {
     const where = intent.location ? LOCATIONS.find((l) => l.key === intent.location)!.shortName : area ? `our ${area[0]} locations` : "our locations";
     if (available.length) {
       const lines = available.slice(0, 4).map((u) => {
-        const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/28 days + HST`;
-        return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price} (${u.available_count} listed)`;
+        const price = u.pricing_note ?? `${money(u.monthly_price ?? 0)}/month + HST`;
+        return `• ${u.size_label} ${u.type} at ${u.location_name}: ${price}${u.offer ? ` — ${u.offer}` : ""} (${u.available_count} listed)`;
       });
       return {
         reply: `Here are some spaces to compare at ${where}:\n${lines.join("\n")}\n\nChoose one to review the details and your move-in total. Starting checkout holds the space for the time shown there.${r.as_of ? ` (Updated ${timeAgo(r.as_of)}.)` : ""}`,
@@ -205,7 +205,7 @@ export async function rulesChat(text: string): Promise<ChatReply> {
       .filter((u) => !area || area[2].includes(u.location as LocationKey))
       .sort((a, b) => Number(b.size === intent.sizeText) - Number(a.size === intent.sizeText));
     if (published.length || r.availability === "call_to_confirm") {
-      const lines = published.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name}: ${money(u.price)} ${u.billing_cycle === "6-month prepaid package" ? "6-month package" : "/28 days"} + HST`);
+      const lines = published.slice(0, 4).map((u) => `• ${u.size_label} ${u.type} at ${u.location_name}: ${money(u.price)} ${u.billing_cycle === "6-month prepaid package" ? "6-month package" : "/month"} + HST`);
       return {
         reply: `I can't confirm what's open at ${where} right now. Call ${BRAND.phone} and we'll check availability.${lines.length ? `\n\nPublished prices:\n${lines.join("\n")}` : ""}`,
         actions: [

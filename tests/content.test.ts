@@ -34,7 +34,11 @@ function unit(p: Partial<Unit>): Unit {
 
 describe("unit catalog", () => {
   it("groups identical units and picks the cheapest to hold", () => {
-    const groups = groupUnits([unit({ unitId: 1, rate: 120 }), unit({ unitId: 2, rate: 95 }), unit({ unitId: 3, widthFt: 5, lengthFt: 5, rate: 40 })]);
+    const groups = groupUnits([
+      unit({ unitId: 1, rate: 120, standardRate: 120 }),
+      unit({ unitId: 2, rate: 95, standardRate: 95 }),
+      unit({ unitId: 3, widthFt: 5, lengthFt: 5, rate: 40, standardRate: 40 }),
+    ]);
     expect(groups).toHaveLength(2);
     expect(groups[0]).toMatchObject({ widthFt: 5, available: 1 });
     expect(groups[1]).toMatchObject({ available: 2, fromRate: 95, bestUnitId: 2 });

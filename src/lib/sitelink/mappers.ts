@@ -37,6 +37,9 @@ export function mapUnit(locationKey: LocationKey, r: Row): Unit {
     inside: bool(r, "bInside"),
     alarm: bool(r, "bAlarm"),
     vehicle: VEHICLE_RE.test(typeName) || bool(r, "bVehicle", "bParking"),
+    /**
+     * dcWebRate when SiteLink sends one. Reservations quote standardRate, not this.
+     */
     rate: webRate && webRate > 0 ? webRate : standardRate,
     standardRate,
     rented: bool(r, "bRented"),
