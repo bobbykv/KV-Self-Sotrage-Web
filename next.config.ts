@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       { source: "/(admin|portal|checkout)/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },
+      { source: "/account-password", headers: [{ key: "Cache-Control", value: "no-store" }, { key: "Referrer-Policy", value: "no-referrer" }] },
     ];
   },
 };
