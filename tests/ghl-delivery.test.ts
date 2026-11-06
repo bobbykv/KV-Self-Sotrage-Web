@@ -26,20 +26,25 @@ describe("website lead delivery to GoHighLevel", () => {
     const fetch = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ contact: { id: "crm-contact" } }), { status: 201 }))
       .mockResolvedValueOnce(new Response("{}", { status: 201 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 201 }))
       .mockResolvedValueOnce(new Response("{}", { status: 201 }));
     const saved = await sendLeadToGhl("audit-lead");
     expect(saved.ghlStatus).toBe("sent");
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
     const contact = JSON.parse(String(fetch.mock.calls[0][1]?.body));
-    expect(contact.tags).toContain("storage lead");
-    expect(contact.tags).toContain("reason:waitlist");
-    expect(String(fetch.mock.calls[1][1]?.body)).toContain("Website lead reference: audit-lead");
-    expect(JSON.parse(String(fetch.mock.calls[2][1]?.body))).toMatchObject({ contactId: "crm-contact", status: "open" });
+    expect(contact.tags).toBeUndefined();
+    expect(fetch.mock.calls[1][0]).toBe("https://services.leadconnectorhq.com/contacts/crm-contact/tags");
+    const added = JSON.parse(String(fetch.mock.calls[1][1]?.body));
+    expect(added.tags).toContain("storage lead");
+    expect(added.tags).toContain("reason:waitlist");
+    expect(String(fetch.mock.calls[2][1]?.body)).toContain("Website lead reference: audit-lead");
+    expect(JSON.parse(String(fetch.mock.calls[3][1]?.body))).toMatchObject({ contactId: "crm-contact", status: "open" });
     expect(state.config.appTestMode).toBe(true);
   });
-  it.each(["notes", "opportunity"])("retains a failed lead for retry if %s delivery is rejected", async (step) => {
+  it.each(["tags", "notes", "opportunity"])("retains a failed lead for retry if %s delivery is rejected", async (step) => {
     const fetch = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ contact: { id: "crm-contact" } }), { status: 201 }));
+    if (step !== "tags") fetch.mockResolvedValueOnce(new Response("{}", { status: 201 }));
     if (step === "opportunity") fetch.mockResolvedValueOnce(new Response("{}", { status: 201 }));
     fetch.mockResolvedValueOnce(new Response("{}", { status: 403 }));
     const saved = await sendLeadToGhl("audit-lead");

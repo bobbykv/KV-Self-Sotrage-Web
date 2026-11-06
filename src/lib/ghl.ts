@@ -30,6 +30,18 @@ export function ghlOpportunityName(payload: {
   return `${payload.name} — ${what} (${where})`;
 }
 
+/** Append tags; supplying tags on contact upsert would replace existing tags. */
+export async function addGhlContactTags(contactId: string, tags: string[]): Promise<void> {
+  if (!env.GHL_API_KEY) return;
+  const res = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.GHL_API_KEY}`, Version: "2021-07-28", "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ tags }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`GHL contact tags HTTP ${res.status}`);
+}
+
 /**
  * Storage → New Inquiry opportunity. Callers decide whether a failure is
  * optional; website leads remain retryable until their full delivery succeeds.

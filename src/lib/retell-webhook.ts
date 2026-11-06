@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { LOCATION_KEYS, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
 import { type LeadInput, sendLeadToGhl } from "./leads";
 import { env } from "./env";
-import { postGhlStorageOpportunity } from "./ghl";
+import { addGhlContactTags, postGhlStorageOpportunity } from "./ghl";
 import { db } from "./db";
 import { log, safeErrorMessage } from "./log";
 
@@ -322,7 +322,6 @@ async function upsertGhlContact(lead: LeadInput) {
       email: lead.email || undefined,
       phone: lead.phone || undefined,
       source: `website (${lead.channel})`,
-      tags: ["kv-self-storage", "storage lead", `channel:${lead.channel}`, `reason:${lead.reason}`, "retell"],
     }),
     signal: AbortSignal.timeout(10000),
   });
@@ -330,6 +329,7 @@ async function upsertGhlContact(lead: LeadInput) {
   const body = (await res.json()) as { contact?: { id?: string } };
   const contactId = body.contact?.id;
   if (!contactId) return;
+  await addGhlContactTags(contactId, ["kv-self-storage", "storage lead", `channel:${lead.channel}`, `reason:${lead.reason}`, "retell"]);
   if (lead.notes) {
     await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
       method: "POST",

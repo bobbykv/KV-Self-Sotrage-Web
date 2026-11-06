@@ -3,7 +3,7 @@ import { z } from "zod";
 import { LOCATION_KEYS, getLocation, isLocationKey } from "@/config/locations";
 import { db } from "./db";
 import { env } from "./env";
-import { postGhlStorageOpportunity } from "./ghl";
+import { addGhlContactTags, postGhlStorageOpportunity } from "./ghl";
 import { log, safeErrorMessage } from "./log";
 import { notifyStaff } from "./notify";
 
@@ -74,7 +74,6 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
         email: payload.email,
         phone: payload.phone,
         source: `website (${payload.channel})`,
-        tags: payload.tags,
       }),
       signal: AbortSignal.timeout(10000),
     });
@@ -82,6 +81,7 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
     const body = (await res.json()) as { contact?: { id?: string } };
     const contactId = body.contact?.id;
     if (!contactId) throw new Error("GHL contact upsert returned no contact ID");
+    await addGhlContactTags(contactId, payload.tags);
     if (contactId) {
       const note = [
         `Website lead reference: ${payload.leadId}`,
