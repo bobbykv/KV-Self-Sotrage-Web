@@ -6,6 +6,7 @@ import {
   SIM_CARD_DECLINE,
   SIM_CARD_TIMEOUT,
   initMockState,
+  upgradeMockCatalog,
   invokeMock,
   resetMockMemory,
 } from "@/lib/sitelink/mock";
@@ -86,6 +87,27 @@ describe("fallback inventory", () => {
     expect(stel.every((u) => /nokē smart entry/i.test(u.description))).toBe(true);
     const stelSizes = stel.map((u) => `${u.widthFt}x${u.lengthFt}`);
     expect(new Set(stelSizes)).toEqual(new Set(["5x10", "10x10", "10x15", "10x20"]));
+  });
+});
+
+describe("persisted simulator catalogue upgrades", () => {
+  it("adds missing climate and vehicle samples without resetting previous test activity", () => {
+    const old = initMockState();
+    delete old.catalogFixtureVersion;
+    old.units.haley = old.units.haley.filter((u) => u.bClimate !== "true");
+    old.units.hwy4 = old.units.hwy4.filter((u) => !/winter|vehicle/i.test(u.sTypeName));
+    old.ledgers.haley[0].dcChargeBalance = 0;
+    old.ledgers.haley[0].dcPastDue = 0;
+    const before = structuredClone({ tenants: old.tenants, ledgers: old.ledgers, reservations: old.reservations });
+    const ids = old.units.hwy4.map((u) => u.UnitID);
+    const upgraded = upgradeMockCatalog(old);
+    expect(upgraded.units.haley.some((u) => u.bClimate === "true")).toBe(true);
+    expect(upgraded.units.hwy4.some((u) => /winter/i.test(u.sTypeName))).toBe(true);
+    expect(upgraded.units.hwy4.filter((u) => ids.includes(u.UnitID)).map((u) => u.UnitID)).toEqual(ids);
+    expect({ tenants: upgraded.tenants, ledgers: upgraded.ledgers, reservations: upgraded.reservations }).toEqual(before);
+    const count = Object.values(upgraded.units).flat().length;
+    expect(new Set(Object.values(upgraded.units).flat().map((u) => u.UnitID)).size).toBe(count);
+    expect(Object.values(upgradeMockCatalog(upgraded).units).flat()).toHaveLength(count);
   });
 });
 

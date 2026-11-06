@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { UnitGroupCard } from "@/components/UnitCards";
+import { groupUnits } from "@/lib/catalog";
+import { staticFacilityCoverUrl } from "@/lib/photos";
 import { AmenityList } from "@/components/LocationCards";
 import { BRAND, formatOfficeHours, fullAddress, getLocation, isLocationKey, LOCATIONS } from "@/config/locations";
 import { getInventory } from "@/lib/inventory";
@@ -37,6 +40,16 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
   const gallery = photos.length ? photos : [{ id: "stock", url: "/photos/hero.jpg", altText: `Storage at ${loc.shortName}`, caption: null as string | null, isCover: true }];
 
+  const availableGroups = groupUnits(row?.units ?? []).slice(0, 3);
+  const map = (
+    <section className="min-w-0">
+      <h2 className="h2 text-xl sm:text-2xl">Map</h2>
+      <div className="mt-4 overflow-hidden rounded-3xl border border-kv-line bg-kv-navy-50">
+        <iframe title={`Map of ${loc.shortName}`} src={mapSrc} className="aspect-[4/3] w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+      </div>
+    </section>
+  );
+
   return (
     <div className="container-kv py-10 sm:py-16">
       <p className="eyebrow">Locations</p>
@@ -47,24 +60,26 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
         {loc.landmark ? ` · ${loc.landmark}` : ""}
       </p>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {gallery.map((p) => (
-          <figure key={p.id} className="overflow-hidden rounded-3xl">
-            <div className="relative aspect-[4/3]">
+      <div className={`mt-8 grid gap-6 ${gallery.length === 1 ? "lg:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+        {gallery.map((p, i) => (
+          <figure key={p.id} className="m-0 min-w-0">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-kv-navy-50">
               <Image
                 src={p.url}
                 alt={p.altText || `Storage at ${loc.shortName}`}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                priority={i === 0}
+                sizes={gallery.length === 1 ? "(max-width: 1024px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
                 className="object-cover"
               />
             </div>
             {p.caption && <figcaption className="mt-2 text-sm text-kv-muted">{p.caption}</figcaption>}
           </figure>
         ))}
+        {gallery.length === 1 && map}
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+      <div className={`mt-10 grid gap-8 ${gallery.length > 1 ? "lg:grid-cols-2" : ""}`}>
         <section>
           <h2 className="h2 text-xl sm:text-2xl">Hours &amp; access</h2>
           <dl className="mt-4 space-y-3 text-sm">
@@ -111,20 +126,17 @@ export default async function LocationDetailPage({ params }: { params: Promise<P
           </div>
         </section>
 
-        <section>
-          <h2 className="h2 text-xl sm:text-2xl">Map</h2>
-          <div className="mt-4 overflow-hidden rounded-3xl border border-kv-line bg-kv-navy-50">
-            <iframe
-              title={`Map of ${loc.shortName}`}
-              src={mapSrc}
-              className="aspect-[4/3] w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-            />
-          </div>
-        </section>
+        {gallery.length > 1 && map}
       </div>
+      {availableGroups.length > 0 && (
+        <section className="mt-12">
+          <h2 className="h2">Available units at {loc.shortName}</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {availableGroups.map((g) => <UnitGroupCard key={g.key} g={g} imageUrl={staticFacilityCoverUrl(slug)} />)}
+          </div>
+          <Link href={`/units?location=${slug}`} className="btn-ghost mt-6">See all units &amp; prices</Link>
+        </section>
+      )}
     </div>
   );
 }

@@ -60,13 +60,16 @@ export default async function PortalDashboard() {
     take: 20,
   });
 
-  const demoHistory =
-    env.appTestMode || env.sitelinkMode === "mock"
-      ? [
-          { id: "demo-1", createdAt: new Date(Date.now() - 40 * 86_400_000), description: "Monthly rent (demo)", amount: 95, paymentRef: "DEMO-001", periodLabel: "Previous period" },
-          { id: "demo-2", createdAt: new Date(Date.now() - 70 * 86_400_000), description: "Monthly rent (demo)", amount: 95, paymentRef: "DEMO-002", periodLabel: "Earlier period" },
-        ]
-      : [];
+  const demoHistory = (env.appTestMode || env.sitelinkMode === "mock")
+    ? units.filter((u) => (u.locationKey === "haley" && u.ledgerId === 9001) || (u.locationKey === "stellarton" && u.ledgerId === 9101)).flatMap((u) => [40, 70].map((days, i) => ({
+        id: `demo-${u.locationKey}-${i}`,
+        createdAt: new Date(Date.now() - days * 86_400_000),
+        description: `Sample rent incl. HST — ${getLocation(u.locationKey).shortName} ${u.unitName}`,
+        amount: Math.round(u.rent * (1 + env.HST_RATE) * 100) / 100,
+        paymentRef: `SAMPLE-${u.ledgerId}-${i + 1}`,
+        periodLabel: "Illustrative history only",
+      })))
+    : [];
 
   const history = [
     ...receipts.map((r) => ({

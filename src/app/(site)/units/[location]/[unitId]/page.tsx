@@ -71,8 +71,8 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
       </Link>
       <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_420px]">
         <div>
-          <div className="overflow-hidden rounded-3xl">
-            <Image src={photoUrl} alt={`${sizeLabel} ${noun} at ${loc.shortName}`} width={929} height={622} className="aspect-[16/9] w-full object-cover" />
+          <div className="overflow-hidden rounded-3xl bg-kv-navy-50">
+            <Image src={photoUrl} alt={`${sizeLabel} ${noun} at ${loc.shortName}`} width={929} height={622} priority sizes="(max-width: 1024px) 100vw, 66vw" className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="h1 mt-6">
             {`${sizeLabel} ${noun} at ${loc.shortName}`}

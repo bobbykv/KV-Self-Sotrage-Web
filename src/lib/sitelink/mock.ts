@@ -64,7 +64,10 @@ type MockLedger = {
   autopay: boolean;
 };
 
+const CATALOG_FIXTURE_VERSION = 2;
+
 export type MockState = {
+  catalogFixtureVersion?: number;
   units: Record<LocationKey, MockUnit[]>;
   tenants: Record<LocationKey, MockTenant[]>;
   reservations: Record<LocationKey, MockReservation[]>;
@@ -210,6 +213,7 @@ export function initMockState(): MockState {
   const haleyUnit = units.haley.find((u) => u.bRented === "true" && u.sTypeName === "Drive-up")!;
   const stelUnit = units.stellarton.find((u) => u.bRented === "true")!;
   return {
+    catalogFixtureVersion: CATALOG_FIXTURE_VERSION,
     units,
     tenants: { haley: [demo(501)], hwy4: [], stellarton: [demo(701)] },
     reservations: { haley: [], hwy4: [], stellarton: [] },
@@ -251,17 +255,48 @@ export function initMockState(): MockState {
   };
 }
 
+/** Upgrade sample catalogue fixtures without resetting paid balances or fake rentals. */
+export function upgradeMockCatalog(raw: MockState): MockState {
+  if ((raw.catalogFixtureVersion ?? 0) >= CATALOG_FIXTURE_VERSION) return raw;
+  const expected = initMockState();
+  const key = (u: MockUnit) => `${u.sTypeName}|${u.dcWidth}|${u.dcLength}|${u.bClimate}`;
+  let nextTypeId = Math.max(0, ...Object.values(raw.units).flat().map((u) => Number(u.UnitTypeID) || 0));
+  raw.nextId = Math.max(raw.nextId, ...Object.values(raw.units).flat().map((u) => Number(u.UnitID) || 0));
+  for (const loc of Object.keys(expected.units) as LocationKey[]) {
+    const reserved = activeReservationUnitIds(raw, loc);
+    const groups = new Map<string, MockUnit[]>();
+    for (const u of expected.units[loc]) groups.set(key(u), [...(groups.get(key(u)) ?? []), u]);
+    for (const [groupKey, samples] of groups) {
+      const existing = raw.units[loc].filter((u) => key(u) === groupKey);
+      if (existing.length) {
+        for (const u of existing) {
+          if (u.bRented === "true" || reserved.has(u.UnitID)) continue;
+          u.dcStdRate = samples[0].dcStdRate;
+          u.dcWebRate = samples[0].dcWebRate;
+          u.sUnitDesc = samples[0].sUnitDesc;
+        }
+      } else {
+        const typeId = String(++nextTypeId);
+        for (const [i, u] of samples.filter((u) => u.bRented !== "true").entries()) {
+          raw.units[loc].push({ ...u, UnitID: String(++raw.nextId), UnitTypeID: typeId, sUnitName: `DEMO-${typeId}-${i + 1}` });
+        }
+      }
+    }
+  }
+  raw.catalogFixtureVersion = CATALOG_FIXTURE_VERSION;
+  return raw;
+}
+
 function normalize(raw: MockState): MockState {
-  return {
-    ...raw,
-    completedMoves: Array.isArray(raw.completedMoves) ? raw.completedMoves.map(String) : [],
-  };
+  return upgradeMockCatalog({ ...raw, completedMoves: Array.isArray(raw.completedMoves) ? raw.completedMoves.map(String) : [] });
 }
 
 async function loadState(): Promise<MockState> {
   const fromDb = await loadMockPayload<MockState>();
   if (fromDb?.units && fromDb?.tenants && fromDb?.ledgers) {
+    const needsUpgrade = (fromDb.catalogFixtureVersion ?? 0) < CATALOG_FIXTURE_VERSION;
     const st = normalize(fromDb);
+    if (needsUpgrade) await saveMockPayload(st);
     g.__kvMock = st;
     return st;
   }
@@ -300,12 +335,12 @@ function firstMonthPlan(): Row {
     SiteID: "1",
     QTTouchDiscPlanID: "0",
     iConcessionGlobalNum: "2",
-    sPlanName: "30% off first month",
-    sDescription: "30% off the first month. The standard rate applies after that.",
+    sPlanName: "30% off first 3 months for new customers",
+    sDescription: "New customers receive 30% off rent for their first 3 months. The standard rental rate applies after the promotional period. HST and fees are shown separately at checkout.",
     sComment: "",
     iShowOn: "1",
     bNeverExpires: "true",
-    iExpirMonths: "0",
+    iExpirMonths: "3",
     bPrepay: "false",
     bOnPmt: "false",
     bManualCredit: "false",

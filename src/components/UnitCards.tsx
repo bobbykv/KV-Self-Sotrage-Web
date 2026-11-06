@@ -23,16 +23,17 @@ export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "
   );
 }
 
-export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?: string; offer?: string | null }) {
+export function UnitGroupCard({ g, imageUrl, offer, priority = false }: { g: UnitGroup; imageUrl?: string; offer?: string | null; priority?: boolean }) {
   const loc = getLocation(g.locationKey);
   const area = Math.round(g.widthFt * g.lengthFt);
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
   return (
     <article className="card flex flex-col gap-4 p-5">
       {imageUrl && (
-        <div className="overflow-hidden rounded-2xl">
+        <div className="overflow-hidden rounded-2xl bg-kv-navy-50">
           <Image
             src={imageUrl}
+            priority={priority}
             alt={`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun} at ${loc.shortName}`}
             width={640}
             height={400}
@@ -41,7 +42,7 @@ export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?:
           />
         </div>
       )}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 min-[440px]:flex-row min-[440px]:items-start min-[440px]:justify-between">
         <div>
           <h3 className="text-2xl font-extrabold text-kv-navy">
             {`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun}`}
@@ -51,7 +52,7 @@ export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?:
             {`${storageTypeLabel(g)} · ${area} sq. ft. approximately`}
           </p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 min-[440px]:text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
           <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
           {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}
@@ -75,7 +76,7 @@ export function PublishedRateCard({ g, offer }: { g: PublishedRate; offer?: stri
   const titleNoun = g.vehicle ? "parking space" : "storage unit";
   return (
     <article className="card flex flex-col gap-4 p-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 min-[440px]:flex-row min-[440px]:items-start min-[440px]:justify-between">
         <div>
           <h3 className="text-2xl font-extrabold text-kv-navy">
             {`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun}`}
@@ -85,7 +86,7 @@ export function PublishedRateCard({ g, offer }: { g: PublishedRate; offer?: stri
             {`${storageTypeLabel(g)} · ${area} sq. ft. approximately`}
           </p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 min-[440px]:text-right">
           <p className="text-2xl font-extrabold text-kv-red">{money(g.fromRate)}</p>
           <p className="text-xs text-kv-muted">{rateSuffix(g.typeName)}</p>
           {offer && <p className="text-sm font-bold text-kv-red">{offer}</p>}

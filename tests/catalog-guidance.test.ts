@@ -31,6 +31,11 @@ describe("catalogue-backed size guidance", () => {
   it("never recommends groups with zero remaining availability", () => {
     expect(recommendStorage({ what: "boxes" }, groups.map((g) => ({ ...g, available: 0 }))).groups).toEqual([]);
   });
+  it("includes the owner-confirmed promotion and insurance answer alongside existing FAQ copy", () => {
+    const result = catalogueFaq([{ name: "General", entries: [] }], groups)[0].entries;
+    expect(result.find((e) => e.id === "current-promotion")?.answer).toContain("30% off rent for their first 3 months");
+    expect(result.find((e) => e.id === "tenant-insurance")?.answer).toContain("does not supply insurance");
+  });
   it("replaces static FAQ sizes with current links while preserving other copy", () => {
     const categories: FaqCategory[] = [{ name: "Choosing", entries: [
       { id: "size", category: "Choosing", question: "What size do I need?", answer: "Try 5 × 5 or 10 × 30." },

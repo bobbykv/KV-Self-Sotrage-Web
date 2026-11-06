@@ -6,7 +6,7 @@ export const BILLING_PERIOD_DAYS = 28;
 
 /** Simulator ConcessionID only. Live checkout uses the id DiscountPlansRetrieve returns. */
 export const MOCK_WINTER_CONCESSION_ID = 39906;
-/** Simulator only. A 30% first-month concession returned by DiscountPlansRetrieve. */
+/** Simulator only. A 30% new-customer concession returned by DiscountPlansRetrieve. */
 export const MOCK_FIRST_MONTH_CONCESSION_ID = 30030;
 export const MOCK_FIRST_MONTH_PERCENT = 30;
 
@@ -142,13 +142,11 @@ export function isMoveInDiscount(plan: ConcessionPlan): boolean {
   return false;
 }
 
-/** Customer-facing line, e.g. "30% off first month". */
+/** Keep the duration and eligibility returned by SiteLink instead of inventing one month. */
 export function promoOfferLabel(plan: ConcessionPlan): string {
-  if (plan.amountType === 1 && plan.percentDiscount > 0) {
-    const pct = Number.isInteger(plan.percentDiscount) ? String(plan.percentDiscount) : String(plan.percentDiscount);
-    return `${pct}% off first month`;
-  }
-  if (plan.fixedDiscount > 0) return `${plan.fixedDiscount} off first month`;
+  if (plan.name && !/^concession \d+$/i.test(plan.name)) return plan.name;
+  if (plan.amountType === 1 && plan.percentDiscount > 0) return `${plan.percentDiscount}% off rent`;
+  if (plan.fixedDiscount > 0) return `${plan.fixedDiscount} off rent`;
   return plan.name;
 }
 

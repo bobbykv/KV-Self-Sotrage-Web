@@ -160,7 +160,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
       {shown.length ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((g, i) => (
-            <UnitGroupCard key={g.key} g={g} imageUrl={imageUrls[i]} offer={offerFor(g)} />
+            <UnitGroupCard key={g.key} g={g} priority={i === 0} imageUrl={imageUrls[i]} offer={offerFor(g)} />
           ))}
         </div>
       ) : rates.length ? null : unconfirmed.length > 0 && bookable.length === 0 ? (

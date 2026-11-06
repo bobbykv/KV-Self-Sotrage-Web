@@ -14,7 +14,7 @@ Vercel project at that database and enable the simulator:
 | `DATABASE_URL` | Postgres URL for the **test** database only |
 | `APP_URL` | `https://kv-self-storage-web.vercel.app` (or your custom domain) |
 | `SITELINK_MODE` | leave blank or `mock` (forced to mock when `APP_TEST_MODE=1`) |
-| SiteLink / GHL / `NOTIFY_WEBHOOK_URL` / `PAY_ONLINE_URL` / `CHAT_LLM_API_KEY` | may stay set; they are **ignored** while `APP_TEST_MODE=1` |
+| SiteLink / `NOTIFY_WEBHOOK_URL` / `PAY_ONLINE_URL` / `CHAT_LLM_API_KEY` | may stay set; they are **ignored** while `APP_TEST_MODE=1` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | optional custom staff account; test mode also auto-creates `owner@kvselfstorage.ca` |
 
 After setting env vars (Production + Preview if you use both):
@@ -61,8 +61,8 @@ docker compose -f compose.test.yml stop
 * `APP_TEST_MODE=1` forces simulated SiteLink and card payments even if `.env`
   contains live credentials.
 * Direct live SOAP calls throw before `fetch`.
-* GHL delivery, staff webhooks, external payment links and paid AI chat are
-  disabled.
+* Staff webhooks, external payment links and paid AI chat are disabled.
+* GHL delivery is disabled by default; the explicit CRM-only override below permits real leads.
 
 For a rental demo that must capture real sales inquiries, explicitly set
 `GHL_LIVE_LEADS_IN_TEST_MODE=1` alongside the GHL connection settings. Only CRM
@@ -89,7 +89,10 @@ Use a future expiry, any 3-digit security code, and a fictional name/address.
 ## Portal scenarios
 
 Sign in with `demo@kvselfstorage.ca` / `demo1234`. It has a Haley Road unit with
-an overdue balance and a Stellarton unit with autopay on. Test unit details,
+an initial overdue balance and a Stellarton unit with autopay on. Previous
+simulated payments persist and may have cleared the balance to $0; an up-to-date
+account has no Pay balance button. The sample lease is a simulator stand-in,
+not a legally binding document or a real signature service. Test unit details,
 balances, sample access codes, demo leases, maintenance reports, unit-change
 requests and scheduling a move-out. These requests stay in the test DB.
 
@@ -119,3 +122,7 @@ For KV production, `GHL_STORAGE_OPPORTUNITY_VIA_WORKFLOW=1` lets the published
 assign the owner, and add the callback task when `storage lead` is added.
 The website sends contact details and notes, preserving existing contact tags.
 Disable this flag only if that workflow no longer manages opportunities.
+
+Test-mode listings read persisted simulator inventory, including reservations and
+rented units. They never reuse live snapshot unit IDs or prices. The real
+catalogue remains a separate launch check when rental testing is turned off.

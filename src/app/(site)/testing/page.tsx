@@ -22,7 +22,7 @@ export default async function TestingPage() {
       <p className="eyebrow">Simulator</p>
       <h1 className="h2 mt-2">Rental and portal test site</h1>
       <p className="mt-3 text-kv-muted">
-        This is KV&apos;s own website simulator on a separate test database. It does not call live SiteLink, process real cards, send staff or GoHighLevel updates, or activate Nokē.
+        This is KV&apos;s own website simulator on a separate test database. It does not call live SiteLink, process real cards, send staff notifications, or activate Nokē. {env.ghlLiveLeadsInTestMode ? "Website inquiries are connected to the real GoHighLevel account; mark test submissions AUDIT TEST." : "GoHighLevel delivery is disabled."}
       </p>
 
       <section className="mt-10">
@@ -39,7 +39,7 @@ export default async function TestingPage() {
           </div>
         </dl>
         <p className="mt-3 text-sm text-kv-muted">
-          Haley Road shows an overdue balance; Stellarton has autopay on. Access codes are sample data only.
+          Haley Road starts with an overdue balance; previous simulated payments persist and may have cleared it to $0. Stellarton starts with autopay on. Access codes are sample data only.
         </p>
         <Link href="/portal/login" className="btn-primary mt-5 inline-flex">
           Open portal sign-in
@@ -101,7 +101,7 @@ export default async function TestingPage() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-kv-muted">
           <li>Live SiteLink SOAP calls (even if credentials exist in the host env)</li>
           <li>Staff notification webhooks</li>
-          <li>GoHighLevel lead updates</li>
+          {!env.ghlLiveLeadsInTestMode && <li>GoHighLevel lead updates</li>}
           <li>External pay-online links and paid AI chat</li>
           <li>Nokē remote unlock — portal never prompts for real app activation here</li>
         </ul>

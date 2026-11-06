@@ -6,7 +6,7 @@ import type { FaqCategory } from "./faq";
 export function catalogueFaq(categories: FaqCategory[], groups: UnitGroup[]): FaqCategory[] {
   const storage = groups.filter((g) => !g.vehicle && g.available > 0);
   const link = (g: UnitGroup) => `[${formatSize(g.widthFt, g.lengthFt)} at ${getLocation(g.locationKey).shortName}](/units/${g.locationKey}/${g.bestUnitId})`;
-  return categories.map((category) => ({ ...category, entries: category.entries.map((entry) => {
+  const rendered = categories.map((category) => ({ ...category, entries: category.entries.map((entry) => {
     if (/^what size do i need\??$/i.test(entry.question.trim())) {
       const sizes = [...new Map(storage.map((g) => [`${g.widthFt}x${g.lengthFt}`, g])).values()];
       const answer = sizes.length
@@ -22,4 +22,12 @@ export function catalogueFaq(categories: FaqCategory[], groups: UnitGroup[]): Fa
     }
     return entry;
   }) }));
+  // Owner-confirmed answers stay current even when an older FAQ is saved in the CMS.
+  const confirmed = [
+    { id: "current-promotion", question: "What is your current promotion?", answer: "New customers receive 30% off rent for their first 3 months. The standard rental rate applies after the promotional period. Check the selected billing plan and itemized fees and HST at checkout before confirming." },
+    { id: "tenant-insurance", question: "Do you supply tenant insurance?", answer: "KV Self Storage does not supply insurance. Contact your own insurer about coverage for belongings in storage." },
+  ];
+  for (const category of rendered) category.entries = category.entries.filter((entry) => !/insurance|current promotion|current offer/i.test(entry.question));
+  for (const item of confirmed) rendered[0]?.entries.push({ ...item, category: rendered[0].name });
+  return rendered;
 }

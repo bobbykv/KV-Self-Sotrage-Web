@@ -151,6 +151,12 @@ describe("SiteLink concessions are the promotion data", () => {
     expect(offerForUnit([plan], { locationKey: "hwy4", typeName: "Drive-up", widthFt: 10, lengthFt: 10 })).toBe("30% off first month");
   });
 
+  it("preserves a multi-month offer and its new-customer eligibility", () => {
+    const name = "30% off first 3 months for new customers";
+    expect(promoOfferLabel(promo({ name }))).toBe(name);
+    expect(promoOfferLabel(promo({ name: "Concession 1" }))).toBe("30% off rent");
+  });
+
   it("charges the standard rate and takes 30% off that rate, not the web rate", async () => {
     resetMockMemory();
     const st = initMockState();
