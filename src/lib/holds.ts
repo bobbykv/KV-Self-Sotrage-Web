@@ -362,7 +362,7 @@ function assertActive(h: Hold | null): asserts h is Hold {
 }
 
 /**
- * Saves license, mailing address, and ID photo onto the SiteLink tenant before
+ * Saves mailing address and any optional license/photo onto the SiteLink tenant before
  * payment or reservation confirmation. TenantUpdate_v3 must succeed. A failed
  * TenantImageUpload is logged and does not stop checkout. Image bytes are not stored.
  */
@@ -382,29 +382,31 @@ export async function syncTenantVerification(h: Hold, body: Record<string, unkno
       city: v.city,
       region: v.region,
       postalCode: v.postalCode,
-      license: v.licenseNumber,
-      licRegion: v.licenseRegion,
+      license: v.licenseNumber || undefined,
+      licRegion: v.licenseNumber ? v.licenseRegion : undefined,
     });
   } catch (err) {
     throw new HoldError(
       safeErrorMessage(err),
-      "We couldn't save your address and driver's license for the lease. Please try again or call (902) 867-3779.",
+      "We couldn't save your customer details for the lease. Please try again or call (902) 867-3779.",
     );
   }
 
-  let idPhotoUploaded = false;
-  try {
-    await sitelink.uploadTenantImage(loc, h.tenantId, v.imageBase64, v.fileName);
-    idPhotoUploaded = true;
-  } catch (err) {
-    log.warn("TenantImageUpload failed; continuing checkout", { holdId: h.id, err });
+  let idPhotoUploaded = h.idPhotoUploaded;
+  if (v.imageBase64) {
+    try {
+      await sitelink.uploadTenantImage(loc, h.tenantId, v.imageBase64, v.fileName);
+      idPhotoUploaded = true;
+    } catch (err) {
+      log.warn("TenantImageUpload failed; continuing checkout", { holdId: h.id, err });
+    }
   }
 
   const updated = await db.hold.update({
     where: { id: h.id },
     data: {
-      licenseNumber: v.licenseNumber,
-      licenseRegion: v.licenseRegion,
+      licenseNumber: v.licenseNumber || h.licenseNumber,
+      licenseRegion: v.licenseNumber ? v.licenseRegion : h.licenseRegion,
       addr1: v.addr1,
       city: v.city,
       region: v.region,

@@ -1,7 +1,7 @@
 export const MOVE_IN_STEPS = [
   {
-    title: "Verify ID & address + pay",
-    detail: "Driver's license, mailing address, and the 28-day charge or prepaid package.",
+    title: "Enter your details + pay",
+    detail: "Enter your mailing address and review the 28-day charge or prepaid package. Licence details and photo upload are optional.",
   },
   {
     title: "Sign your SiteLink eSign lease",

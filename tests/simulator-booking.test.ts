@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ payload: null as unknown, holds: [] as Record<string, unknown>[], snapshots: vi.fn() }));
-vi.mock("@/lib/env", () => ({ env: { appTestMode: true, sitelinkMode: "mock", HST_RATE: 0.14 }, cookieNames: { hold: "hold" }, assertSiteLinkConfig: () => {} }));
+vi.mock("@/lib/env", () => ({ env: { appTestMode: true, sitelinkMode: "live", PAYMENT_MODE: "passthrough", HST_RATE: 0.14 }, cookieNames: { hold: "hold" }, assertSiteLinkConfig: () => {} }));
 vi.mock("@/lib/db", () => ({ db: {
   siteLinkSnapshot: { findMany: state.snapshots },
+  paymentReceipt: { create: vi.fn().mockResolvedValue({}) },
   hold: {
+    findUnique: async ({ where }: { where: { id: string } }) => state.holds.find((h) => h.id === where.id) ?? null,
     findMany: async () => state.holds,
-    create: async ({ data }: { data: Record<string, unknown> }) => { const h = { ...data, status: "active" }; state.holds.push(h); return h; },
+    create: async ({ data }: { data: Record<string, unknown> }) => { const h = { idPhotoUploaded: false, licenseNumber: null, licenseRegion: null, failureCount: 0, ...data, status: "active" }; state.holds.push(h); return h; },
     update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
       const h = state.holds.find((h) => h.id === where.id)!; Object.assign(h, data); return h;
     },
@@ -17,12 +19,14 @@ vi.mock("@/lib/sitelink/mock-store", () => ({
   saveMockPayload: async (payload: unknown) => { state.payload = structuredClone(payload); },
 }));
 vi.mock("@/lib/sitelink/budget", () => ({ recordCall: async () => {} }));
+vi.mock("@/lib/leads", () => ({ captureLead: vi.fn().mockResolvedValue({}) }));
 vi.mock("@/lib/settings", () => ({ getSettings: async () => ({ maintenanceMode: false, holdMinutes: 20 }) }));
 vi.mock("@/lib/discount-visibility", () => ({ getDiscountToggles: async () => ({}) }));
 
 import { getInventory } from "@/lib/inventory";
-import { createHold } from "@/lib/holds";
+import { createHold, payPassthrough, syncTenantVerification } from "@/lib/holds";
 import { sitelink } from "@/lib/sitelink/client";
+import { staffMoveIn } from "@/lib/staff-office";
 import { initMockState, resetMockMemory } from "@/lib/sitelink/mock";
 
 describe("simulator listings and checkout use the same persisted inventory", () => {
@@ -43,6 +47,36 @@ describe("simulator listings and checkout use the same persisted inventory", () 
     }
     expect(inventory.find((r) => r.location === "haley")?.units.some((u) => u.climate)).toBe(true);
     expect(inventory.find((r) => r.location === "hwy4")?.units.some((u) => u.vehicle)).toBe(true);
+  });
+
+  it("saves a manual address without sending an ID photo or clearing an existing licence", async () => {
+    const unit = (await getInventory()).find((r) => r.location === "hwy4")!.units[0];
+    const hold = await createHold({ locationKey: "hwy4", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Manual", email: "manual@example.com", phone: "9025550100", moveInDate: new Date() });
+    await sitelink.updateTenantForLease("hwy4", hold.tenantId!, { firstName: hold.firstName, lastName: hold.lastName, email: hold.email, phone: hold.phone, addr1: "Old address", city: "Antigonish", region: "NS", postalCode: "B2G 1A1", license: "OLD12345", licRegion: "NS" });
+    const upload = vi.spyOn(sitelink, "uploadTenantImage");
+    await syncTenantVerification(hold, { addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
+    const info = await sitelink.tenantInfo("hwy4", hold.tenantId!);
+    expect(info?.raw).toMatchObject({ sAddr1: "12 Main Street", sLicense: "OLD12345", sLicRegion: "NS" });
+    expect(upload).not.toHaveBeenCalled();
+    upload.mockRestore();
+  });
+
+  it("completes a simulated rental with a manual address and no licence or ID photo", async () => {
+    const unit = (await getInventory()).find((r) => r.location === "hwy4")!.units[0];
+    const hold = await createHold({ locationKey: "hwy4", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Manual checkout", email: "manual-checkout@example.com", phone: "9025550100", moveInDate: new Date() });
+    const upload = vi.spyOn(sitelink, "uploadTenantImage");
+    const completed = await payPassthrough(hold.id, { number: "4242424242424242", cvv: "123", expiry: "12/30", name: "Audit Test", street: "12 Main Street", postal: "B2G 1A1" }, { addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
+    expect(completed.status).toBe("moved_in");
+    expect(upload).not.toHaveBeenCalled();
+    expect((await sitelink.unitById("hwy4", unit.unitId))?.rented).toBe(true);
+    upload.mockRestore();
+  });
+
+  it("completes a simulated staff move-in without a licence", async () => {
+    const unit = (await getInventory()).find((r) => r.location === "stellarton")!.units[0];
+    const result = await staffMoveIn({ mode: "movein", locationKey: "stellarton", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Office", email: "office@example.com", phone: "9025550100", moveInDate: new Date(), concessionId: null, addr1: "12 Main Street", city: "Stellarton", region: "NS", postalCode: "B0K 1S0", payMethod: "cash" });
+    expect(result.ledgerId).toBeGreaterThan(0);
+    expect((await sitelink.unitById("stellarton", unit.unitId))?.rented).toBe(true);
   });
 
   it.each(["hwy4", "stellarton"] as const)("creates a priced hold and reservation for a listed %s unit", async (locationKey) => {

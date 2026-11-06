@@ -115,7 +115,7 @@ export function StaffBooking({
     <section id="book" className="card mb-8 scroll-mt-6 p-5">
       <h2 className="font-extrabold text-kv-navy">Book / reserve a unit</h2>
       <p className="mt-1 max-w-3xl text-sm text-kv-muted">
-        Send the customer a checkout link so they can scan their ID, pay, and sign on their phone, or complete the move-in here. Card numbers are sent to SiteLink and are not stored on this website.
+        Send the customer a checkout link so they can enter their details, pay, and sign on their phone, or complete the move-in here. Card numbers are sent to SiteLink and are not stored on this website.
       </p>
       {!units.length && <p className="mt-3 text-sm text-kv-red">No vacant units are in the cache yet. Refresh units from SiteLink first.</p>}
       <form
@@ -188,10 +188,10 @@ export function StaffBooking({
 
         <div className="sm:col-span-2 mt-2 border-t border-kv-line pt-4">
           <p className="text-sm font-extrabold text-kv-navy">Complete staff move-in</p>
-          <p className="text-xs text-kv-muted">Required only when you finish the move-in here. A checkout link leaves the licence and payment to the customer.</p>
+          <p className="text-xs text-kv-muted">Address and payment details are needed to finish a move-in here. Licence details are optional.</p>
         </div>
         <label className="text-sm font-semibold text-kv-navy">
-          Driver&apos;s licence
+          Driver&apos;s licence (optional)
           <input name="licenseNumber" className="input mt-1" />
         </label>
         <label className="text-sm font-semibold text-kv-navy">

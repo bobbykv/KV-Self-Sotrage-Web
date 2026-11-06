@@ -1,5 +1,5 @@
 /**
- * Checkout move-in verification. The ID photo is validated and forwarded to
+ * Checkout customer details. An optional ID photo is validated and forwarded to
  * SiteLink. It is not stored in Postgres.
  */
 import { countryForRegion, isRegionCode } from "./regions";
@@ -15,7 +15,7 @@ export type TenantVerification = {
   postalCode: string;
   imageBase64: string;
   fileName: string;
-  mime: "image/jpeg" | "image/png";
+  mime?: "image/jpeg" | "image/png";
 };
 
 export type VerificationResult = { ok: true; value: TenantVerification } | { ok: false; error: string };
@@ -72,10 +72,10 @@ export function decodeIdPhoto(dataUrl: string): { ok: true; base64: string; mime
 
 export function parseTenantVerification(input: Record<string, unknown>): VerificationResult {
   const licenseNumber = text(input.licenseNumber).replace(/\s+/g, " ");
-  if (!/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
+  if (licenseNumber && !/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
     return { ok: false, error: "Enter your driver's license number (4–30 letters or numbers)." };
   }
-  const licenseRegion = resolveRegion(input.licenseRegion, input.licenseRegionOther, "province or state that issued your license");
+  const licenseRegion = licenseNumber ? resolveRegion(input.licenseRegion, input.licenseRegionOther, "province or state that issued your license") : { ok: true as const, value: "" };
   if (!licenseRegion.ok) return licenseRegion;
 
   const addr1 = text(input.addr1).replace(/\s+/g, " ");
@@ -87,8 +87,9 @@ export function parseTenantVerification(input: Record<string, unknown>): Verific
   const region = resolveRegion(input.region, input.regionOther, "mailing province or state");
   if (!region.ok) return region;
 
-  const photo = decodeIdPhoto(text(input.idPhoto));
-  if (!photo.ok) return photo;
+  const photoInput = text(input.idPhoto);
+  const photo = photoInput ? decodeIdPhoto(photoInput) : null;
+  if (photo && !photo.ok) return photo;
 
   return {
     ok: true,
@@ -99,9 +100,9 @@ export function parseTenantVerification(input: Record<string, unknown>): Verific
       city,
       region: region.value,
       postalCode,
-      imageBase64: photo.base64,
-      fileName: photo.mime === "image/png" ? "drivers-license.png" : "drivers-license.jpg",
-      mime: photo.mime,
+      imageBase64: photo?.ok ? photo.base64 : "",
+      fileName: photo?.ok ? (photo.mime === "image/png" ? "drivers-license.png" : "drivers-license.jpg") : "",
+      mime: photo?.ok ? photo.mime : undefined,
     },
   };
 }
@@ -109,5 +110,7 @@ export function parseTenantVerification(input: Record<string, unknown>): Verific
 export function verificationNote(v: TenantVerification, idPhotoUploaded: boolean): string {
   const country = countryForRegion(v.region);
   const place = [v.addr1, v.city, v.region, v.postalCode, country.country].filter(Boolean).join(", ");
-  return `Checkout verification. Driver's license ${v.licenseNumber} (${v.licenseRegion}). Mailing address ${place}. ID photo ${idPhotoUploaded ? "uploaded to SiteLink" : "provided; SiteLink image upload did not complete"}.`;
+  const license = v.licenseNumber ? `provided (${v.licenseRegion})` : "not provided (optional)";
+  const photo = idPhotoUploaded ? "uploaded to SiteLink" : v.imageBase64 ? "provided; SiteLink image upload did not complete" : "not provided (optional)";
+  return `Checkout customer details. Driver's license ${license}. Mailing address ${place}. ID photo ${photo}.`;
 }

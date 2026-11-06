@@ -65,8 +65,13 @@ describe("tenant verification", () => {
     expect(parsed.value.fileName).toBe("drivers-license.png");
   });
 
-  it("rejects a missing photo, an oversized photo, and a short license", () => {
-    expect(parseTenantVerification({ ...valid, idPhoto: "" }).ok).toBe(false);
+  it("accepts a manually entered address with no licence number or photo", () => {
+    const result = parseTenantVerification({ ...valid, licenseNumber: "", licenseRegion: "", idPhoto: "" });
+    expect(result).toMatchObject({ ok: true, value: { licenseNumber: "", licenseRegion: "", imageBase64: "", addr1: "12 Main St" } });
+  });
+
+  it("rejects an invalid optional photo or licence and requires an address", () => {
+    expect(parseTenantVerification({ ...valid, idPhoto: "not an image" }).ok).toBe(false);
     expect(parseTenantVerification({ ...valid, idPhoto: photo(ID_PHOTO_MAX_BYTES + 10) }).ok).toBe(false);
     expect(parseTenantVerification({ ...valid, licenseNumber: "A1" }).ok).toBe(false);
     expect(parseTenantVerification({ ...valid, addr1: "" }).ok).toBe(false);
@@ -81,7 +86,7 @@ describe("tenant verification", () => {
 describe("move-in steps", () => {
   it("explains verify, SiteLink eSign, and Nokē or Haley access", () => {
     const text = MOVE_IN_STEPS.map((s) => `${s.title} ${s.detail}`).join(" ");
-    expect(text).toMatch(/Verify ID & address \+ pay/i);
+    expect(text).toMatch(/Enter your details \+ pay/i);
     expect(text).toMatch(/28-day charge or prepaid package/i);
     expect(text).toMatch(/SiteLink eSign lease/i);
     expect(text).toMatch(/emailed to you/i);

@@ -24,10 +24,6 @@ export function PaySeparatelyPanel({
     e.preventDefault();
     const form = e.currentTarget;
     const fields = new FormData(form);
-    if (!String(fields.get("idPhoto") || "")) {
-      setError("Add a photo of your driver's license or government ID.");
-      return;
-    }
     setPending(true);
     setError(undefined);
     const res = await fetch(`/api/checkout/${holdId}/confirm`, {
@@ -83,10 +79,6 @@ export function CardPaymentForm({ holdId, total, recurringNote }: { holdId: stri
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
-    if (!String(f.get("idPhoto") || "")) {
-      setError("Add a photo of your driver's license or government ID.");
-      return;
-    }
     setPending(true);
     setError(undefined);
     const body = JSON.stringify(Object.fromEntries(f));

@@ -215,8 +215,8 @@ export const sitelink = {
       city: string;
       region: string;
       postalCode: string;
-      license: string;
-      licRegion: string;
+      license?: string;
+      licRegion?: string;
     },
   ) {
     const info = await this.tenantInfo(loc, tenantId);
@@ -272,8 +272,8 @@ export const sitelink = {
       bCompanyIsTenant: flag("bCompanyIsTenant"),
       dDOB: keep("dDOB"),
       sTenNote: keep("sTenNote"),
-      sLicense: profile.license,
-      sLicRegion: profile.licRegion,
+      sLicense: profile.license ?? keep("sLicense"),
+      sLicRegion: profile.licRegion ?? keep("sLicRegion"),
       sSSN: keep("sSSN"),
       sEmailAlt: keep("sEmailAlt"),
       sRelationshipAlt: keep("sRelationshipAlt"),

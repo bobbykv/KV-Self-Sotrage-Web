@@ -174,74 +174,9 @@ export function VerificationFields({ defaults, form }: { defaults?: Verification
 
   return (
     <fieldset className="space-y-3">
-      <legend className="font-extrabold text-kv-navy">Snap a photo of your driver&apos;s license to auto-fill your details</legend>
-      <p className="text-sm text-kv-muted">We fill in your licence and address from the photo. Please check them. Change anything that isn&apos;t right. These details go on your SiteLink lease.</p>
+      <legend className="font-extrabold text-kv-navy">Your mailing address</legend>
+      <p className="text-sm text-kv-muted">Enter your address below. Adding a driver&apos;s licence number or photo is optional.</p>
 
-      <div
-        className={`rounded-2xl border-2 border-dashed p-4 ${dragging ? "border-kv-navy bg-kv-navy-50" : "border-kv-line bg-white"}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          void takeFile(e.dataTransfer.files?.[0]);
-        }}
-      >
-        <p className="font-extrabold text-kv-navy">Step 1 · Photo of your driver&apos;s license</p>
-        <p className="mt-1 text-sm text-kv-muted">
-          {scanning
-            ? "Scanning license to auto-fill your info…"
-            : defaults?.idPhotoUploaded
-              ? "Attach the photo again to finish. We don't keep the picture on this website."
-              : "Use your camera or drop a file here. We resize it so it uploads quickly."}
-        </p>
-        <label className="btn-ghost mt-3 inline-flex cursor-pointer">
-          {scanning ? "Scanning license to auto-fill your info…" : preview ? "Choose a different photo" : "Snap or upload your license"}
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            disabled={scanning}
-            onChange={(e) => {
-              void takeFile(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {preview && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt="Preview of your ID photo" className="mt-4 max-h-48 rounded-xl border border-kv-line object-contain" />
-        )}
-        {photoError && (
-          <p className="mt-3 text-sm font-semibold text-kv-red" role="alert">
-            {photoError}
-          </p>
-        )}
-        <input type="hidden" name="idPhoto" form={form} value={preview} required />
-        <input type="hidden" name="idPhotoName" form={form} value={fileName} />
-      </div>
-
-      {autoFilled && (
-        <p className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">Auto-filled from your ID — please verify</p>
-      )}
-
-      <label className="block">
-        <span className="label">Driver&apos;s license number</span>
-        <input name="licenseNumber" form={form} required value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} autoComplete="off" className="input" maxLength={30} />
-      </label>
-      <RegionSelect
-        name="licenseRegion"
-        otherName="licenseRegionOther"
-        label="Issuing province / state"
-        form={form}
-        value={licenseRegion}
-        other={licenseOther}
-        onChange={setLicenseRegion}
-        onOther={setLicenseOther}
-      />
       <label className="block">
         <span className="label">Mailing address</span>
         <input name="addr1" form={form} required value={addr1} onChange={(e) => setAddr1(e.target.value)} autoComplete="address-line1" className="input" maxLength={80} />
@@ -266,6 +201,77 @@ export function VerificationFields({ defaults, form }: { defaults?: Verification
         onChange={setRegion}
         onOther={setRegionOther}
       />
+      <details className="rounded-2xl border border-kv-line p-4">
+        <summary className="cursor-pointer font-semibold text-kv-navy">Optional: add licence details or use a photo to autofill</summary>
+        <div className="mt-4 space-y-3">
+          <div
+            className={`rounded-2xl border-2 border-dashed p-4 ${dragging ? "border-kv-navy bg-kv-navy-50" : "border-kv-line bg-white"}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              void takeFile(e.dataTransfer.files?.[0]);
+            }}
+          >
+            <p className="font-extrabold text-kv-navy">Photo of your driver&apos;s licence (optional)</p>
+            <p className="mt-1 text-sm text-kv-muted">
+              {scanning
+                ? "Scanning license to auto-fill your info…"
+                : defaults?.idPhotoUploaded
+                  ? "A photo was uploaded previously. You can add another, or continue without one."
+                  : "Use a photo to help fill in your address, or enter it manually. A photo is not required."}
+            </p>
+            <label className="btn-ghost mt-3 inline-flex cursor-pointer">
+              {scanning ? "Scanning license to auto-fill your info…" : preview ? "Choose a different photo" : "Snap or upload your license"}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={scanning}
+                onChange={(e) => {
+                  void takeFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Preview of your ID photo" className="mt-4 max-h-48 rounded-xl border border-kv-line object-contain" />
+            )}
+            {preview && <button type="button" className="btn-ghost btn-sm mt-3" disabled={scanning} onClick={() => { setPreview(""); setFileName(""); setPhotoError(undefined); }}>Remove photo</button>}
+            {photoError && (
+              <p className="mt-3 text-sm font-semibold text-kv-red" role="alert">
+                {photoError}
+              </p>
+            )}
+            <input type="hidden" name="idPhoto" form={form} value={preview} />
+            <input type="hidden" name="idPhotoName" form={form} value={fileName} />
+          </div>
+
+          {autoFilled && (
+            <p className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">Auto-filled from your ID — please verify</p>
+          )}
+
+          <label className="block">
+            <span className="label">Driver&apos;s licence number (optional)</span>
+            <input name="licenseNumber" form={form} value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} autoComplete="off" className="input" maxLength={30} />
+          </label>
+          {licenseNumber.trim() && <RegionSelect
+            name="licenseRegion"
+            otherName="licenseRegionOther"
+            label="Issuing province / state"
+            form={form}
+            value={licenseRegion}
+            other={licenseOther}
+            onChange={setLicenseRegion}
+            onOther={setLicenseOther}
+          />}
+        </div>
+      </details>
     </fieldset>
   );
 }
