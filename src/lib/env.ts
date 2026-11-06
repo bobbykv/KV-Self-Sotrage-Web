@@ -34,6 +34,8 @@ const schema = z.object({
   GHL_STORAGE_PIPELINE_ID: z.string().optional(),
   /** Storage pipeline stage. Defaults to New Inquiry. */
   GHL_STORAGE_STAGE_ID: z.string().optional(),
+  /** The existing storage lead tag workflow creates and assigns opportunities. */
+  GHL_STORAGE_OPPORTUNITY_VIA_WORKFLOW: z.string().optional(),
   /** Explicitly send real CRM leads while SiteLink/payments remain simulated. */
   GHL_LIVE_LEADS_IN_TEST_MODE: z.string().optional(),
 
@@ -92,6 +94,7 @@ export const env = {
   isProd: raw.NODE_ENV === "production",
   appTestMode,
   ghlLiveLeadsInTestMode,
+  ghlStorageOpportunityViaWorkflow: raw.GHL_STORAGE_OPPORTUNITY_VIA_WORKFLOW === "1" || raw.GHL_STORAGE_OPPORTUNITY_VIA_WORKFLOW === "true",
   sitelinkMode,
   sitelinkLocationCodes: appTestMode ? ({} as Partial<Record<LocationKey, string>>) : parseLocationCodes(raw.SITELINK_LOCATION_CODES),
   sitelinkTestMode: appTestMode || raw.SITELINK_TEST_MODE === "1" || raw.SITELINK_TEST_MODE === "true",

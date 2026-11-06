@@ -113,3 +113,9 @@ npm run typecheck
 Automated tests cover test-mode isolation, live-call blocking, payment approve /
 decline / timeout, repeat move-in rejection, and portal ledger ownership helpers.
 They do not prove real processor idempotency.
+
+For KV production, `GHL_STORAGE_OPPORTUNITY_VIA_WORKFLOW=1` lets the published
+**KV Self Storage | New Lead Callback** workflow create Storage opportunities,
+assign the owner, and add the callback task when `storage lead` is added.
+The website sends contact details and notes, preserving existing contact tags.
+Disable this flag only if that workflow no longer manages opportunities.

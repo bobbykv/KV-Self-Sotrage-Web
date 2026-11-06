@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { ghlEnv } = vi.hoisted(() => ({
   ghlEnv: {
+    ghlStorageOpportunityViaWorkflow: false,
     GHL_API_KEY: "test-key" as string | undefined,
     GHL_LOCATION_ID: "nGDJgf5wtNXdc5NWsm0z" as string | undefined,
     GHL_STORAGE_PIPELINE_ID: undefined as string | undefined,
@@ -19,6 +20,7 @@ const KV_STAGE = "8a2cbc31-d9a5-411a-b89c-184cb31b4262";
 
 describe("GoHighLevel storage opportunity", () => {
   beforeEach(() => {
+    ghlEnv.ghlStorageOpportunityViaWorkflow = false;
     ghlEnv.GHL_API_KEY = "test-key";
     ghlEnv.GHL_LOCATION_ID = KV_LOCATION;
     ghlEnv.GHL_STORAGE_PIPELINE_ID = undefined;
@@ -76,6 +78,13 @@ describe("GoHighLevel storage opportunity", () => {
       name: "Sam — Outdoor Vehicle, RV & Boat Winter Storage (Addington Forks)",
       status: "open",
     });
+  });
+
+  it("leaves opportunity creation to the existing tag workflow when configured", async () => {
+    ghlEnv.ghlStorageOpportunityViaWorkflow = true;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await postGhlStorageOpportunity("contact_existing", { name: "Returning customer" });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("skips the opportunity when this location has no pipeline", async () => {

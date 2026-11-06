@@ -52,6 +52,9 @@ export async function postGhlStorageOpportunity(contactId: string, payload: {
   unitType?: string | null;
   preferredLocation?: string | null;
 }): Promise<void> {
+  // KV's published storage lead workflow also assigns the owner and callback task.
+  // Let it own opportunity creation to avoid duplicate cards and stage resets.
+  if (env.ghlStorageOpportunityViaWorkflow) return;
   if (!env.GHL_API_KEY || !env.GHL_LOCATION_ID) return;
   const pipelineId = resolveGhlStoragePipelineId(env.GHL_LOCATION_ID, env.GHL_STORAGE_PIPELINE_ID);
   if (!pipelineId) return;
