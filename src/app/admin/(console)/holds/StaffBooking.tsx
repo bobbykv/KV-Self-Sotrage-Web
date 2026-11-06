@@ -188,11 +188,11 @@ export function StaffBooking({
 
         <div className="sm:col-span-2 mt-2 border-t border-kv-line pt-4">
           <p className="text-sm font-extrabold text-kv-navy">Complete staff move-in</p>
-          <p className="text-xs text-kv-muted">Address and payment details are needed to finish a move-in here. Licence details are optional.</p>
+          <p className="text-xs text-kv-muted">Licence number, address and payment details are needed to finish a move-in here. If you create a checkout link, the customer enters their own licence number.</p>
         </div>
         <label className="text-sm font-semibold text-kv-navy">
-          Driver&apos;s licence (optional)
-          <input name="licenseNumber" className="input mt-1" />
+          Driver&apos;s licence number
+          <input name="licenseNumber" className="input mt-1" required />
         </label>
         <label className="text-sm font-semibold text-kv-navy">
           Licence province

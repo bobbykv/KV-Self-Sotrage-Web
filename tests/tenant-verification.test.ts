@@ -65,9 +65,10 @@ describe("tenant verification", () => {
     expect(parsed.value.fileName).toBe("drivers-license.png");
   });
 
-  it("accepts a manually entered address with no licence number or photo", () => {
-    const result = parseTenantVerification({ ...valid, licenseNumber: "", licenseRegion: "", idPhoto: "" });
-    expect(result).toMatchObject({ ok: true, value: { licenseNumber: "", licenseRegion: "", imageBase64: "", addr1: "12 Main St" } });
+  it("requires a licence number but accepts a manually entered number without a photo", () => {
+    expect(parseTenantVerification({ ...valid, licenseNumber: "", idPhoto: "" }).ok).toBe(false);
+    const result = parseTenantVerification({ ...valid, idPhoto: "" });
+    expect(result).toMatchObject({ ok: true, value: { licenseNumber: "NS123456", imageBase64: "", addr1: "12 Main St" } });
   });
 
   it("rejects an invalid optional photo or licence and requires an address", () => {

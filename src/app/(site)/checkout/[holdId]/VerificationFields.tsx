@@ -174,8 +174,8 @@ export function VerificationFields({ defaults, form }: { defaults?: Verification
 
   return (
     <fieldset className="space-y-3">
-      <legend className="font-extrabold text-kv-navy">Your mailing address</legend>
-      <p className="text-sm text-kv-muted">Enter your address below. Adding a driver&apos;s licence number or photo is optional.</p>
+      <legend className="font-extrabold text-kv-navy">Your details</legend>
+      <p className="text-sm text-kv-muted">Enter your driver&apos;s licence number and mailing address. Uploading a photo is optional.</p>
 
       <label className="block">
         <span className="label">Mailing address</span>
@@ -201,8 +201,23 @@ export function VerificationFields({ defaults, form }: { defaults?: Verification
         onChange={setRegion}
         onOther={setRegionOther}
       />
+      <label className="block">
+        <span className="label">Driver&apos;s licence number</span>
+        <input name="licenseNumber" form={form} required value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} autoComplete="off" className="input" maxLength={30} />
+      </label>
+      <RegionSelect
+        name="licenseRegion"
+        otherName="licenseRegionOther"
+        label="Issuing province / state"
+        form={form}
+        value={licenseRegion}
+        other={licenseOther}
+        onChange={setLicenseRegion}
+        onOther={setLicenseOther}
+      />
+
       <details className="rounded-2xl border border-kv-line p-4">
-        <summary className="cursor-pointer font-semibold text-kv-navy">Optional: add licence details or use a photo to autofill</summary>
+        <summary className="cursor-pointer font-semibold text-kv-navy">Optional: use a licence photo to autofill your details</summary>
         <div className="mt-4 space-y-3">
           <div
             className={`rounded-2xl border-2 border-dashed p-4 ${dragging ? "border-kv-navy bg-kv-navy-50" : "border-kv-line bg-white"}`}
@@ -256,20 +271,6 @@ export function VerificationFields({ defaults, form }: { defaults?: Verification
             <p className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">Auto-filled from your ID — please verify</p>
           )}
 
-          <label className="block">
-            <span className="label">Driver&apos;s licence number (optional)</span>
-            <input name="licenseNumber" form={form} value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} autoComplete="off" className="input" maxLength={30} />
-          </label>
-          {licenseNumber.trim() && <RegionSelect
-            name="licenseRegion"
-            otherName="licenseRegionOther"
-            label="Issuing province / state"
-            form={form}
-            value={licenseRegion}
-            other={licenseOther}
-            onChange={setLicenseRegion}
-            onOther={setLicenseOther}
-          />}
         </div>
       </details>
     </fieldset>

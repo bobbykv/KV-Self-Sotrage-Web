@@ -72,10 +72,10 @@ export function decodeIdPhoto(dataUrl: string): { ok: true; base64: string; mime
 
 export function parseTenantVerification(input: Record<string, unknown>): VerificationResult {
   const licenseNumber = text(input.licenseNumber).replace(/\s+/g, " ");
-  if (licenseNumber && !/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
     return { ok: false, error: "Enter your driver's license number (4–30 letters or numbers)." };
   }
-  const licenseRegion = licenseNumber ? resolveRegion(input.licenseRegion, input.licenseRegionOther, "province or state that issued your license") : { ok: true as const, value: "" };
+  const licenseRegion = resolveRegion(input.licenseRegion, input.licenseRegionOther, "province or state that issued your license");
   if (!licenseRegion.ok) return licenseRegion;
 
   const addr1 = text(input.addr1).replace(/\s+/g, " ");
@@ -110,7 +110,7 @@ export function parseTenantVerification(input: Record<string, unknown>): Verific
 export function verificationNote(v: TenantVerification, idPhotoUploaded: boolean): string {
   const country = countryForRegion(v.region);
   const place = [v.addr1, v.city, v.region, v.postalCode, country.country].filter(Boolean).join(", ");
-  const license = v.licenseNumber ? `provided (${v.licenseRegion})` : "not provided (optional)";
+  const license = `provided (${v.licenseRegion})`;
   const photo = idPhotoUploaded ? "uploaded to SiteLink" : v.imageBase64 ? "provided; SiteLink image upload did not complete" : "not provided (optional)";
   return `Checkout customer details. Driver's license ${license}. Mailing address ${place}. ID photo ${photo}.`;
 }

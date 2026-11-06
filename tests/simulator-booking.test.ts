@@ -49,34 +49,49 @@ describe("simulator listings and checkout use the same persisted inventory", () 
     expect(inventory.find((r) => r.location === "hwy4")?.units.some((u) => u.vehicle)).toBe(true);
   });
 
-  it("saves a manual address without sending an ID photo or clearing an existing licence", async () => {
+  it("saves a manually entered licence and address without sending an ID photo", async () => {
     const unit = (await getInventory()).find((r) => r.location === "hwy4")!.units[0];
     const hold = await createHold({ locationKey: "hwy4", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Manual", email: "manual@example.com", phone: "9025550100", moveInDate: new Date() });
     await sitelink.updateTenantForLease("hwy4", hold.tenantId!, { firstName: hold.firstName, lastName: hold.lastName, email: hold.email, phone: hold.phone, addr1: "Old address", city: "Antigonish", region: "NS", postalCode: "B2G 1A1", license: "OLD12345", licRegion: "NS" });
     const upload = vi.spyOn(sitelink, "uploadTenantImage");
-    await syncTenantVerification(hold, { addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
+    await syncTenantVerification(hold, { licenseNumber: "OLD12345", licenseRegion: "NS", addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
     const info = await sitelink.tenantInfo("hwy4", hold.tenantId!);
     expect(info?.raw).toMatchObject({ sAddr1: "12 Main Street", sLicense: "OLD12345", sLicRegion: "NS" });
     expect(upload).not.toHaveBeenCalled();
     upload.mockRestore();
   });
 
-  it("completes a simulated rental with a manual address and no licence or ID photo", async () => {
+  it("completes a simulated rental with a licence number and no ID photo", async () => {
     const unit = (await getInventory()).find((r) => r.location === "hwy4")!.units[0];
     const hold = await createHold({ locationKey: "hwy4", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Manual checkout", email: "manual-checkout@example.com", phone: "9025550100", moveInDate: new Date() });
     const upload = vi.spyOn(sitelink, "uploadTenantImage");
-    const completed = await payPassthrough(hold.id, { number: "4242424242424242", cvv: "123", expiry: "12/30", name: "Audit Test", street: "12 Main Street", postal: "B2G 1A1" }, { addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
+    const completed = await payPassthrough(hold.id, { number: "4242424242424242", cvv: "123", expiry: "12/30", name: "Audit Test", street: "12 Main Street", postal: "B2G 1A1" }, { licenseNumber: "TEST12345", licenseRegion: "NS", addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" });
     expect(completed.status).toBe("moved_in");
     expect(upload).not.toHaveBeenCalled();
     expect((await sitelink.unitById("hwy4", unit.unitId))?.rented).toBe(true);
     upload.mockRestore();
   });
 
-  it("completes a simulated staff move-in without a licence", async () => {
+  it("rejects customer checkout without a licence number before payment", async () => {
+    const unit = (await getInventory()).find((r) => r.location === "hwy4")!.units[0];
+    const hold = await createHold({ locationKey: "hwy4", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Missing licence", email: "missing-licence@example.com", phone: "9025550100", moveInDate: new Date() });
+    const charge = vi.spyOn(sitelink, "moveInWithCard");
+    await expect(payPassthrough(hold.id, { number: "4242424242424242", cvv: "123", expiry: "12/30", name: "Audit Test", street: "12 Main Street", postal: "B2G 1A1" }, { addr1: "12 Main Street", city: "Antigonish", region: "NS", postalCode: "B2G 1A1" })).rejects.toMatchObject({ userMessage: expect.stringMatching(/license number/i) });
+    expect(charge).not.toHaveBeenCalled();
+    charge.mockRestore();
+  });
+
+  it("rejects a simulated staff move-in without a licence number", async () => {
     const unit = (await getInventory()).find((r) => r.location === "stellarton")!.units[0];
-    const result = await staffMoveIn({ mode: "movein", locationKey: "stellarton", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Office", email: "office@example.com", phone: "9025550100", moveInDate: new Date(), concessionId: null, addr1: "12 Main Street", city: "Stellarton", region: "NS", postalCode: "B0K 1S0", payMethod: "cash" });
-    expect(result.ledgerId).toBeGreaterThan(0);
-    expect((await sitelink.unitById("stellarton", unit.unitId))?.rented).toBe(true);
+    await expect(staffMoveIn({ mode: "movein", locationKey: "stellarton", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Office", email: "office@example.com", phone: "9025550100", moveInDate: new Date(), concessionId: null, addr1: "12 Main Street", city: "Stellarton", region: "NS", postalCode: "B0K 1S0", payMethod: "cash" } )).rejects.toMatchObject({ userMessage: expect.stringMatching(/licence number/i) });
+    expect((await sitelink.unitById("stellarton", unit.unitId))?.rented).toBe(false);
+  });
+
+  it("saves licence details entered by staff on the simulator tenant", async () => {
+    const unit = (await getInventory()).find((r) => r.location === "stellarton")!.units[0];
+    const result = await staffMoveIn({ mode: "movein", locationKey: "stellarton", unitId: unit.unitId, firstName: "AUDIT TEST", lastName: "Staff licence", email: "office-licence@example.com", phone: "9025550100", moveInDate: new Date(), concessionId: null, licenseNumber: "TEST12345", licenseRegion: "NS", addr1: "12 Main Street", city: "Stellarton", region: "NS", postalCode: "B0K 1S0", payMethod: "cash" });
+    const tenant = await sitelink.tenantInfo("stellarton", result.tenantId);
+    expect(tenant?.raw).toMatchObject({ sLicense: "TEST12345", sLicRegion: "NS" });
   });
 
   it.each(["hwy4", "stellarton"] as const)("creates a priced hold and reservation for a listed %s unit", async (locationKey) => {

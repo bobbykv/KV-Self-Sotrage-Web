@@ -125,10 +125,10 @@ function leaseIdentity(input: StaffBookInput) {
   const city = text(input.city).replace(/\s+/g, " ");
   const region = text(input.region).toUpperCase();
   const postalCode = text(input.postalCode).toUpperCase().replace(/\s+/g, " ");
-  if (licenseNumber && !/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9 -]{2,28}[A-Za-z0-9]$/.test(licenseNumber)) {
     throw new HoldError("license", "Enter the driver's licence number.");
   }
-  if (licenseNumber && !isRegionCode(licenseRegion)) throw new HoldError("license", "Choose the province or state that issued the licence.");
+  if (!isRegionCode(licenseRegion)) throw new HoldError("license", "Choose the province or state that issued the licence.");
   if (addr1.length < 2 || addr1.length > 80) throw new HoldError("address", "Enter the street address.");
   if (city.length < 2 || city.length > 60) throw new HoldError("address", "Enter the city.");
   if (!isRegionCode(region)) throw new HoldError("address", "Choose the mailing province or state.");
