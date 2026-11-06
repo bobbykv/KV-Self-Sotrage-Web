@@ -64,13 +64,15 @@ export async function expireHolds(): Promise<number> {
       moveInDate: true,
       expiresAt: true,
       quotedRate: true,
-      concessionId: true,
     },
   });
   for (const h of lapsed) {
     await db.hold.update({ where: { id: h.id }, data: { status: "expired" }, select: { id: true } });
     if (RESERVATION_STATUS_CANCELLED !== null && h.waitingId && h.tenantId) {
       try {
+        // A pending concession migration must not block website expiry or
+        // inventory refresh. Cancellation failures leave SiteLink's expiry in place.
+        const concession = await db.hold.findUnique({ where: { id: h.id }, select: { concessionId: true } });
         await sitelink.updateReservation(h.locationKey as LocationKey, {
           waitingId: h.waitingId,
           tenantId: h.tenantId,
@@ -80,7 +82,7 @@ export async function expireHolds(): Promise<number> {
           quotedRate: Number(h.quotedRate),
           comment: "Website hold expired",
           status: RESERVATION_STATUS_CANCELLED,
-          concessionId: h.concessionId,
+          concessionId: concession?.concessionId,
           cancellationTypeId: RESERVATION_CANCEL_TYPE,
           cancellationReason: "Website 20-minute hold expired",
         });
