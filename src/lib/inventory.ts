@@ -61,11 +61,15 @@ export async function automaticRefreshIsPaused(): Promise<boolean> {
   return refreshIsPaused(await getSettings());
 }
 
-/** Applies a lngLastTimePolled delta: replace changed units, drop ones no longer vacant. */
+function publiclyAvailable(u: Unit): boolean {
+  return Boolean(u) && !u.rented && u.rentable && !u.waitingListReserved && !u.excludedFromWebsite;
+}
+
+/** Applies a lngLastTimePolled delta and keeps only units available on the website. */
 export function mergeUnits(previous: Unit[], delta: Unit[]): Unit[] {
-  const byId = new Map(previous.map((u) => [u.unitId, u]));
+  const byId = new Map(previous.filter(publiclyAvailable).map((u) => [u.unitId, u]));
   for (const u of delta) {
-    if (u.rented || !u.rentable) byId.delete(u.unitId);
+    if (!publiclyAvailable(u)) byId.delete(u.unitId);
     else byId.set(u.unitId, u);
   }
   return [...byId.values()];
@@ -128,7 +132,7 @@ export async function refreshInventory(opts: RefreshOptions = {}): Promise<Refre
           try {
             const cursor = opts.full || !snap?.lastTimePolled ? "0" : snap.lastTimePolled;
             const { units, lastTimePolled } = await sitelink.availableUnits(loc, cursor);
-            const merged = cursor === "0" ? units.filter((u) => !u.rented && u.rentable) : mergeUnits((snap?.data as Unit[]) ?? [], units);
+            const merged = mergeUnits(cursor === "0" ? [] : (snap?.data as Unit[]) ?? [], units);
             await saveSnapshot(loc, "available", merged, lastTimePolled);
             results.push({ location: loc, kind: "available", ok: true, count: merged.length });
           } catch (err) {
@@ -220,11 +224,7 @@ type InventorySnap = { data: unknown; refreshedAt: Date; lastError?: string | nu
 function listedUnits(data: unknown, loc: LocationKey, heldKey: Set<string>): Unit[] {
   return ((data as Unit[]) ?? []).filter(
     (u): u is Unit =>
-      Boolean(u) &&
-      !u.rented &&
-      u.rentable &&
-      !u.excludedFromWebsite &&
-      !u.waitingListReserved &&
+      publiclyAvailable(u) &&
       !heldKey.has(`${loc}:${u.unitId}`),
   );
 }

@@ -57,7 +57,11 @@ npm run dev:test              # Docker Postgres on :55432 + app on :3001
    run `prisma migrate deploy` on Vercel (Neon `P1002`). Migrate once locally with
    Neon’s **direct** URL, then optional `npm run db:seed`.
 4. Confirm the yellow demo banner and open `/testing` for portal login and card
-   scenarios. Scheduled crons are off on Hobby; refresh inventory from the
-   staff dashboard after the first deploy if units look empty.
+   scenarios. Vercel cron is not configured on Hobby. GitHub Actions runs
+   `.github/workflows/sitelink-inventory-refresh.yml` every 30 minutes and can
+   also be started with **Run workflow**. Set the same `CRON_SECRET` in the
+   repository's Actions secrets and Vercel production, then redeploy Vercel
+   after changing it. Keep `SITELINK_REFRESH_PAUSED=0` for live refreshes.
+   GitHub schedules can be delayed; the staff dashboard also offers a refresh.
 5. When you are ready for live SiteLink, remove `APP_TEST_MODE`, point
    `DATABASE_URL` at a production database, and set real credentials.

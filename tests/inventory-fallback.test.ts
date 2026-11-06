@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { locationInventoryFromSnapshots, openUnitCounts } from "@/lib/inventory";
+import { locationInventoryFromSnapshots, mergeUnits, openUnitCounts } from "@/lib/inventory";
 import { publishedRates } from "@/lib/catalog";
 import { SiteLinkError } from "@/lib/sitelink/soap";
 import { isSiteLinkPermissionDenied } from "@/lib/holds";
@@ -18,6 +18,36 @@ const price: PriceListEntry = {
   vacant: 3,
   total: 8,
 };
+
+describe("available snapshot merging", () => {
+  const available: Unit = {
+    ...mockUnitsFor("hwy4")[0],
+    unitId: 42,
+    rented: false,
+    rentable: true,
+    waitingListReserved: false,
+    excludedFromWebsite: false,
+  };
+
+  it.each([
+    { rented: true },
+    { rentable: false },
+    { waitingListReserved: true },
+    { excludedFromWebsite: true },
+  ])("removes unavailable units from full and delta snapshots: %j", (flags) => {
+    const hidden = { ...available, ...flags };
+    expect(mergeUnits([], [hidden])).toEqual([]);
+    expect(mergeUnits([available], [hidden])).toEqual([]);
+    expect(mergeUnits([hidden], [])).toEqual([]);
+    expect(mergeUnits([hidden], [available])).toEqual([available]);
+  });
+
+  it("preserves untouched available units and replaces changed ones", () => {
+    const untouched = { ...available, unitId: 43 };
+    const changed = { ...available, standardRate: 200 };
+    expect(mergeUnits([available, untouched], [changed])).toEqual([changed, untouched]);
+  });
+});
 
 describe("live availability does not fall back to sample units", () => {
   it("shows published prices and no sample unit ids when SiteLink has never succeeded", () => {

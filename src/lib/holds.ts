@@ -51,9 +51,24 @@ export type HoldInput = {
 
 /** Marks lapsed holds expired and (only if SiteLink confirmed the status enum) cancels them there too. */
 export async function expireHolds(): Promise<number> {
-  const lapsed = await db.hold.findMany({ where: { status: { in: BLOCKING_HOLD_STATUSES }, expiresAt: { lte: new Date() } } });
+  // Expiry does not need tenant verification fields. Keep this job working
+  // while the tenant-verification migration is still pending.
+  const lapsed = await db.hold.findMany({
+    where: { status: { in: BLOCKING_HOLD_STATUSES }, expiresAt: { lte: new Date() } },
+    select: {
+      id: true,
+      locationKey: true,
+      waitingId: true,
+      tenantId: true,
+      unitId: true,
+      moveInDate: true,
+      expiresAt: true,
+      quotedRate: true,
+      concessionId: true,
+    },
+  });
   for (const h of lapsed) {
-    await db.hold.update({ where: { id: h.id }, data: { status: "expired" } });
+    await db.hold.update({ where: { id: h.id }, data: { status: "expired" }, select: { id: true } });
     if (RESERVATION_STATUS_CANCELLED !== null && h.waitingId && h.tenantId) {
       try {
         await sitelink.updateReservation(h.locationKey as LocationKey, {
