@@ -27,6 +27,9 @@ export default async function PortalLogin() {
           </label>
         </ActionForm>
         <p className="mt-4 text-sm">
+          <Link href="/portal/access" className="font-semibold text-kv-navy underline">First time online? Set up access</Link>
+        </p>
+        <p className="mt-4 text-sm">
           <Link href="/portal/forgot-password" className="font-semibold text-kv-navy underline">
             Forgot password?
           </Link>
