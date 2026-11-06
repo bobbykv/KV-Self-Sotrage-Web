@@ -14,6 +14,7 @@ import { mockPriceListFor, mockUnitsFor } from "./sitelink/mock";
 import { forEachSequential, isAutomaticRefreshPaused, normalizeRefreshLocations } from "./sitelink/refresh-policy";
 import type { PriceListEntry, Unit } from "./sitelink/types";
 import { blockingHoldWhere } from "./hold-status";
+import { isPublicUnit } from "./catalog";
 
 type Kind = "available" | "all" | "pricelist" | "report";
 const snapshotId = (loc: LocationKey, kind: Kind) => `${loc}:${kind}`;
@@ -62,7 +63,7 @@ export async function automaticRefreshIsPaused(): Promise<boolean> {
 }
 
 function publiclyAvailable(u: Unit): boolean {
-  return Boolean(u) && !u.rented && u.rentable && !u.waitingListReserved && !u.excludedFromWebsite;
+  return isPublicUnit(u) && !u.rented && u.rentable && !u.waitingListReserved && !u.excludedFromWebsite;
 }
 
 /** Applies a lngLastTimePolled delta and keeps only units available on the website. */

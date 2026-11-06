@@ -84,6 +84,8 @@ describe("SiteLink refresh scheduling", () => {
           {
             locationKey: "haley",
             unitId: 5,
+            widthFt: 5,
+            lengthFt: 10,
             rented: false,
             rentable: true,
             excludedFromWebsite: false,

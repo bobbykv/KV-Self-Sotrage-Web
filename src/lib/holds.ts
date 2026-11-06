@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import type { Hold, Prisma } from "@prisma/client";
 import type { LocationKey } from "@/config/locations";
 import { cardBrand, digitsOnly, luhnValid, parseExpiry, paymentTypeIdFor } from "./card";
-import { formatSize, isWinterStoragePackage, quotedStandardRate, standardRateDrift } from "./catalog";
+import { formatSize, isPublicUnit, isWinterStoragePackage, quotedStandardRate, standardRateDrift } from "./catalog";
 import { getDiscountToggles } from "./discount-visibility";
 import { bestMoveInPromo, discountToggleKey, matchingWinterPrepaidPlan, planMatchesUnit, planShownOnWebsite, publicPlansForUnit } from "./sitelink/concessions";
 import { db } from "./db";
@@ -106,7 +106,7 @@ export async function createHold(input: HoldInput): Promise<Hold> {
   let fresh = unit;
   try {
     const live = await sitelink.unitById(input.locationKey, input.unitId);
-    if (!live || live.rented || !live.rentable || live.waitingListReserved) {
+    if (!live || !isPublicUnit(live) || live.rented || !live.rentable || live.waitingListReserved || live.excludedFromWebsite) {
       throw new HoldError("unit no longer vacant in SiteLink", "This unit is no longer available. Check the other units at this location.");
     }
     fresh = live;

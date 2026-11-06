@@ -4,9 +4,9 @@ import { LeadForm } from "@/components/LeadForm";
 import { PromoBanner } from "@/components/PromoBanner";
 import { PublishedRateCard, UnitGroupCard } from "@/components/UnitCards";
 import { BRAND, LOCATIONS, getLocation, isLocationKey, type LocationKey } from "@/config/locations";
-import { areaRangeFromParams, filterFullTypes, filterGroups, filterPublished, formatSize, fullTypes, groupUnits, publishedRates, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
+import { areaRangeFromParams, filterFullTypes, filterGroups, filterPublished, formatSize, fullTypes, groupUnits, money, publicMonthlyRate, publishedRates, SIZE_LABELS, type SizeCategory, type UnitFilter } from "@/lib/catalog";
 import { getPublicDiscountPlans } from "@/lib/discount-catalog";
-import { offerForUnit } from "@/lib/sitelink/concessions";
+import { offerForUnit, rateSuffix } from "@/lib/sitelink/concessions";
 import { getLivePromotions } from "@/lib/cms";
 import { getInventory } from "@/lib/inventory";
 import { listingUnitPhotoUrl } from "@/lib/photos";
@@ -208,6 +208,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <span>
                     <span className="block font-extrabold text-kv-navy">{formatSize(p.widthFt, p.lengthFt)} storage unit</span>
+                    {publicMonthlyRate(p) > 0 && <span className="block font-semibold text-kv-navy">{money(publicMonthlyRate(p))} {rateSuffix(p.typeName)}</span>}
                     <span className="text-sm text-kv-muted">
                       {getLocation(p.locationKey).shortName} · No units available in this size.
                     </span>

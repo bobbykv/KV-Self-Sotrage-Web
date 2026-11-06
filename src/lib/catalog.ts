@@ -1,4 +1,4 @@
-import type { LocationKey } from "@/config/locations";
+import { getLocation, type LocationKey } from "@/config/locations";
 import type { CostLine, PriceListEntry, Unit } from "./sitelink/types";
 
 export type SizeCategory = "small" | "medium" | "large" | "parking";
@@ -25,6 +25,26 @@ export function publicMonthlyRate(source: { standardRate?: number | null; rate?:
   if (Number.isFinite(standard) && standard > 0) return standard;
   const fallback = Number(source.webRate ?? source.rate);
   return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+}
+
+export function hasPublicDimensions(source: { widthFt: number; lengthFt: number }): boolean {
+  return Number.isFinite(source.widthFt) && source.widthFt > 0 && Number.isFinite(source.lengthFt) && source.lengthFt > 0;
+}
+
+/** Malformed/placeholder rows must never become a public unit or hold link. */
+export function isPublicUnit(unit: Unit): boolean {
+  return Boolean(unit) && Number.isInteger(unit.unitId) && unit.unitId > 0 && hasPublicDimensions(unit) && publicMonthlyRate(unit) > 0;
+}
+
+/** Some SiteLink type names contain the facility name instead of a storage type. */
+export function storageTypeLabel(unit: Pick<Unit, "locationKey" | "typeName" | "climate" | "inside" | "vehicle">): string {
+  const loc = getLocation(unit.locationKey);
+  const name = unit.typeName.trim();
+  const facilityName = [loc.shortName, loc.city, loc.street].some((label) => name.toLowerCase().includes(label.toLowerCase()));
+  if (name && (!facilityName || isWinterStoragePackage(name))) return name;
+  if (unit.climate) return "Climate-controlled";
+  if (unit.vehicle) return "Vehicle, RV & boat parking";
+  return unit.inside ? "Indoor" : "Drive-up";
 }
 
 function cents(amount: number): number {
@@ -108,7 +128,7 @@ export function publishedRates(entries: PriceListEntry[]): PublishedRate[] {
   const out: PublishedRate[] = [];
   for (const p of entries) {
     const fromRate = publicMonthlyRate(p);
-    if (!fromRate || fromRate <= 0 || p.widthFt <= 0 || p.lengthFt <= 0) continue;
+    if (!fromRate || !hasPublicDimensions(p)) continue;
     const vehicle = VEHICLE_RE.test(p.typeName);
     const rate: PublishedRate = {
       key: `${p.locationKey}:${groupKey(p)}`,
@@ -147,6 +167,7 @@ export function filterPublished(rates: PublishedRate[], f: UnitFilter): Publishe
 export function groupUnits(units: Unit[]): UnitGroup[] {
   const map = new Map<string, UnitGroup>();
   for (const u of units) {
+    if (!isPublicUnit(u)) continue;
     const key = `${u.locationKey}:${groupKey(u)}`;
     const price = publicMonthlyRate(u);
     const g = map.get(key);
@@ -182,6 +203,7 @@ export function fullTypes(priceList: PriceListEntry[], groups: UnitGroup[]): Pri
   const availableKeys = new Set(groups.map((g) => `${g.locationKey}:${groupKey({ typeName: g.typeName, widthFt: g.widthFt, lengthFt: g.lengthFt, climate: g.climate })}`));
   const seen = new Set<string>();
   return priceList.filter((p) => {
+    if (!hasPublicDimensions(p)) return false;
     const k = `${p.locationKey}:${groupKey(p)}`;
     if (availableKeys.has(k) || seen.has(k)) return false;
     seen.add(k);

@@ -6,7 +6,7 @@ import { AmenityList } from "@/components/LocationCards";
 import { PromoBanner } from "@/components/PromoBanner";
 import { FeatureTags } from "@/components/UnitCards";
 import { BRAND, fullAddress, getLocation, isLocationKey } from "@/config/locations";
-import { formatSize, isWinterStoragePackage, money, publicMonthlyRate } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money, publicMonthlyRate, storageTypeLabel } from "@/lib/catalog";
 import { getPublicDiscountPlans } from "@/lib/discount-catalog";
 import { offerForUnit, rateSuffix } from "@/lib/sitelink/concessions";
 import { getLivePromotions } from "@/lib/cms";
@@ -103,7 +103,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
               </div>
               <div>
                 <dt className="text-kv-muted">Storage type</dt>
-                <dd className="font-semibold">{unit.typeName}</dd>
+                <dd className="font-semibold">{storageTypeLabel(unit)}</dd>
               </div>
               <div>
                 <dt className="text-kv-muted">Location</dt>
