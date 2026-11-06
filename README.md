@@ -53,9 +53,13 @@ npm run dev:test              # Docker Postgres on :55432 + app on :3001
 2. Set `APP_TEST_MODE=1` and `APP_URL` to the Vercel URL. SiteLink / GHL /
    notify secrets are ignored while test mode is on. Other variables from
    `.env.example` can stay blank.
-3. **Build command:** `prisma generate && next build` (or `npm run build`). **Do not**
-   run `prisma migrate deploy` on Vercel (Neon `P1002`). Migrate once locally with
-   Neon’s **direct** URL, then optional `npm run db:seed`.
+3. **Build command:** `npm run build`. Production deployments apply pending
+   migrations before building; a migration failure stops deployment. The script
+   uses `DIRECT_URL`, `DATABASE_URL_UNPOOLED`, or `POSTGRES_URL_NON_POOLING` when
+   supplied. For Neon it removes `-pooler` from the database host so migrations
+   use a direct connection (the pooled connection previously caused `P1002`).
+   Preview and local builds skip production migrations. For local setup, run
+   `npm run db:migrate` using a direct URL, then optional `npm run db:seed`.
 4. Confirm the yellow demo banner and open `/testing` for portal login and card
    scenarios. Vercel cron is not configured on Hobby. GitHub Actions runs
    `.github/workflows/sitelink-inventory-refresh.yml` every 30 minutes and can

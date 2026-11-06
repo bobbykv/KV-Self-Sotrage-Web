@@ -26,6 +26,7 @@ export function LeadForm({
 }: Props & { notesPlaceholder?: string }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
+  const [contact, setContact] = useState({ phone: "", email: "" });
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,13 +65,13 @@ export function LeadForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className={compact ? "space-y-2" : "space-y-3"}>
+    <form onSubmit={onSubmit} onChange={() => setError("")} className={compact ? "space-y-2" : "space-y-3"}>
       {title && <p className="font-bold text-kv-navy">{title}</p>}
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
       <input name="name" required placeholder="Name" autoComplete="name" className="input" aria-label="Name" />
       <div className={compact ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
-        <input name="phone" type="tel" placeholder={reason === "contact_request" ? "Phone (optional)" : "Phone"} autoComplete="tel" className="input" aria-label="Phone" />
-        <input name="email" type="email" placeholder="Email" autoComplete="email" className="input" aria-label="Email" />
+        <input name="phone" type="tel" placeholder={reason === "contact_request" ? "Phone (optional)" : "Phone"} autoComplete="tel" className="input" aria-label="Phone" value={contact.phone} onChange={(e) => setContact((current) => ({ ...current, phone: e.target.value }))} />
+        <input name="email" type="email" placeholder="Email" autoComplete="email" className="input" aria-label="Email" value={contact.email} onChange={(e) => setContact((current) => ({ ...current, email: e.target.value }))} />
       </div>
       {!locationKey && !compact && (
         <select name="locationKey" className="input" aria-label="Location" defaultValue="">
@@ -82,11 +83,11 @@ export function LeadForm({
       )}
       {!unitSize && !compact && <input name="unitSize" placeholder="Size needed" className="input" aria-label="Size needed" />}
       <textarea name="notes" rows={compact ? 2 : 3} placeholder={notesPlaceholder} className="input py-3" aria-label={reason === "contact_request" ? "What can we help with?" : "Notes"} />
-      {error && <p className="text-sm font-semibold text-kv-red">{error}</p>}
+      {error && <p role="alert" className="text-sm font-semibold text-kv-red">{error}</p>}
       <button type="submit" disabled={state === "sending"} className={`btn-primary w-full ${compact ? "btn-sm min-h-11" : ""}`}>
         {state === "sending" ? (reason === "contact_request" ? "Sending..." : "Sending…") : submitLabel}
       </button>
-      {!compact && <p className="text-xs text-kv-muted">Add a phone number or email so we can follow up.</p>}
+      {!compact && !contact.phone.trim() && !contact.email.trim() && <p className="text-xs text-kv-muted">Add a phone number or email so we can follow up.</p>}
     </form>
   );
 }

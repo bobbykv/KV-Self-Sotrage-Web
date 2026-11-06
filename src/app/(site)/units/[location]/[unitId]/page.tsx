@@ -14,6 +14,7 @@ import { getInventory } from "@/lib/inventory";
 import { unitTypePhotoUrl } from "@/lib/photos";
 import { allowSearchIndexing } from "@/lib/site-env";
 import { getSettings } from "@/lib/settings";
+import { moveInWindow } from "@/lib/move-in-date";
 import { HoldForm } from "./HoldForm";
 
 type Params = { location: string; unitId: string };
@@ -34,10 +35,6 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
       : `Storage at ${loc.shortName}.`,
     robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
   };
-}
-
-function isoDate(d: Date) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Halifax" }).format(d);
 }
 
 export default async function UnitDetail({ params }: { params: Promise<Params> }) {
@@ -65,6 +62,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
     vehicle: unit.vehicle,
   });
   const noun = unit.vehicle ? "parking space" : "self storage";
+  const dates = moveInWindow();
 
   return (
     <div className="container-kv py-8 sm:py-12">
@@ -146,7 +144,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
               <PromoBanner promos={promos} compact />
             </div>
             <div className="mt-4">
-              <HoldForm location={location} unitId={unit.unitId} holdMinutes={settings.holdMinutes} minDate={isoDate(new Date())} maxDate={isoDate(new Date(Date.now() + 30 * 86_400_000))} />
+              <HoldForm location={location} unitId={unit.unitId} holdMinutes={settings.holdMinutes} minDate={dates.min} maxDate={dates.max} />
             </div>
             <p className="mt-4 text-sm text-kv-muted">
               Unsure about the size? Call{" "}

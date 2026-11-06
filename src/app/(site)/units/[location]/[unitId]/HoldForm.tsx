@@ -1,10 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { startHold, type HoldFormState } from "./actions";
 
 export function HoldForm({ location, unitId, holdMinutes, minDate, maxDate }: { location: string; unitId: number; holdMinutes: number; minDate: string; maxDate: string }) {
-  const [state, action, pending] = useActionState<HoldFormState, FormData>(startHold, {});
+  const [values, setValues] = useState({ firstName: "", lastName: "", email: "", phone: "", moveInDate: minDate });
+  const [edited, setEdited] = useState(false);
+  const [state, action, pending] = useActionState<HoldFormState, FormData>(async (prev, form) => {
+    setEdited(false);
+    return startHold(prev, form);
+  }, {});
+  function field(name: keyof typeof values) {
+    return { value: values[name], onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      setValues((current) => ({ ...current, [name]: e.target.value }));
+      setEdited(true);
+    } };
+  }
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="location" value={location} />
@@ -12,27 +23,27 @@ export function HoldForm({ location, unitId, holdMinutes, minDate, maxDate }: { 
       <div className="grid grid-cols-2 gap-3">
         <label>
           <span className="label">First name</span>
-          <input name="firstName" required autoComplete="given-name" className="input" />
+          <input name="firstName" required autoComplete="given-name" className="input" {...field("firstName")} />
         </label>
         <label>
           <span className="label">Last name</span>
-          <input name="lastName" required autoComplete="family-name" className="input" />
+          <input name="lastName" required autoComplete="family-name" className="input" {...field("lastName")} />
         </label>
       </div>
       <label className="block">
         <span className="label">Email</span>
-        <input name="email" type="email" required autoComplete="email" inputMode="email" className="input" />
+        <input name="email" type="email" required autoComplete="email" inputMode="email" className="input" {...field("email")} />
       </label>
       <label className="block">
         <span className="label">Mobile number</span>
-        <input name="phone" type="tel" required autoComplete="tel" inputMode="tel" className="input" />
+        <input name="phone" type="tel" required autoComplete="tel" inputMode="tel" className="input" {...field("phone")} />
       </label>
       <label className="block">
         <span className="label">Move-in date</span>
-        <input name="moveInDate" type="date" required defaultValue={minDate} min={minDate} max={maxDate} className="input" />
+        <input name="moveInDate" type="date" required min={minDate} max={maxDate} className="input" {...field("moveInDate")} />
       </label>
       <p className="text-xs text-kv-muted">Use the email and mobile number you want us to contact you on.</p>
-      {state.error && (
+      {!pending && !edited && state.error && (
         <p className="rounded-xl bg-kv-red-50 p-3 text-sm font-semibold text-kv-red" role="alert">
           {state.error}
         </p>

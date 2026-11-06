@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { createHold, HOLD_COOKIE, HoldError } from "@/lib/holds";
 import { log } from "@/lib/log";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { parseMoveInDate } from "@/lib/move-in-date";
 
 const schema = z.object({
   location: z.string(),
@@ -25,16 +26,12 @@ export async function startHold(_prev: HoldFormState, form: FormData): Promise<H
   const parsed = schema.safeParse(Object.fromEntries(form));
   if (!parsed.success || !isLocationKey(parsed.data.location)) return { error: "Check the marked fields and try again." };
   const d = parsed.data;
+  const moveIn = parseMoveInDate(d.moveInDate);
+  if (!moveIn) return { error: "Please choose a move-in date within the next 30 days." };
   const ip = await clientIp();
   if (!(await rateLimit(`hold:${ip}`, 6, 1800)) || !(await rateLimit(`hold-email:${d.email.toLowerCase()}`, 4, 1800))) {
     return { error: "You've started several holds in a short time. Please call (902) 867-3779 and we'll help you directly." };
   }
-  const moveIn = new Date(`${d.moveInDate}T12:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const max = new Date(today.getTime() + 30 * 86_400_000);
-  if (moveIn < today || moveIn > max) return { error: "Please choose a move-in date within the next 30 days." };
-
   let holdId: string;
   try {
     const hold = await createHold({
