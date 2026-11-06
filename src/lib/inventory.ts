@@ -304,12 +304,30 @@ export function openUnitCounts(rows: LocationInventory[]): Record<string, number
 export const getInventory = cache(async (): Promise<LocationInventory[]> => {
   const allowDemo = env.sitelinkMode === "mock" || env.appTestMode;
   try {
-    const snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
     const held = await db.hold.findMany({
       where: blockingHoldWhere(),
       select: { locationKey: true, unitId: true },
     });
     const heldKey = new Set(held.map((h) => `${h.locationKey}:${h.unitId}`));
+    // Test-mode checkout talks to the persisted simulator, never to these live
+    // snapshots. Listing live IDs here makes every simulator hold fail lookup.
+    if (allowDemo) {
+      const rows: LocationInventory[] = [];
+      for (const loc of LOCATION_KEYS) {
+        const [{ units }, priceList] = await Promise.all([sitelink.availableUnits(loc), sitelink.priceList(loc)]);
+        rows.push({
+          location: loc,
+          units: units.filter((u) => publiclyAvailable(u) && !heldKey.has(`${loc}:${u.unitId}`)),
+          priceList,
+          refreshedAt: null,
+          pricesAsOf: null,
+          lastError: null,
+          availability: "demo",
+        });
+      }
+      return rows;
+    }
+    const snaps = await db.siteLinkSnapshot.findMany({ where: { kind: { in: ["available", "pricelist"] } } });
     return LOCATION_KEYS.map((loc) => {
       const avail = snaps.find((s) => s.id === snapshotId(loc, "available"));
       const price = snaps.find((s) => s.id === snapshotId(loc, "pricelist"));

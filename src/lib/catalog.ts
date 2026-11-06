@@ -40,7 +40,7 @@ export function isPublicUnit(unit: Unit): boolean {
 export function storageTypeLabel(unit: Pick<Unit, "locationKey" | "typeName" | "climate" | "inside" | "vehicle">): string {
   const loc = getLocation(unit.locationKey);
   const name = unit.typeName.trim();
-  const facilityName = [loc.shortName, loc.city, loc.street].some((label) => name.toLowerCase().includes(label.toLowerCase()));
+  const facilityName = /^stellerton$/i.test(name) || [loc.shortName, loc.city, loc.street].some((label) => name.toLowerCase().includes(label.toLowerCase()));
   if (name && (!facilityName || isWinterStoragePackage(name))) return name;
   if (unit.climate) return "Climate-controlled";
   if (unit.vehicle) return "Vehicle, RV & boat parking";

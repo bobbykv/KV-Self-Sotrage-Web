@@ -26,6 +26,7 @@ describe("public catalogue safety", () => {
   it("shows storage features when the SiteLink type is a facility name", () => {
     expect(storageTypeLabel({ ...unit, typeName: "Addington Forks (2784 Hwy 4)" })).toBe("Drive-up");
     expect(storageTypeLabel({ ...unit, typeName: "Addington Forks", climate: true })).toBe("Climate-controlled");
+    expect(storageTypeLabel({ ...unit, locationKey: "stellarton", typeName: "Stellerton" })).toBe("Drive-up");
     expect(storageTypeLabel({ ...unit, typeName: "Container" })).toBe("Container");
   });
 });
