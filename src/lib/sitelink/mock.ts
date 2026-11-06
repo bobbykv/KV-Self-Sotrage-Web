@@ -64,7 +64,7 @@ type MockLedger = {
   autopay: boolean;
 };
 
-const CATALOG_FIXTURE_VERSION = 2;
+const CATALOG_FIXTURE_VERSION = 3;
 
 export type MockState = {
   catalogFixtureVersion?: number;
@@ -263,6 +263,11 @@ export function upgradeMockCatalog(raw: MockState): MockState {
   let nextTypeId = Math.max(0, ...Object.values(raw.units).flat().map((u) => Number(u.UnitTypeID) || 0));
   raw.nextId = Math.max(raw.nextId, ...Object.values(raw.units).flat().map((u) => Number(u.UnitID) || 0));
   for (const loc of Object.keys(expected.units) as LocationKey[]) {
+    // Old simulator versions seeded parking at Haley. Keep any associated
+    // test rental records, but do not advertise unsupported sample products.
+    if (loc !== "hwy4") {
+      for (const u of raw.units[loc]) if (mapUnit(loc, u).vehicle) u.bExcludeFromWebsite = "true";
+    }
     const reserved = activeReservationUnitIds(raw, loc);
     const groups = new Map<string, MockUnit[]>();
     for (const u of expected.units[loc]) groups.set(key(u), [...(groups.get(key(u)) ?? []), u]);

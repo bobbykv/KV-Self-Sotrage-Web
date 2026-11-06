@@ -96,12 +96,14 @@ describe("persisted simulator catalogue upgrades", () => {
     delete old.catalogFixtureVersion;
     old.units.haley = old.units.haley.filter((u) => u.bClimate !== "true");
     old.units.hwy4 = old.units.hwy4.filter((u) => !/winter|vehicle/i.test(u.sTypeName));
+    old.units.haley.push({ ...old.units.haley[0], UnitID: "70000", sTypeName: "Outdoor parking" });
     old.ledgers.haley[0].dcChargeBalance = 0;
     old.ledgers.haley[0].dcPastDue = 0;
     const before = structuredClone({ tenants: old.tenants, ledgers: old.ledgers, reservations: old.reservations });
     const ids = old.units.hwy4.map((u) => u.UnitID);
     const upgraded = upgradeMockCatalog(old);
     expect(upgraded.units.haley.some((u) => u.bClimate === "true")).toBe(true);
+    expect(upgraded.units.haley.find((u) => u.UnitID === "70000")?.bExcludeFromWebsite).toBe("true");
     expect(upgraded.units.hwy4.some((u) => /winter/i.test(u.sTypeName))).toBe(true);
     expect(upgraded.units.hwy4.filter((u) => ids.includes(u.UnitID)).map((u) => u.UnitID)).toEqual(ids);
     expect({ tenants: upgraded.tenants, ledgers: upgraded.ledgers, reservations: upgraded.reservations }).toEqual(before);
