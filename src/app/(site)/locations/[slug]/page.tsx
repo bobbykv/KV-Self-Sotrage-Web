@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!isLocationKey(slug)) return { title: "Location" };
   const loc = getLocation(slug);
   return {
-    title: `${loc.cardTitle} | KV Self Storage`,
+    title: loc.cardTitle,
     description: `${loc.blurb} ${fullAddress(loc)}. ${loc.access} access.`,
     robots: allowSearchIndexing() ? undefined : { index: false, follow: false },
   };

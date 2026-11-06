@@ -53,7 +53,7 @@ export function LocationCards({ counts }: { counts?: Record<string, number> }) {
           <p className="text-sm">{l.blurb}</p>
           <AmenityList l={l} />
           <p className="text-xs text-kv-muted">Office hours: {formatOfficeHours(l)}</p>
-          {counts && typeof counts[l.key] === "number" && <p className="text-sm text-kv-muted">{counts[l.key]} units open</p>}
+          {counts && typeof counts[l.key] === "number" && <p className="text-sm text-kv-muted">{`${counts[l.key]} units open`}</p>}
           <div className="mt-auto flex flex-wrap items-center gap-2">
             <Link href={`/locations/${l.key}`} className="btn-primary btn-sm min-h-11">
               Location details

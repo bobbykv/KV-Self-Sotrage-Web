@@ -1,13 +1,20 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { SizeFinder } from "./SizeFinder";
+import { getInventory } from "@/lib/inventory";
+import { formatSize, groupUnits } from "@/lib/catalog";
+import { getLocation } from "@/config/locations";
 
 export const metadata: Metadata = {
   title: "Storage Size Finder for Antigonish and Stellarton",
   description: "Find a starting size for boxes, furniture, business stock or a household move. Compare available units in Antigonish and Stellarton.",
 };
 
-export default function SizeFinderPage() {
+export default async function SizeFinderPage() {
+  const inventory = await getInventory();
+  const groups = groupUnits(inventory.filter((l) => l.availability === "live" || l.availability === "demo").flatMap((l) => l.units));
+  const guide = [...new Map(groups.filter((g) => !g.vehicle).map((g) => [`${g.widthFt}x${g.lengthFt}`, g])).values()];
   return (
     <div className="container-kv grid gap-10 py-10 sm:py-16 lg:grid-cols-2">
       <div>
@@ -16,28 +23,15 @@ export default function SizeFinderPage() {
         <div className="mt-6 overflow-hidden rounded-3xl">
           <Image src="/photos/facility-2.jpg" alt="KV Self Storage drive-up units" width={940} height={361} className="w-full object-cover" />
         </div>
-        <h2 className="mt-8 text-lg font-extrabold text-kv-navy">A quick size guide</h2>
+        <h2 className="mt-8 text-lg font-extrabold text-kv-navy">Sizes currently available</h2>
         <ul className="mt-4 space-y-2 text-sm text-kv-muted">
-          <li>
-            <strong className="text-kv-navy">5 × 5</strong>: Boxes, seasonal gear or smaller dorm room belongings.
-          </li>
-          <li>
-            <strong className="text-kv-navy">5 × 10</strong>: Boxes and furniture from a smaller apartment.
-          </li>
-          <li>
-            <strong className="text-kv-navy">10 × 10</strong>: Furniture and boxes from a studio or one-bedroom apartment.
-          </li>
-          <li>
-            <strong className="text-kv-navy">10 × 15 to 10 × 20</strong>: A starting range for a two- or three-bedroom move.
-          </li>
-          <li>
-            <strong className="text-kv-navy">10 × 20 to 10 × 30</strong>: A starting range for a larger household.
-          </li>
+          {guide.map((g) => <li key={g.key}><Link href={`/units/${g.locationKey}/${g.bestUnitId}`} className="font-semibold text-kv-red underline">{formatSize(g.widthFt, g.lengthFt)}</Link>{` — ${getLocation(g.locationKey).shortName}`}</li>)}
         </ul>
+        {!guide.length && <p className="mt-4 text-sm text-kv-muted">Call us to confirm the sizes currently available.</p>}
         <p className="mt-4 text-sm text-kv-muted">These are estimates. Measure large items and leave room to reach what you&apos;ll need.</p>
       </div>
       <div className="lg:pt-8">
-        <SizeFinder />
+        <SizeFinder groups={groups} />
       </div>
     </div>
   );

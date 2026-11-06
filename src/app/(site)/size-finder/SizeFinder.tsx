@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { getLocation } from "@/config/locations";
-import { sizeFinderHref, STORAGE_NEEDS, type SizeFinderAnswer } from "@/lib/size-finder";
+import { recommendStorage, recommendedSizeHref, STORAGE_NEEDS, type SizeFinderAnswer } from "@/lib/size-finder";
+import { formatSize, type UnitGroup } from "@/lib/catalog";
 
 const LOCS = [
   { id: "", label: "Any location" },
@@ -12,11 +13,12 @@ const LOCS = [
   { id: "stellarton", label: "Stellarton, Heritage Avenue" },
 ] as const;
 
-export function SizeFinder() {
+export function SizeFinder({ groups }: { groups: UnitGroup[] }) {
   const [step, setStep] = useState(0);
   const [a, setA] = useState<SizeFinderAnswer>({});
   const choice = STORAGE_NEEDS.find((w) => w.id === a.what);
   const climateRedirect = a.sensitive === true && a.location && a.location !== "haley";
+  const suggested = recommendStorage(a, groups);
 
   const option = (active: boolean) => `w-full rounded-2xl border px-5 py-4 text-left font-semibold transition ${active ? "border-kv-red bg-kv-red-50 text-kv-red" : "border-kv-line bg-white text-kv-navy hover:border-kv-navy"}`;
 
@@ -76,20 +78,25 @@ export function SizeFinder() {
         <div className="mt-3">
           <h2 className="text-2xl font-extrabold text-kv-navy">Start with these sizes</h2>
           <p className="mt-2 text-kv-muted">
-            {choice.result} This is an estimate. Large furniture, box count and space to walk inside can change what you need.
+            {a.what === "vehicle" ? choice.result : suggested.closest ? "Your starting size range is full here. This is the closest size currently in stock; check that your belongings will fit." : suggested.groups.length ? "Compare these sizes from the current available catalogue." : "No matching units are currently available at this location. Contact us to check another location or join the waitlist."} This is an estimate. Large furniture, box count and space to walk inside can change what you need.
           </p>
+          {suggested.groups.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {suggested.groups.map((g) => <li key={g.key}><Link href={`/units/${g.locationKey}/${g.bestUnitId}`} className="font-semibold text-kv-red underline">{`${formatSize(g.widthFt, g.lengthFt)} at ${getLocation(g.locationKey).shortName}`}</Link></li>)}
+            </ul>
+          )}
           {a.sensitive === true && <p className="mt-3 text-sm text-kv-muted">For climate control, compare units at Haley Road in Antigonish.</p>}
           {climateRedirect && <p className="mt-3 text-sm text-kv-muted">You chose {getLocation(a.location || "haley").shortName}. You can also compare options there without the climate-control filter.</p>}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link href={sizeFinderHref(a)} className="btn-primary">
-              See matching units &amp; prices
+            <Link href={recommendedSizeHref(a, groups)} className="btn-primary">
+              {suggested.groups.length ? "See matching units & prices" : "Ask about availability"}
             </Link>
             <button type="button" className="btn-ghost" onClick={() => { setA({}); setStep(0); }}>
               Start again
             </button>
           </div>
           {climateRedirect && (
-            <Link href={sizeFinderHref({ ...a, sensitive: false })} className="mt-4 inline-block text-sm font-semibold text-kv-red underline">
+            <Link href={recommendedSizeHref({ ...a, sensitive: false }, groups)} className="mt-4 inline-block text-sm font-semibold text-kv-red underline">
               Compare options at {getLocation(a.location || "haley").shortName}
             </Link>
           )}

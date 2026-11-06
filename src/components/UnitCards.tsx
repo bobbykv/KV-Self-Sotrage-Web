@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BRAND, getLocation } from "@/config/locations";
-import { formatSize, isWinterStoragePackage, money, type PublishedRate, type UnitGroup } from "@/lib/catalog";
+import { formatSize, isWinterStoragePackage, money, storageTypeLabel, type PublishedRate, type UnitGroup } from "@/lib/catalog";
 import { rateSuffix } from "@/lib/sitelink/concessions";
 
 export function FeatureTags({ g }: { g: Pick<UnitGroup, "climate" | "inside" | "power" | "vehicle" | "typeName"> }) {
@@ -44,11 +44,11 @@ export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?:
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-2xl font-extrabold text-kv-navy">
-            {formatSize(g.widthFt, g.lengthFt)} {titleNoun}
+            {`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun}`}
           </h3>
           <p className="mt-0.5 text-sm text-kv-muted">{loc.shortName}</p>
           <p className="text-sm text-kv-muted">
-            {g.typeName} · {area} sq. ft. approximately
+            {`${storageTypeLabel(g)} · ${area} sq. ft. approximately`}
           </p>
         </div>
         <div className="text-right">
@@ -59,7 +59,7 @@ export function UnitGroupCard({ g, imageUrl, offer }: { g: UnitGroup; imageUrl?:
       </div>
       <FeatureTags g={g} />
       <div className="mt-auto flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-kv-navy">{g.available} available</p>
+        <p className="text-sm font-semibold text-kv-navy">{`${g.available} available`}</p>
         <Link href={`/units/${g.locationKey}/${g.bestUnitId}`} className="btn-primary btn-sm min-h-11">
           View unit
         </Link>
@@ -78,11 +78,11 @@ export function PublishedRateCard({ g, offer }: { g: PublishedRate; offer?: stri
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-2xl font-extrabold text-kv-navy">
-            {formatSize(g.widthFt, g.lengthFt)} {titleNoun}
+            {`${formatSize(g.widthFt, g.lengthFt)} ${titleNoun}`}
           </h3>
           <p className="mt-0.5 text-sm text-kv-muted">{loc.shortName}</p>
           <p className="text-sm text-kv-muted">
-            {g.typeName} · {area} sq. ft. approximately
+            {`${storageTypeLabel(g)} · ${area} sq. ft. approximately`}
           </p>
         </div>
         <div className="text-right">

@@ -9,7 +9,7 @@ function storageSchema(l: Location, siteUrl: string) {
     telephone: BRAND.phoneE164,
     email: BRAND.email,
     image: `${siteUrl}/photos/hero.jpg`,
-    address: { "@type": "PostalAddress", streetAddress: l.street, addressLocality: l.city, addressRegion: l.region, addressCountry: l.country },
+    address: { "@type": "PostalAddress", streetAddress: l.street, addressLocality: l.city, addressRegion: l.region, postalCode: l.postalCode, addressCountry: l.country },
     areaServed: l.serves.map((s) => ({ "@type": "City", name: s })),
     openingHoursSpecification: l.officeHours.map((h) => ({
       "@type": "OpeningHoursSpecification",

@@ -3,6 +3,9 @@ import { BRAND } from "@/config/locations";
 import { getFaq } from "@/lib/faq";
 import { renderMarkdown } from "@/lib/markdown";
 import { showDraftNotices } from "@/lib/site-env";
+import { getInventory } from "@/lib/inventory";
+import { groupUnits } from "@/lib/catalog";
+import { catalogueFaq } from "@/lib/catalog-faq";
 
 export const metadata: Metadata = {
   title: "Self Storage Questions in Antigonish and Stellarton",
@@ -10,11 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function FaqPage() {
-  const cats = await getFaq();
+  const [source, inventory] = await Promise.all([getFaq(), getInventory()]);
+  const cats = catalogueFaq(source, groupUnits(inventory.filter((l) => l.availability === "live" || l.availability === "demo").flatMap((l) => l.units)));
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: cats.flatMap((c) => c.entries).map((e) => ({ "@type": "Question", name: e.question, acceptedAnswer: { "@type": "Answer", text: e.answer.replace(/\*\*/g, "") } })),
+    mainEntity: cats.flatMap((c) => c.entries).map((e) => ({ "@type": "Question", name: e.question, acceptedAnswer: { "@type": "Answer", text: e.answer.replace(/\*\*/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") } })),
   };
   return (
     <div className="container-kv max-w-3xl py-10 sm:py-16">

@@ -1,4 +1,5 @@
 import type { LocationKey } from "@/config/locations";
+import { filterGroups, type UnitGroup } from "./catalog";
 
 export const STORAGE_NEEDS = [
   { id: "boxes", label: "Boxes, seasonal gear or a dorm room", minArea: 25, maxArea: 50, sizes: "5 × 5 to 5 × 10", result: "Start with 5 × 5 to 5 × 10. Check the dimensions of your largest items." },
@@ -32,4 +33,34 @@ export function sizeFinderHref(answer: SizeFinderAnswer): string {
     params.set("climate", "1");
   } else if (choice.id !== "vehicle" && answer.location) params.set("location", answer.location);
   return `/units?${params}`;
+}
+
+/** Recommend only bookable groups from the supplied current catalogue. */
+export function recommendStorage(answer: SizeFinderAnswer, groups: UnitGroup[]) {
+  const choice = STORAGE_NEEDS.find((w) => w.id === answer.what);
+  if (!choice) return { groups: [] as UnitGroup[], closest: false };
+  const params = new URL(sizeFinderHref(answer), "https://example.com").searchParams;
+  const eligible = filterGroups(groups, {
+    location: (params.get("location") || undefined) as LocationKey | undefined,
+    climate: params.get("climate") === "1",
+    vehicle: choice.id === "vehicle",
+  }).filter((g) => g.available > 0 && g.fromRate > 0);
+  const matches = choice.id === "vehicle" ? eligible : eligible.filter((g) => {
+    const area = g.widthFt * g.lengthFt;
+    return area >= choice.minArea && area <= choice.maxArea;
+  });
+  if (matches.length) return { groups: matches.slice(0, 3), closest: false };
+  const distance = (g: UnitGroup) => {
+    const area = g.widthFt * g.lengthFt;
+    return area < choice.minArea ? choice.minArea - area : Math.max(0, area - choice.maxArea);
+  };
+  eligible.sort((a, b) => distance(a) - distance(b) || b.widthFt * b.lengthFt - a.widthFt * a.lengthFt);
+  return { groups: eligible.slice(0, 1), closest: eligible.length > 0 };
+}
+
+export function recommendedSizeHref(answer: SizeFinderAnswer, groups: UnitGroup[]): string {
+  const result = recommendStorage(answer, groups);
+  if (!result.groups.length) return "/contact";
+  const first = result.groups[0];
+  return result.closest ? `/units/${first.locationKey}/${first.bestUnitId}` : sizeFinderHref(answer);
 }

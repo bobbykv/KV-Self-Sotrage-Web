@@ -29,7 +29,7 @@ export default function ContactPage() {
         <ul className="mt-2 space-y-2 text-sm">
           {LOCATIONS.map((l) => (
             <li key={l.key}>
-              <span className="font-semibold text-kv-navy">{fullAddress(l)}</span>: {formatOfficeHours(l)}.
+              <span className="font-semibold text-kv-navy">{fullAddress(l)}</span>: {formatOfficeHours(l)}
             </li>
           ))}
         </ul>

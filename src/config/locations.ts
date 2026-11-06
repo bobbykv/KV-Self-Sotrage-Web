@@ -12,6 +12,7 @@ export type Location = {
   street: string;
   city: string;
   region: string;
+  postalCode?: string;
   country: string;
   landmark?: string;
   blurb: string;
@@ -53,9 +54,9 @@ export function formatHours(h: { open: string; close: string }): string {
 
 /** e.g. "Monday to Friday, 8:30 a.m. to 4:30 p.m." */
 export function formatOfficeHours(l: Location): string {
-  return l.officeHours.map((h) => `${h.days}, ${formatHours(h)}`).join("; ");
+  return l.officeHours.map((h) => `${h.days}, ${formatHours(h).replace(/ (a\.m\.|p\.m\.)/g, "\u00a0$1")}`).join("; ");
 }
 
 export function fullAddress(l: Location): string {
-  return `${l.street}, ${l.city}, ${l.region}`;
+  return `${l.street}, ${l.city}, ${l.region}${l.postalCode ? ` ${l.postalCode}` : ""}`;
 }

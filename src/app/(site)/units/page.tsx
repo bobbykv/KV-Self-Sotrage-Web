@@ -108,7 +108,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
         </p>
       )}
 
-      <form method="get" className="mt-6 grid gap-3 rounded-2xl border border-kv-line p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <form method="get" className="mt-6 grid gap-3 rounded-2xl border border-kv-line p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(18rem,1.3fr)]">
         {range.minArea && <input type="hidden" name="minArea" value={range.minArea} />}
         {range.maxArea && <input type="hidden" name="maxArea" value={range.maxArea} />}
         <label className="block">
@@ -133,9 +133,9 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
             ))}
           </select>
         </label>
-        <label className="block">
+        <label className="block min-w-0 sm:col-span-2 lg:col-span-1">
           <span className="label">Storage type</span>
-          <select name="type" defaultValue={storageType ?? ""} className="input">
+          <select name="type" defaultValue={storageType ?? ""} className="input pr-8">
             <option value="">All storage types</option>
             <option value="storage">Storage units</option>
             <option value="parking">Vehicle, RV &amp; boat parking</option>
@@ -207,7 +207,7 @@ export default async function UnitsPage({ searchParams }: { searchParams: Promis
               <details key={`${p.locationKey}-${p.unitTypeId}`} className="card p-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <span>
-                    <span className="block font-extrabold text-kv-navy">{formatSize(p.widthFt, p.lengthFt)} storage unit</span>
+                    <span className="block font-extrabold text-kv-navy">{`${formatSize(p.widthFt, p.lengthFt)} storage unit`}</span>
                     {publicMonthlyRate(p) > 0 && <span className="block font-semibold text-kv-navy">{money(publicMonthlyRate(p))} {rateSuffix(p.typeName)}</span>}
                     <span className="text-sm text-kv-muted">
                       {getLocation(p.locationKey).shortName} · No units available in this size.

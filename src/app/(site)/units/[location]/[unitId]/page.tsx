@@ -75,7 +75,7 @@ export default async function UnitDetail({ params }: { params: Promise<Params> }
             <Image src={photoUrl} alt={`${sizeLabel} ${noun} at ${loc.shortName}`} width={929} height={622} className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="h1 mt-6">
-            {sizeLabel} {noun} at {loc.shortName}
+            {`${sizeLabel} ${noun} at ${loc.shortName}`}
           </h1>
           <p className="mt-2 text-2xl font-extrabold text-kv-red">
             {money(monthly)}
