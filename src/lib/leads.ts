@@ -47,7 +47,7 @@ export function ghlPayload(lead: LeadInput & { id: string; createdAt: Date }) {
     unitSize: lead.unitSize ?? null,
     notes: lead.notes ?? null,
     timestamp: lead.createdAt.toISOString(),
-    tags: ["kv-self-storage", `channel:${lead.channel}`, `reason:${lead.reason}`, ...(lead.locationKey ? [`location:${lead.locationKey}`] : [])],
+    tags: ["kv-self-storage", "storage lead", `channel:${lead.channel}`, `reason:${lead.reason}`, ...(lead.locationKey ? [`location:${lead.locationKey}`] : [])],
   };
 }
 
@@ -81,8 +81,10 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
     if (!res.ok) throw new Error(`GHL contacts/upsert HTTP ${res.status}`);
     const body = (await res.json()) as { contact?: { id?: string } };
     const contactId = body.contact?.id;
+    if (!contactId) throw new Error("GHL contact upsert returned no contact ID");
     if (contactId) {
       const note = [
+        `Website lead reference: ${payload.leadId}`,
         `Reason: ${payload.reason}`,
         `Preferred location: ${payload.preferredLocation}`,
         payload.unitType && `Unit type: ${payload.unitType}`,
@@ -92,13 +94,14 @@ async function pushToGhl(payload: ReturnType<typeof ghlPayload>): Promise<void> 
       ]
         .filter(Boolean)
         .join("\n");
-      await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
+      const noteRes = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
         method: "POST",
         headers,
         body: JSON.stringify({ body: note }),
         signal: AbortSignal.timeout(10000),
-      }).catch(() => undefined);
-      await postGhlStorageOpportunity(contactId, payload).catch(() => undefined);
+      });
+      if (!noteRes.ok) throw new Error(`GHL contact note HTTP ${noteRes.status}`);
+      await postGhlStorageOpportunity(contactId, payload);
     }
     return;
   }
@@ -149,7 +152,7 @@ export async function captureLead(input: LeadInput) {
 
 export async function sendLeadToGhl(leadId: string) {
   const lead = await db.lead.findUniqueOrThrow({ where: { id: leadId } });
-  if (env.appTestMode) {
+  if (env.appTestMode && !env.ghlLiveLeadsInTestMode) {
     return db.lead.update({ where: { id: leadId }, data: { ghlStatus: "skipped", ghlError: "APP_TEST_MODE — GHL delivery blocked" } });
   }
   const configured = Boolean(env.GHL_WEBHOOK_URL || (env.GHL_API_KEY && env.GHL_LOCATION_ID));

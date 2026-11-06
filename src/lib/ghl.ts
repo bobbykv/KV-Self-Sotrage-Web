@@ -31,8 +31,8 @@ export function ghlOpportunityName(payload: {
 }
 
 /**
- * Best-effort Storage → New Inquiry opportunity. Network failures are ignored
- * so a pipeline miss never fails the contact upsert that already succeeded.
+ * Storage → New Inquiry opportunity. Callers decide whether a failure is
+ * optional; website leads remain retryable until their full delivery succeeds.
  */
 export async function postGhlStorageOpportunity(contactId: string, payload: {
   name: string;
@@ -44,7 +44,7 @@ export async function postGhlStorageOpportunity(contactId: string, payload: {
   const pipelineId = resolveGhlStoragePipelineId(env.GHL_LOCATION_ID, env.GHL_STORAGE_PIPELINE_ID);
   if (!pipelineId) return;
   const pipelineStageId = resolveGhlStorageStageId(env.GHL_STORAGE_STAGE_ID);
-  await fetch("https://services.leadconnectorhq.com/opportunities/upsert", {
+  const res = await fetch("https://services.leadconnectorhq.com/opportunities/upsert", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.GHL_API_KEY}`,
@@ -61,5 +61,6 @@ export async function postGhlStorageOpportunity(contactId: string, payload: {
       status: "open",
     }),
     signal: AbortSignal.timeout(10000),
-  }).catch(() => undefined);
+  });
+  if (!res.ok) throw new Error(`GHL opportunity upsert HTTP ${res.status}`);
 }

@@ -63,6 +63,12 @@ docker compose -f compose.test.yml stop
 * Direct live SOAP calls throw before `fetch`.
 * GHL delivery, staff webhooks, external payment links and paid AI chat are
   disabled.
+
+For a rental demo that must capture real sales inquiries, explicitly set
+`GHL_LIVE_LEADS_IN_TEST_MODE=1` alongside the GHL connection settings. Only CRM
+lead delivery and Retell webhook authentication are enabled by this override;
+SiteLink calls, rental/payment simulation, staff webhooks and paid AI stay
+isolated. Leave this flag unset for ordinary test environments.
 * Authentication and checkout use separate test cookie names
   (`kv_test_tenant`, `kv_test_admin`, `kv_test_hold`).
 * The `/testing` page returns 404 outside test mode.

@@ -215,7 +215,7 @@ export function shouldSyncRetellEvent(event: string): boolean {
  * 2) contact row in /admin/leads; LeadConnector upsert when API key is set
  */
 export async function syncRetellSessionToGhl(event: string, session: RetellSession) {
-  if (env.appTestMode) {
+  if (env.appTestMode && !env.ghlLiveLeadsInTestMode) {
     return { ok: true as const, skipped: "APP_TEST_MODE" as const, leadId: null as string | null };
   }
 
@@ -322,7 +322,7 @@ async function upsertGhlContact(lead: LeadInput) {
       email: lead.email || undefined,
       phone: lead.phone || undefined,
       source: `website (${lead.channel})`,
-      tags: ["kv-self-storage", `channel:${lead.channel}`, `reason:${lead.reason}`, "retell"],
+      tags: ["kv-self-storage", "storage lead", `channel:${lead.channel}`, `reason:${lead.reason}`, "retell"],
     }),
     signal: AbortSignal.timeout(10000),
   });

@@ -34,6 +34,8 @@ const schema = z.object({
   GHL_STORAGE_PIPELINE_ID: z.string().optional(),
   /** Storage pipeline stage. Defaults to New Inquiry. */
   GHL_STORAGE_STAGE_ID: z.string().optional(),
+  /** Explicitly send real CRM leads while SiteLink/payments remain simulated. */
+  GHL_LIVE_LEADS_IN_TEST_MODE: z.string().optional(),
 
   CHAT_LLM_API_KEY: z.string().optional(),
   CHAT_LLM_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
@@ -58,6 +60,8 @@ if (!parsed.success) {
 }
 const raw = parsed.data;
 const appTestMode = isAppTestMode();
+const ghlLiveLeadsInTestMode = raw.GHL_LIVE_LEADS_IN_TEST_MODE === "1" || raw.GHL_LIVE_LEADS_IN_TEST_MODE === "true";
+const ghlDeliveryAllowed = !appTestMode || ghlLiveLeadsInTestMode;
 
 function parseLocationCodes(value: string | undefined): Partial<Record<LocationKey, string>> {
   if (!value) return {};
@@ -80,29 +84,31 @@ const paymentMode = (appTestMode || sitelinkMode === "mock" ? "passthrough" : ra
 /**
  * APP_TEST_MODE forces the isolated simulator even when live credentials are
  * present in the host environment (e.g. a Vercel project that also has go-live
- * secrets configured). Integration secrets are ignored at runtime.
+ * secrets configured). Integration secrets are ignored at runtime, except
+ * CRM lead delivery when GHL_LIVE_LEADS_IN_TEST_MODE is explicitly enabled.
  */
 export const env = {
   ...raw,
   isProd: raw.NODE_ENV === "production",
   appTestMode,
+  ghlLiveLeadsInTestMode,
   sitelinkMode,
   sitelinkLocationCodes: appTestMode ? ({} as Partial<Record<LocationKey, string>>) : parseLocationCodes(raw.SITELINK_LOCATION_CODES),
   sitelinkTestMode: appTestMode || raw.SITELINK_TEST_MODE === "1" || raw.SITELINK_TEST_MODE === "true",
   PAYMENT_MODE: paymentMode,
   PAY_ONLINE_URL: appTestMode || sitelinkMode === "mock" ? undefined : raw.PAY_ONLINE_URL,
-  GHL_WEBHOOK_URL: appTestMode ? undefined : raw.GHL_WEBHOOK_URL,
-  GHL_API_KEY: appTestMode ? undefined : raw.GHL_API_KEY,
-  GHL_LOCATION_ID: appTestMode ? undefined : raw.GHL_LOCATION_ID,
-  GHL_STORAGE_PIPELINE_ID: appTestMode ? undefined : raw.GHL_STORAGE_PIPELINE_ID,
-  GHL_STORAGE_STAGE_ID: appTestMode ? undefined : raw.GHL_STORAGE_STAGE_ID,
+  GHL_WEBHOOK_URL: ghlDeliveryAllowed ? raw.GHL_WEBHOOK_URL : undefined,
+  GHL_API_KEY: ghlDeliveryAllowed ? raw.GHL_API_KEY : undefined,
+  GHL_LOCATION_ID: ghlDeliveryAllowed ? raw.GHL_LOCATION_ID : undefined,
+  GHL_STORAGE_PIPELINE_ID: ghlDeliveryAllowed ? raw.GHL_STORAGE_PIPELINE_ID : undefined,
+  GHL_STORAGE_STAGE_ID: ghlDeliveryAllowed ? raw.GHL_STORAGE_STAGE_ID : undefined,
   CHAT_LLM_API_KEY: appTestMode ? undefined : raw.CHAT_LLM_API_KEY,
   OPENAI_API_KEY: appTestMode ? undefined : raw.OPENAI_API_KEY,
   GEMINI_API_KEY: appTestMode ? undefined : raw.GEMINI_API_KEY,
   ANTHROPIC_API_KEY: appTestMode ? undefined : raw.ANTHROPIC_API_KEY,
   NOTIFY_WEBHOOK_URL: appTestMode ? undefined : raw.NOTIFY_WEBHOOK_URL,
   OWNER_NOTIFY_EMAIL: appTestMode ? undefined : raw.OWNER_NOTIFY_EMAIL,
-  RETELL_API_KEY: appTestMode ? undefined : raw.RETELL_API_KEY,
+  RETELL_API_KEY: ghlDeliveryAllowed ? raw.RETELL_API_KEY : undefined,
 };
 
 /** Called lazily (not at import) so `next build` works without production secrets. */

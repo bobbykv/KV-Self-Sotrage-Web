@@ -85,8 +85,13 @@ describe("GoHighLevel storage opportunity", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("ignores a failed opportunity upsert", async () => {
+  it("reports a failed opportunity upsert so the saved lead can be retried", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"));
-    await expect(postGhlStorageOpportunity("contact_4", { name: "Sam", preferredLocation: "Any" })).resolves.toBeUndefined();
+    await expect(postGhlStorageOpportunity("contact_4", { name: "Sam", preferredLocation: "Any" })).rejects.toThrow("network down");
+  });
+
+  it("rejects non-2xx opportunity responses instead of reporting delivery success", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 403 }));
+    await expect(postGhlStorageOpportunity("contact_5", { name: "Sam" })).rejects.toThrow("GHL opportunity upsert HTTP 403");
   });
 });
