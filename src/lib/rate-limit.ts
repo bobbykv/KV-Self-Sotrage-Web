@@ -7,7 +7,7 @@ import { log, safeErrorMessage } from "./log";
  * Fixed-window limiter stored in Postgres so it works across serverless
  * instances. Returns true when the request is allowed.
  */
-export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+export async function rateLimit(key: string, limit: number, windowSeconds: number, failClosed = false): Promise<boolean> {
   const windowStart = new Date(Math.floor(Date.now() / (windowSeconds * 1000)) * windowSeconds * 1000);
   try {
     const rows = await db.$queryRaw<{ count: number }[]>`
@@ -19,7 +19,7 @@ export async function rateLimit(key: string, limit: number, windowSeconds: numbe
     return (rows[0]?.count ?? 1) <= limit;
   } catch (err) {
     log.warn("rate limit skipped", { err: safeErrorMessage(err) });
-    return true;
+    return !failClosed;
   }
 }
 
